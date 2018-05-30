@@ -46,7 +46,7 @@ public class BasicGun extends Gun
     {
         for (Bullet b: bullets)
         {
-            if(b.live && b.active)
+            if(b.live)
             {
                 b.move();
                 for(Pixel p: b.pixelGroup.pixels)
@@ -65,7 +65,6 @@ public class BasicGun extends Gun
 
             if(!b.live)
             {
-                b.active = false;
                 //bulletPool.add(b);
                 bulletPool.push(b);
             }

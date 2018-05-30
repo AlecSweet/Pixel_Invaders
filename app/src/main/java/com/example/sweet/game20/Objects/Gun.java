@@ -59,28 +59,21 @@ public abstract class Gun
 
     public void draw(double interpolation)
     {
-        /*for (Iterator<Bullet> i = bullets.iterator(); i.hasNext(); )
+        for(Bullet b: bullets)
         {
-            Bullet t = i.next();
-            if (t.live)
-                t.draw();
-            else {
-                t.freeResources();
-                i.remove();
+            if (b.live)
+            {
+                b.draw();
             }
-        }*/
-        int len = bullets.length;
-        for(int i = 0; i < len; i++)
-        {
-            if (bullets[i].live && bullets[i].active)
-                bullets[i].draw();
         }
     }
 
     public void move()
     {
         for(Bullet b: bullets)
+        {
             b.move();
+        }
     }
 
     public boolean shoot(float x, float y, float angle)

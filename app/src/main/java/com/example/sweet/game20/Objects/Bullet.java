@@ -18,7 +18,7 @@ import static android.opengl.GLES20.glUniform1f;
 
 public class Bullet
 {
-    public volatile float
+    public float
             speed,
             angle,
             maxDistance,
@@ -27,7 +27,6 @@ public class Bullet
             sinA;
 
     public volatile boolean live = true;
-    public volatile boolean active = false;
 
     public PixelGroup pixelGroup;
 
@@ -65,7 +64,6 @@ public class Bullet
         if(maxDistance < distance)
         {
             live = false;
-            active = false;
         }
     }
 
@@ -103,13 +101,12 @@ public class Bullet
 
     public void resetBullet(float x, float y, float a)
     {
+        pixelGroup.resetPixels();
         pixelGroup.setLoc(x,y);
         rotate(a);
         pixelGroup.rotate(a);//angle + (float) (Math.random() * spread - spread / 2));
-        pixelGroup.resetPixels();
         distance = 0;
         live = true;
-        active = true;
     }
     /*@Override
     public Bullet clone()

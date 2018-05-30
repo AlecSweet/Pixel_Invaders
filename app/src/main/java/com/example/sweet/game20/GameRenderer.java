@@ -567,8 +567,10 @@ public class GameRenderer implements Renderer{
                     {
                         for(Bullet b: gc.gun.getBullets())
                         {
-                            if(b.active && b.live)
+                            if(b.live)
+                            {
                                 collisionHandler.checkCollisions(b.pixelGroup, e.getPixelGroup());
+                            }
                         }
                     }
                 }
@@ -582,8 +584,10 @@ public class GameRenderer implements Renderer{
                         {
                             for(Bullet b: gc.gun.getBullets())
                             {
-                                if (b.active && b.live)
+                                if (b.live)
+                                {
                                     collisionHandler.checkCollisions(b.pixelGroup, player1.getPixelGroup());
+                                }
                             }
                         }
                     }

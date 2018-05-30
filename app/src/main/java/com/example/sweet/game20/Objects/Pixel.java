@@ -40,8 +40,8 @@ public class Pixel {
 
     public Pixel(float x, float y)
     {
-        //xDisp = x;
-        //yDisp = y;
+        xDisp = x;
+        yDisp = y;
         xOriginal = x;
         yOriginal = y;
     }
@@ -49,9 +49,13 @@ public class Pixel {
     public void killPixel()
     {
         live = false;
-        for(int i = 0; i < neighbors.length; i++)
-            if(neighbors[i] != null)
-                neighbors[i].outside = true;
+        for(Pixel n: neighbors)
+        {
+            if (n != null)
+            {
+                n.outside = true;
+            }
+        }
     }
 
     /*@Override

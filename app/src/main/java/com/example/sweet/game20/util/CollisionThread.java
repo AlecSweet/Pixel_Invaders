@@ -133,8 +133,10 @@ public class CollisionThread implements Runnable
                     {
                         for(Bullet b: gc.gun.getBullets())
                         {
-                            if(b.active && b.live)
+                            if(b.live)
+                            {
                                 collisionHandler.checkCollisions(b.pixelGroup, e.getPixelGroup());
+                            }
                         }
                     }
                 }
@@ -148,8 +150,10 @@ public class CollisionThread implements Runnable
                         {
                             for(Bullet b: gc.gun.getBullets())
                             {
-                                if (b.active && b.live)
+                                if (b.live)
+                                {
                                     collisionHandler.checkCollisions(b.pixelGroup, player1.getPixelGroup());
+                                }
                             }
                         }
                     }
