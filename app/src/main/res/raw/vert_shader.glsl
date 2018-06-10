@@ -41,7 +41,7 @@ void main()
 		
 	float tLeft = -normX * sin(a) + normY * cos(a);
 	float tRight = normX * cos(a)+ normY * sin(a);
-	float factor = (0.8 + 0.28 * a_Position.z);
+	float factor = (0.8 + 0.2 * a_Position.z);
 	
 	for(float i = 0.0; i < squareLength/2.0; i+=squareLength/40.0)
 	{

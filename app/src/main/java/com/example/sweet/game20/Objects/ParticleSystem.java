@@ -1,10 +1,6 @@
 package com.example.sweet.game20.Objects;
 
-import android.content.Context;
-
-import com.example.sweet.game20.R;
 import com.example.sweet.game20.util.Constants;
-import com.example.sweet.game20.util.TextureLoader;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -32,7 +28,8 @@ import static android.opengl.GLES20.glBindTexture;
  * Created by Sweet on 3/18/2018.
  */
 
-public class ParticleSystem {
+public class ParticleSystem
+{
     private static final int
             POSITION_COMPONENT_COUNT = 2,
             COLOR_COMPONENT_COUNT = 4,
@@ -84,20 +81,19 @@ public class ParticleSystem {
 
     private FloatBuffer particleBuf;
 
+    private double globalStartTime;
+
     private final int maxParticleCount;
 
     private int
             currentParticleCount,
             nextParticle;
 
-
-    private double globalStartTime;
-
     private int shaderLocation;
     private boolean
             needsUpdate = false;
 
-    public ParticleSystem(int maxParticleCount, double gst, int sL, int tID)
+    public ParticleSystem(int maxParticleCount, int sL, int tID, double gst)
     {
         globalStartTime = gst;
         this.maxParticleCount = maxParticleCount;
@@ -160,7 +156,7 @@ public class ParticleSystem {
 
         particles[currentOffset++] = angle;
 
-        particles[currentOffset++] = (float)((System.currentTimeMillis()-globalStartTime)/1000);
+        particles[currentOffset++] = (float)((System.currentTimeMillis() - globalStartTime) / 1000);
         particles[currentOffset++] = speed;
         particles[currentOffset++] = maxDistance;
         particles[currentOffset++] = rotationSpeed;
@@ -170,7 +166,6 @@ public class ParticleSystem {
 
     public void draw()
     {
-
         if(needsUpdate)
         {
             glBindBuffer(GL_ARRAY_BUFFER, particleVBO[0]);
@@ -187,7 +182,7 @@ public class ParticleSystem {
         // Tell the texture uniform sampler to use this texture in the shader by binding to texture unit 0.
         glUniform1i(uTextureLocation, 0);
 
-        glUniform1f(uTimeLocation,(float)((System.currentTimeMillis()-globalStartTime)/1000));
+        glUniform1f(uTimeLocation,(float)((System.currentTimeMillis() - globalStartTime) / 1000));
 
         bindAttributes();
 
@@ -253,6 +248,6 @@ public class ParticleSystem {
 
     public ParticleSystem clone()
     {
-        return new ParticleSystem(maxParticleCount, globalStartTime, shaderLocation, textureID[0]);
+        return new ParticleSystem(maxParticleCount, shaderLocation, textureID[0], globalStartTime);
     }
 }

@@ -1,12 +1,5 @@
 package com.example.sweet.game20.util;
 
-import com.example.sweet.game20.Objects.Enemy;
-import com.example.sweet.game20.Objects.PixelGroup;
-
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-import java.nio.FloatBuffer;
-
 /**
  * Created by Sweet on 1/22/2018.
  */
@@ -27,4 +20,20 @@ public class Constants
 
     public static final int ZONE_LENGTH = 4;
 
+    public static final int ENTITIES_LENGTH = 200;
+
+    public static final int SCREEN_BOUND = 4;
+
+    public enum EnemyType
+    {
+        //Enemies
+        SIMPLE,
+        CARRIER,
+        ASTEROID_RED_TINY,
+        ASTEROID_GREY_TINY,
+        ASTEROID_RED_SMALL,
+        ASTEROID_GREY_SMALL,
+        ASTEROID_RED_MEDIUM,
+        ASTEROID_GREY_MEDIUM
+    }
 }

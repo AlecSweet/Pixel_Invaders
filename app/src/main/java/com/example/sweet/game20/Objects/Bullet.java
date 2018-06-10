@@ -1,13 +1,5 @@
 package com.example.sweet.game20.Objects;
 
-import android.content.Context;
-
-import com.example.sweet.game20.R;
-import com.example.sweet.game20.util.Constants;
-import com.example.sweet.game20.util.ImageParser;
-
-import java.util.ArrayList;
-
 import static android.opengl.GLES20.glGetUniformLocation;
 import static android.opengl.GLES20.glUniform1f;
 
@@ -26,7 +18,7 @@ public class Bullet
             cosA,
             sinA;
 
-    public volatile boolean live = true;
+    public boolean live = true;
 
     public PixelGroup pixelGroup;
 

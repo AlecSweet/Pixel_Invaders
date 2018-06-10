@@ -1,9 +1,5 @@
 package com.example.sweet.game20.Objects;
 
-import android.provider.Telephony;
-
-import java.util.ArrayList;
-
 /**
  * Created by Sweet on 4/15/2018.
  */

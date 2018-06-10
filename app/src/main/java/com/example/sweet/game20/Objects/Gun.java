@@ -1,11 +1,5 @@
 package com.example.sweet.game20.Objects;
 
-import android.content.Context;
-
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.Stack;
 
 /**
@@ -24,8 +18,6 @@ public abstract class Gun
             shootDelay,
             lastShotTime;
 
-    protected double globalStartTime;
-
     protected float
             spread,
             speed;
@@ -36,14 +28,13 @@ public abstract class Gun
 
     protected ParticleSystem masterParticleSystem;
 
-    public Gun(float sD, double gst, int tID, int sL, int pSL, PixelGroup pG, ParticleSystem ps, float spd)
+    public Gun(float sD, PixelGroup pG, ParticleSystem ps, float spd)
     {
         pixelGroupTemplate = pG;
         bulletPool = new Stack<>();
         shootDelay = sD;
-        globalStartTime = gst;
-        textureID = tID;
-        shaderLocation = sL;
+        //textureID = tID;
+        //shaderLocation = sL;
         speed = spd;
         int num = (int)Math.ceil((3.4/(speed * 60)) * (1000/sD))+1;
         bullets = new Bullet[num];
@@ -53,7 +44,7 @@ public abstract class Gun
                     speed, 3.4f, shaderLocation, pixelGroupTemplate.clone());
             bulletPool.push(bullets[i]);
         }
-        lastShotTime = System.currentTimeMillis()-globalStartTime;
+        lastShotTime = System.currentTimeMillis();
         masterParticleSystem = ps;
     }
 

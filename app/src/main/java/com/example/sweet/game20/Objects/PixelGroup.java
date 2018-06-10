@@ -1,7 +1,5 @@
 package com.example.sweet.game20.Objects;
 
-import com.example.sweet.game20.R;
-
 import com.example.sweet.game20.util.Constants;
 
 
@@ -25,7 +23,6 @@ import static android.opengl.GLES20.GL_ARRAY_BUFFER;
 import static android.opengl.GLES20.glDrawArrays;
 import static android.opengl.GLES20.glBindBuffer;
 import static android.opengl.GLES20.glBufferData;
-import static android.opengl.GLES20.GL_STATIC_DRAW;
 import static android.opengl.GLES20.glBufferSubData;
 import static android.opengl.GLES20.glGenBuffers;
 import static android.opengl.GLES20.glEnableVertexAttribArray;
@@ -47,14 +44,18 @@ public class PixelGroup extends Collidable
             aColorLocation,
             uTextureLocation,
             uAngleLocation,
-            uSquareLengthLocation;
+            uSquareLengthLocation,
+            xDispLoc,
+            yDispLoc;
 
     private static final String
             A_COLOR = "a_Color",
             A_POSITION = "a_Position",
             U_TEXTURE = "u_Texture",
             U_ANGLE = "angle",
-            U_SQUARELENGTH = "squareLength";
+            U_SQUARELENGTH = "squareLength",
+            X_DISP = "x_displacement",
+            Y_DISP = "y_displacement";
 
     private float[] colorVA;
 
@@ -69,23 +70,26 @@ public class PixelGroup extends Collidable
 
     private int shaderLocation;
 
-    public PixelGroup(Pixel[] p, float halfSquareLength, Zone[] z,int  tID, int sL, int[] vB)
+    private boolean glInit = false;
+
+    public PixelGroup(Pixel[] p, float halfSquareLength, Zone[] z,int  tID, int sL, int vB)
     {
-        //super(0 , 0, halfSquareLength, p,true, cG);
         super(0 , 0, halfSquareLength, p,true, z);
         textureID[0] = tID;
         shaderLocation = sL;
-        vBuffer = vB;
-        aPositionLocation = glGetAttribLocation(shaderLocation, A_POSITION);
-        aColorLocation = glGetAttribLocation(shaderLocation, A_COLOR);
-        uTextureLocation = glGetUniformLocation(shaderLocation, U_TEXTURE);
-        uAngleLocation = glGetUniformLocation(shaderLocation,U_ANGLE);
-        uSquareLengthLocation = glGetUniformLocation(shaderLocation,U_SQUARELENGTH);
-        initBuffers();
+        vBuffer[0] = vB;
     }
 
     public void draw()
     {
+        if(!glInit)
+        {
+            initGlCalls();
+        }
+
+        glUniform1f(xDispLoc, centerX);
+        glUniform1f(yDispLoc, centerY);
+
         if(needsUpdate)
         {
             updatePixels();
@@ -152,7 +156,7 @@ public class PixelGroup extends Collidable
     public void updatePixels()
     {
         int tSize = pixels.length;
-        for(int i = 0,temp = tSize; i < temp; i++)
+        for(int i = 0; i < tSize; i++)
         {
             if(pixels[i].live)
             {
@@ -169,6 +173,20 @@ public class PixelGroup extends Collidable
 
         glBindBuffer(GL_ARRAY_BUFFER, cBuffer[0]);
         glBufferSubData(GL_ARRAY_BUFFER,0,cbuf.capacity()*Constants.BYTES_PER_FLOAT,cbuf);
+    }
+
+    public void initGlCalls()
+    {
+        aPositionLocation = glGetAttribLocation(shaderLocation, A_POSITION);
+        aColorLocation = glGetAttribLocation(shaderLocation, A_COLOR);
+        uTextureLocation = glGetUniformLocation(shaderLocation, U_TEXTURE);
+        uAngleLocation = glGetUniformLocation(shaderLocation,U_ANGLE);
+        uSquareLengthLocation = glGetUniformLocation(shaderLocation,U_SQUARELENGTH);
+        xDispLoc = glGetUniformLocation(shaderLocation,X_DISP);
+        yDispLoc = glGetUniformLocation(shaderLocation,Y_DISP);
+
+        initBuffers();
+        glInit = true;
     }
 
     public Pixel[] getPixels()
@@ -208,15 +226,14 @@ public class PixelGroup extends Collidable
 
     public void resetPixels()
     {
-        int len = pixels.length;
-        for(int i = 0; i < len; i++)
+        for(Pixel p: pixels)
         {
-            pixels[i].live = true;
-            pixels[i].outside = false;
-            pixels[i].groupFlag = -1;
-            for(int i2 = 0; i2 < 4; i2++)
-                if(pixels[i].neighbors[i2] == null)
-                    pixels[i].outside = true;
+            p.live = true;
+            p.outside = false;
+            p.groupFlag = -1;
+            for(Pixel n: p.neighbors)
+                if(n == null)
+                    p.outside = true;
         }
         collidableLive = true;
         needsUpdate = true;
@@ -318,7 +335,7 @@ public class PixelGroup extends Collidable
                 tempItr++;
             }
 
-        PixelGroup pixelGroup = new PixelGroup(pArr,(float)halfSquareLength * Constants.PIXEL_SIZE, tempZones, textureID[0], shaderLocation, vBuffer);
+        PixelGroup pixelGroup = new PixelGroup(pArr,(float)halfSquareLength * Constants.PIXEL_SIZE, tempZones, textureID[0], shaderLocation, vBuffer[0]);
         pixelGroup.setpMap(cloneMap);
         return pixelGroup;
     }

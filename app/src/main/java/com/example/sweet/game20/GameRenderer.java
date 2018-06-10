@@ -5,20 +5,21 @@ import android.content.Context;
 import android.graphics.PointF;
 import android.opengl.GLSurfaceView;
 import android.opengl.GLSurfaceView.Renderer;
-import android.os.Vibrator;
-
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 import java.util.ArrayList;
-import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.Stack;
+
 import com.example.sweet.game20.util.*;
 import com.example.sweet.game20.Objects.*;
 
 import javax.microedition.khronos.opengles.GL10;
 import javax.microedition.khronos.egl.EGLConfig;
 
+import static com.example.sweet.game20.util.Constants.EnemyType.*;
 import static android.opengl.GLES20.GL_ARRAY_BUFFER;
 import static android.opengl.GLES20.GL_COLOR_BUFFER_BIT;
 import static android.opengl.GLES20.GL_FLOAT;
@@ -53,40 +54,25 @@ import static android.opengl.GLES20.glUniform1f;
  * Created by Sweet on 1/14/2018.
  */
 
-public class GameRenderer implements Renderer{
-
-    //private ArrayList<Drawable> drawables = new ArrayList<>();
-
-    public boolean
-            movementDown = false,
-            shootingDown = false,
-            pause = false;
-
-    public PointF
-            movementOnDown = new PointF(0,0),
-            movementOnMove = new PointF(0,0),
-            shootingOnDown = new PointF(0,0),
-            shootingOnMove = new PointF(0,0),
-            panToward = new PointF(0,0);
-
+public class GameRenderer implements Renderer
+{
+    public boolean pause = false;
     private double
-            globalStartTime,
+            lastSpawn,
+            spawnDelay = 2000;
+    private double
             secondMark,
             interpolation = 0;
 
     private final Context context;
+    
+    private EnemyFactory enemyFactory;
 
     public float
             xScale,
             yScale,
             xbound,
-            ybound,
-            xScreenShift = 0,
-            yScreenShift = 0,
-            cameraSpeed = .014f,
-            cameraPanX = 0f,
-            cameraPanY = 0f,
-            cameraClamp = .16f;
+            ybound;
 
     private int
             xScaleLocation,
@@ -121,30 +107,36 @@ public class GameRenderer implements Renderer{
             X_DISP = "x_displacement",
             Y_DISP = "y_displacement";
 
-    private int
-            frames,
-            difficulty = 2;
-
-    private int highestColCheck;
+    private int frames;
 
     private final long MILLIS_PER_SECOND = 1000;
     private final long UPS = 60;
 
     private final long mSPU = MILLIS_PER_SECOND / UPS;
 
-    private ArrayList<Enemy> entities = new ArrayList<>();
+    private Enemy[] entities;
+    
+    private ParticleSystem
+            playerParticles,
+            enemyParticles,
+            collisionParticles;
 
-    private ParticleSystem playerParticles;
-    private ParticleSystem enemyParticles;
-    private ParticleSystem collisionParticles;
     private CollisionHandler collisionHandler;
+
     private int whiteTexture;
-    private boolean isPlaying = false;
+
+    private boolean isPlaying = false,
+                    init = false;
 
     private Player player1;
+
     public UI ui;
+
     private double pastTime;
+
     private double lag = 0.0;
+
+    private double globalStartTime;
 
     private float[] background = new float[]{
             0f,    0f, 0.5f, 0.5f,
@@ -159,28 +151,26 @@ public class GameRenderer implements Renderer{
 
     private int backgroundTexture;
 
-    private PixelGroup simple;
-    private PixelGroup carrier;
+    public AIThread aiRunnable;
 
-    private AIThread 
-            aiRunnable, 
-            aiRunnable1;
-            //aiRunnable2;
-    
-    //private CollisionThread collisionRunnable;
+    private CollisionThread collisionRunnable;
 
-    private Thread 
+    private LevelControllerThread levelRunnable;
+
+    private Thread
             aiThread,
-            aiThread1;
-            //aiThread2,
-            //collisionThread;
+            collisionThread,
+            levelThread;
 
-    //private Simple simpleTemplate = new Simple()
-    public GameRenderer(Context c, double gst, GLSurfaceView g)
+    private Stack<Integer> openEntityIndices = new Stack<>();
+
+    private LinkedList<Enemy> enemyOverflow = new LinkedList<>();
+
+    public GameRenderer(Context c, GLSurfaceView g)
     {
-        globalStartTime = gst;
-        pastTime = System.currentTimeMillis()-globalStartTime;
-        secondMark = System.currentTimeMillis() - globalStartTime;
+        globalStartTime = System.currentTimeMillis();
+        pastTime = System.currentTimeMillis();
+        secondMark = System.currentTimeMillis();
         context = c;
     }
 
@@ -267,26 +257,13 @@ public class GameRenderer implements Renderer{
 
         backgroundTexture = TextureLoader.loadTexture(context, R.drawable.spacebackground);
 
-        simple = ImageParser.parseImage(context, R.drawable.simple1, R.drawable.simple_light, whiteTexture, shaderProgram);
-        carrier = ImageParser.parseImage(context, R.drawable.carrier3, R.drawable.carrier_light1, whiteTexture, shaderProgram);
-
-        /*System.out.println("PLAYER  ----------");
-        ImageParser.parseImage(context, R.drawable.player1, R.drawable.player_light, whiteTexture, shaderProgram);
-        System.out.println("BULLET  ----------");
-        ImageParser.parseImage(context, R.drawable.basicbullet, R.drawable.basicbullet_light, whiteTexture, shaderProgram);*/
-
-        aiRunnable = new AIThread();
-        aiRunnable1 = new AIThread();
-        //aiRunnable2 = new AIThread();
-        aiThread = new Thread(aiRunnable);
-        aiThread1 = new Thread(aiRunnable1);
-        aiThread.start();
-        aiThread1.start();
-        //aiThread2 = new Thread(aiRunnable2);
-
-        //collisionRunnable = new CollisionThread();
-        //collisionThread = new Thread(collisionRunnable);
-        //collisionThread.start();
+        if(!init)
+        {
+            init();
+            init = true;
+            newGame();
+            isPlaying = true;
+        }
     }
 
     @Override
@@ -297,14 +274,15 @@ public class GameRenderer implements Renderer{
             newGame();
             isPlaying = true;
         }
-        if (System.currentTimeMillis()-globalStartTime - secondMark >= 1000)
+
+        if (System.currentTimeMillis() - secondMark >= 1000)
         {
-            secondMark = System.currentTimeMillis()-globalStartTime;
+            secondMark = System.currentTimeMillis();
             System.out.println(frames);
             frames = 0;
         }
 
-        double currentTime = System.currentTimeMillis()-globalStartTime;
+        double currentTime = System.currentTimeMillis();
         double elapsedTime = currentTime - pastTime;
         pastTime = currentTime;
         lag += elapsedTime;
@@ -322,34 +300,46 @@ public class GameRenderer implements Renderer{
 
         drawBackground();
 
-        glUseProgram(shaderProgram);
-        glUniform1f(xScreenShiftLocation, xScreenShift);
-        glUniform1f(yScreenShiftLocation, yScreenShift);
+        glUseProgram(particleShaderProgram);
+        glUniform1f(timeLocation, (float) ((System.currentTimeMillis() - globalStartTime) / 1000));
+        glUniform1f(xScreenShiftLocationParticle, aiRunnable.xScreenShift);
+        glUniform1f(yScreenShiftLocationParticle, aiRunnable.yScreenShift);
 
-        int s = entities.size();
-        for(int i = 0; i < s; i++)
+        enemyParticles.draw();
+        playerParticles.draw();
+
+        glUseProgram(shaderProgram);
+        glUniform1f(xScreenShiftLocation, aiRunnable.xScreenShift);
+        glUniform1f(yScreenShiftLocation, aiRunnable.yScreenShift);
+
+        player1.draw(interpolation);
+
+        for(Enemy e: entities)
         {
-            if (entities.get(i).onScreen && entities.get(i).getPixelGroup().getCollidableLive())
-                entities.get(i).draw(interpolation);
-            if(entities.get(i).getHasGun())
+            if(e != null)
             {
-                int gS = entities.get(i).getGunComponents().length;
-                for (int g = 0; g < gS; g++)
-                    entities.get(i).getGunComponents()[g].gun.draw(0);
+                if (e.onScreen && e.getPixelGroup().getCollidableLive())
+                {
+                    e.draw(interpolation);
+                }
+                if (e.getHasGun())
+                {
+                    for (GunComponent gC: e.getGunComponents())
+                    {
+                        gC.gun.draw(0);
+                    }
+                }
             }
         }
         
-        player1.draw(interpolation);
+
 
         glUseProgram(particleShaderProgram);
         glUniform1f(timeLocation, (float) ((System.currentTimeMillis() - globalStartTime) / 1000));
-        glUniform1f(xScreenShiftLocationParticle, xScreenShift);
-        glUniform1f(yScreenShiftLocationParticle, yScreenShift);
+        glUniform1f(xScreenShiftLocationParticle, aiRunnable.xScreenShift);
+        glUniform1f(yScreenShiftLocationParticle, aiRunnable.yScreenShift);
 
-
-        enemyParticles.draw();
         collisionParticles.draw();
-        playerParticles.draw();
 
         glUseProgram(plainShaderProgram);
         ui.draw(interpolation);
@@ -360,7 +350,6 @@ public class GameRenderer implements Renderer{
     @Override
     public void onSurfaceChanged(GL10 unused, int width, int height)
     {
-        //Detect and set aspect ratio
         glViewport(0, 0, width, height);
         float aspectRatio = width > height ?
                 (float) height / (float) width :
@@ -381,7 +370,6 @@ public class GameRenderer implements Renderer{
             glUniform1f(yScaleLocationPlain, 1);
             xScale = aspectRatio;
             yScale = 1;
-            // Landscape
         }
         else
         {
@@ -399,11 +387,12 @@ public class GameRenderer implements Renderer{
 
             xScale = 1;
             yScale = aspectRatio;
-            // Portrait or square
         }
 
         xbound = 3 * xScale;
         ybound = 3 * yScale;
+        aiRunnable.xbound = xbound;
+        aiRunnable.ybound = ybound;
     }
 
     public void setInterpolation(double i)
@@ -413,289 +402,131 @@ public class GameRenderer implements Renderer{
     
     public void newGame()
     {
-        ui = new UI(context, plainShaderProgram);
+        openEntityIndices = new Stack<>();
+        for(int i = 0; i < Constants.ENTITIES_LENGTH; i++)
+        {
+            openEntityIndices.push(i);
+        }
 
-        playerParticles = new ParticleSystem(2000, globalStartTime ,particleShaderProgram , whiteTexture);
-        collisionParticles = new ParticleSystem(4000, globalStartTime, particleShaderProgram, whiteTexture);
-        enemyParticles = new ParticleSystem(30000, globalStartTime ,particleShaderProgram,whiteTexture);
-
-        collisionHandler = new CollisionHandler(collisionParticles);
-
-        player1 = new Player(context, .004f,0f,0f, globalStartTime, whiteTexture, shaderProgram, particleShaderProgram, playerParticles);
+        player1 = new Player(context, .004f,0f,0f, whiteTexture, shaderProgram, particleShaderProgram, playerParticles);
         player1.xscale = xScale;
         player1.yscale = yScale;
 
+        Enemy[] aiEntities = new Enemy[Constants.ENTITIES_LENGTH];
+        Enemy[] collisionEntities = new Enemy[Constants.ENTITIES_LENGTH];
+        entities = new Enemy[Constants.ENTITIES_LENGTH];
+
+        Enemy[][] entityList = new Enemy[][]{
+                aiEntities,
+                collisionEntities,
+                entities
+        };
+
+        aiRunnable = new AIThread(entities);
+        aiThread = new Thread(aiRunnable);
         aiRunnable.setPlayer(player1);
-        aiRunnable1.setPlayer(player1);
 
-        //aiRunnable2.player1 = player1;
-        //collisionRunnable.setPlayer(player1);
-        //collisionRunnable.setCollisionHandler(collisionHandler);
+        collisionRunnable = new CollisionThread(entities);
+        collisionThread = new Thread(collisionRunnable);
+        collisionRunnable.setPlayer(player1);
+        collisionRunnable.setCollisionHandler(collisionHandler);
 
-        levelController();
-    }
+        //levelRunnable = new LevelControllerThread(entityList, enemyFactory);
+        levelRunnable = new LevelControllerThread(enemyFactory);
+        levelThread = new Thread(levelRunnable);
+        levelRunnable.setPlayer(player1);
 
-    public void enemyActions()
-    {
-        int eS = entities.size();
-        for(int i = 0; i < eS; i++)
-        {
-            /*  Move all entities;
-             */
-            if(entities.get(i).getPixelGroup().getCollidableLive())
-            {
-                entities.get(i).move(player1.getPixelGroup().getCenterX(), player1.getPixelGroup().getCenterY());
-            }
-        }
+        aiThread.start();
+        collisionThread.start();
+        levelThread.start();
     }
 
     public void update()
     {
-        //int s = entities.size();
-        Iterator<Enemy> itr = entities.iterator();
-
-        /*for(int i = 0; i < s; i++)
-        {*/
-        while(itr.hasNext())
+        for(int i = 0; i < Constants.ENTITIES_LENGTH; i++)
         {
-            Enemy e = itr.next();
-            if(e.getPixelGroup().getCollidableLive())
+            if(entities[i] != null)
             {
-                if (Math.abs(e.getPixelGroup().getCenterX() - xScreenShift) * xScale <= 1 + e.getPixelGroup().getHalfSquareLength() &&
-                        Math.abs(e.getPixelGroup().getCenterY() - yScreenShift) * yScale <= 1 + e.getPixelGroup().getHalfSquareLength())
+                if (entities[i].getPixelGroup().getCollidableLive())
                 {
-                    e.onScreen = true;
-                } else
-                {
-                    e.onScreen = false;
-                }
-            }
-            else
-            {
-                itr.remove();
-            }
-            /*Enemy e = itr.next();
-            if (Math.abs(entities.get(i).getPixelGroup().getCenterX() - xScreenShift) * xScale <= 1 + entities.get(i).getPixelGroup().getHalfSquareLength() &&
-                    Math.abs(entities.get(i).getPixelGroup().getCenterY() - yScreenShift) * yScale <= 1 + entities.get(i).getPixelGroup().getHalfSquareLength())
-            {
-                entities.get(i).onScreen = true;
-            }
-            else
-            {
-                entities.get(i).onScreen = false;
-            }*/
-        }
-        //System.out.println("got out ============");
-        //enemyActions();
-
-        movePlayer();
-        //enemyActions();
-        aiRunnable.aImove = true;
-        aiRunnable1.aImove = true;
-        checkCollisions();
-        //aiRunnable2.aImove = true;
-        //collisionRunnable.checkCollision = true;
-        levelController();
-    }
-
-    public void checkCollisions()
-    {
-        /*int eS = entities.size();
-        for(int i = 0; i < eS; i++)
-        {
-    
-            if (entities.get(i).getPixelGroup().getCollidableLive() && entities.get(i).onScreen)
-            {
-                // Player -> Entity
-                collisionHandler.checkCollisions(player1.getPixelGroup(), entities.get(i).getPixelGroup());
-
-                // Player Gun's Bullets -> Entity
-                int gS = player1.getGuns().length;
-                for(int gI = 0; gI < gS; gI++)
-                {
-                    if (player1.getGuns()[gI] != null)
+                    if (Math.abs(entities[i].getPixelGroup().getCenterX() - aiRunnable.xScreenShift) * xScale <=
+                        1 + entities[i].getPixelGroup().getHalfSquareLength() &&
+                        Math.abs(entities[i].getPixelGroup().getCenterY() - aiRunnable.yScreenShift) * yScale <=
+                        1 + entities[i].getPixelGroup().getHalfSquareLength())
                     {
-                        int bS = player1.getGuns()[gI].gun.getBullets().length;
-                        for(int bI = 0; bI < bS; bI++)
-                        {
-                            if(player1.getGuns()[gI].gun.getBullets()[bI].active && player1.getGuns()[gI].gun.getBullets()[bI].live)
-                                collisionHandler.checkCollisions(player1.getGuns()[gI].gun.getBullets()[bI].pixelGroup, entities.get(i).getPixelGroup());
-                        }
+                        entities[i].onScreen = true;
+                    }
+                    else
+                    {
+                        entities[i].onScreen = false;
                     }
                 }
-
-                // Entity Gun's Bullets -> Player
-                if(entities.get(i).getHasGun())
+                else if(!entities[i].getPixelGroup().getCollidableLive() &&
+                        entities[i].aiRemoveConsensus &&
+                        entities[i].collisionRemoveConsensus)
                 {
-                    int g2S = entities.get(i).getGunComponents().length;
-                    for (int gI = 0; gI < g2S; gI++)
+                    if (entities[i].getHasGun())
                     {
-                        if (entities.get(i).getGunComponents()[gI] != null)
+                        for (GunComponent gC : entities[i].getGunComponents())
                         {
-                            int bS = entities.get(i).getGunComponents()[gI].gun.getBullets().length;
-                            for (int bI = 0; bI < bS; bI++)
+                            if (gC != null)
                             {
-                                if (entities.get(i).getGunComponents()[gI].gun.getBullets()[bI].active && entities.get(i).getGunComponents()[gI].gun.getBullets()[bI].live)
-                                    collisionHandler.checkCollisions(entities.get(i).getGunComponents()[gI].gun.getBullets()[bI].pixelGroup, player1.getPixelGroup());
-                            }
-                        }
-                    }
-                }
-            }
-
-            // Entity -> Other Entity
-            int eSize = entities.size();
-            for(int i2 = 0; i2 < eSize; i2++)
-            {
-                if (entities.get(i) != entities.get(i2))
-                {
-                    collisionHandler.preventOverlap(entities.get(i).getPixelGroup(), entities.get(i2).getPixelGroup());
-                }
-            }
-        }*/
-        for(Enemy e: entities)
-        {
-            if (e.getPixelGroup().getCollidableLive() && e.onScreen)
-            {
-                // Player -> Entity
-                collisionHandler.checkCollisions(player1.getPixelGroup(), e.getPixelGroup());
-
-                // Player Gun's Bullets -> Entity
-                for(GunComponent gc: player1.getGuns())
-                {
-                    if (gc != null)
-                    {
-                        for(Bullet b: gc.gun.getBullets())
-                        {
-                            if(b.live)
-                            {
-                                collisionHandler.checkCollisions(b.pixelGroup, e.getPixelGroup());
-                            }
-                        }
-                    }
-                }
-
-                // Entity Gun's Bullets -> Player
-                if(e.getHasGun())
-                {
-                    for(GunComponent gc: e.getGunComponents())
-                    {
-                        if (gc != null)
-                        {
-                            for(Bullet b: gc.gun.getBullets())
-                            {
-                                if (b.live)
+                                for (Bullet b : gC.gun.getBullets())
                                 {
-                                    collisionHandler.checkCollisions(b.pixelGroup, player1.getPixelGroup());
+                                    b.freeResources();
                                 }
                             }
                         }
                     }
-                }
-            }
-
-            for(Enemy e2: entities)
-            {
-                if (e != e2)
-                {
-                    collisionHandler.preventOverlap(e.getPixelGroup(), e2.getPixelGroup());
+                    entities[i].getPixelGroup().freeMemory();
+                    entities[i] = null;
+                    openEntityIndices.push(i);
                 }
             }
         }
-    }
 
-    public void movePlayer() {
-        if (movementOnDown.x > .8f) {
-            player1.getPixelGroup().resetPixels();
-        }
-
-        if (movementDown) {
-            player1.move(movementOnMove.x - movementOnDown.x, movementOnMove.y - movementOnDown.y);
-        }
-
-        if (shootingDown) {
-            float diffX = shootingOnMove.x - shootingOnDown.x;
-            float diffY = shootingOnMove.y - shootingOnDown.y;
-            float tempMagnitude = VectorFunctions.getMagnitude(diffX, diffY);
-
-            if (tempMagnitude > .1) {
-                player1.shoot(diffX, diffY);
-                panToward.set(cameraClamp * diffX / tempMagnitude, cameraClamp * diffY / tempMagnitude);
-            } else {
-                panToward.set(0, 0);
-            }
-        } else {
-            panToward.set(0, 0);
-        }
-
-        float panAngle;
-        float panDiffX = panToward.x - cameraPanX;
-        float panDiffY = panToward.y - cameraPanY;
-        float panMag = VectorFunctions.getMagnitude(panDiffX, panDiffY);
-
-        if (panMag > .01) {
-            panAngle = (float) Math.atan2(panToward.y - cameraPanY, panToward.x - cameraPanX);
-            cameraPanX += cameraSpeed * Math.cos(panAngle);
-            cameraPanY += cameraSpeed * Math.sin(panAngle);
-        } else {
-            cameraPanX = panToward.x;
-            cameraPanY = panToward.y;
-        }
-
-        if (player1.getPixelGroup().getCenterX() + cameraPanX < xbound && player1.getPixelGroup().getCenterX() + cameraPanX > -xbound)
+        if(!levelRunnable.enemiesToAdd.isEmpty())
         {
-            xScreenShift = player1.getPixelGroup().getCenterX() + cameraPanX;
-        }
-        if (player1.getPixelGroup().getCenterY() - cameraPanY < ybound && player1.getPixelGroup().getCenterY() - cameraPanY > -ybound)
-        {
-            yScreenShift = player1.getPixelGroup().getCenterY() - cameraPanY;
-        }
-
-        //for(GunComponent g: player1.getGuns())
-        int gS = player1.getGuns().length;
-        for(int i = 0; i < gS; i++)
-        {
-            if (player1.getGuns()[i] != null)
+            Enemy e = levelRunnable.enemiesToAdd.peek();
+            levelRunnable.enemiesToAdd.remove(e);
+            if(!openEntityIndices.isEmpty())
             {
-                player1.getGuns()[i].gun.move();
+                int index = openEntityIndices.pop();
+                entities[index] = e;
+                aiRunnable.entities[index] = e;
+                collisionRunnable.entities[index] = e;
             }
-        }
-    }
-
-    public void levelController()
-    {
-        if(entities.size() == 0)
-        {
-            //catchAIThreads();
-            ArrayList<Enemy> tempList = new ArrayList<>();
-            ArrayList<Enemy> tempList1 = new ArrayList<>();
-            //ArrayList<Enemy> totalList = new ArrayList<>();
-            for(int i = 0; i < difficulty; i++)
+            else
             {
-                /*Simple s = new Simple(
-                        simple.clone(),
-                        shaderProgram,
-                        new BasicGun(globalStartTime, whiteTexture, shaderProgram, particleShaderProgram, context, enemyParticles),
-                        enemyParticles,
-                        0);
-                s.setLoc((float) (Math.random() * 2 - 1), (float) (Math.random() * 2 - 1));*/
-                Carrier s = new Carrier(carrier.clone(),
-                        shaderProgram,
-                        enemyParticles,
-                        0);
-                s.setLoc((float) (Math.random() * 2 - 1), (float) (Math.random() * 2 - 1));
-                entities.add(s);
-                //totalList.add(s);
-                if(i < difficulty * .5)
-                    tempList.add(s);
-                else
-                    tempList1.add(s);
+                enemyOverflow.add(e);
             }
-
-            aiRunnable.setEntities(tempList);
-            aiRunnable1.setEntities(tempList1);
-            //collisionRunnable.setEntities(totalList);
         }
+
+        /*if(System.currentTimeMillis() - spawnDelay > lastSpawn)
+        {
+            lastSpawn = System.currentTimeMillis();
+            System.out.println("Spawned");
+            Asteroid a = null;
+
+            switch((int)(Math.random()*5.9))
+            {
+                case 0: a = (Asteroid)enemyFactory.getNewEnemy(ASTEROID_GREY_MEDIUM); break;
+                case 1: a = (Asteroid)enemyFactory.getNewEnemy(ASTEROID_GREY_SMALL); break;
+                case 2: a = (Asteroid)enemyFactory.getNewEnemy(ASTEROID_GREY_TINY); break;
+                case 3: a = (Asteroid)enemyFactory.getNewEnemy(ASTEROID_RED_SMALL); break;
+                case 4: a = (Asteroid)enemyFactory.getNewEnemy(ASTEROID_RED_SMALL); break;
+                case 5: a = (Asteroid)enemyFactory.getNewEnemy(ASTEROID_RED_MEDIUM); break;
+            }
+            //distributeEnemy(a);
+            int index = openEntityIndices.pop();
+            //aiRunnable.entities[index] = a;
+            //collisionRunnable.entities[index] = a;
+            entities[index] = a;
+            aiRunnable.entities[index] = a;
+            collisionRunnable.entities[index] = a;
+            //uiEntities[index] = a;
+        }*/
+        aiRunnable.frameRequest++;
     }
 
     public void drawBackground()
@@ -704,8 +535,8 @@ public class GameRenderer implements Renderer{
         glBindTexture(GL_TEXTURE_2D, backgroundTexture);
         glUniform1i(uTextureLocation, 0);
 
-        glUniform1f(xDispLocation, -xScreenShift);
-        glUniform1f(yDispLocation, -yScreenShift);
+        glUniform1f(xDispLocation, -aiRunnable.xScreenShift);
+        glUniform1f(yDispLocation, -aiRunnable.yScreenShift);
 
         glBindBuffer(GL_ARRAY_BUFFER, backgroundVBO[0]);
         glEnableVertexAttribArray(aPositionLocation);
@@ -716,5 +547,113 @@ public class GameRenderer implements Renderer{
         glVertexAttribPointer (aTextureCoordLocation, 2,
                 GL_FLOAT, false, Constants.BYTES_PER_FLOAT * 4,Constants.BYTES_PER_FLOAT * 2);
         glDrawArrays(GL_TRIANGLE_FAN, 0, 6);
+    }
+
+    public void init()
+    {
+        playerParticles = new ParticleSystem(2000, particleShaderProgram , whiteTexture, globalStartTime);
+
+        enemyParticles = new ParticleSystem(30000, particleShaderProgram, whiteTexture, globalStartTime);
+
+        enemyFactory = initEnemyFactory();
+
+        collisionParticles = new ParticleSystem(4000, particleShaderProgram, whiteTexture, globalStartTime);
+
+        collisionHandler = new CollisionHandler(collisionParticles);
+
+        ui = new UI(context, plainShaderProgram);
+    }
+
+    public EnemyFactory initEnemyFactory()
+    {
+        EnemyFactory e = new EnemyFactory();
+
+        e.addEnemyToCatalog
+                (
+                        SIMPLE,
+                        new Simple
+                                (
+                                        ImageParser.parseImage(context, R.drawable.simple1, R.drawable.simple_light, whiteTexture, shaderProgram),
+                                        new BasicGun
+                                                (
+                                                        ImageParser.parseImage(context, R.drawable.basicbullet, R.drawable.basicbullet_light, whiteTexture, shaderProgram),
+                                                        enemyParticles
+                                                ),
+                                        enemyParticles
+                                )
+                );
+
+        e.addEnemyToCatalog
+                (
+                        CARRIER,
+                        new Carrier
+                                (
+                                        ImageParser.parseImage(context, R.drawable.carrier3, R.drawable.carrier_light1, whiteTexture, shaderProgram),
+                                        enemyParticles
+                                )
+                );
+
+        e.addEnemyToCatalog
+                (
+                        ASTEROID_GREY_TINY,
+                        new Asteroid
+                                (
+                                        ImageParser.parseImage(context, R.drawable.asteroidgraysmall, R.drawable.asteroidgraysmall_light, whiteTexture, shaderProgram),
+                                        enemyParticles
+                                )
+                );
+
+        e.addEnemyToCatalog
+                (
+                        ASTEROID_RED_TINY,
+                        new Asteroid
+                                (
+                                        ImageParser.parseImage(context, R.drawable.asteroidredtiny, R.drawable.asteroidredtiny_light, whiteTexture, shaderProgram),
+                                        enemyParticles
+                                )
+                );
+
+        e.addEnemyToCatalog
+                (
+                        ASTEROID_GREY_SMALL,
+                        new Asteroid
+                                (
+                                        ImageParser.parseImage(context, R.drawable.asteroidgraymedium, R.drawable.asteroidgraymedium_light, whiteTexture, shaderProgram),
+                                        enemyParticles
+                                )
+                );
+
+        e.addEnemyToCatalog
+                (
+                        ASTEROID_RED_SMALL,
+                        new Asteroid
+                                (
+                                        ImageParser.parseImage(context, R.drawable.asteroidredsmall, R.drawable.asteroidredsmall_light, whiteTexture, shaderProgram),
+                                        enemyParticles
+                                )
+                );
+
+        e.addEnemyToCatalog
+                (
+                        ASTEROID_GREY_MEDIUM,
+                        new Asteroid
+                                (
+                                        ImageParser.parseImage(context, R.drawable.asteroidgraylarge, R.drawable.asteroidgraylarge_light, whiteTexture, shaderProgram),
+                                        enemyParticles
+                                )
+                );
+
+
+        e.addEnemyToCatalog
+                (
+                        ASTEROID_RED_MEDIUM,
+                        new Asteroid
+                                (
+                                        ImageParser.parseImage(context, R.drawable.asteroidredlarge, R.drawable.asteroidredlarge_light, whiteTexture, shaderProgram),
+                                        enemyParticles
+                                )
+                );
+
+        return e;
     }
 }

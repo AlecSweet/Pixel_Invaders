@@ -1,18 +1,14 @@
 package com.example.sweet.game20.Objects;
 
 import android.content.Context;
-import android.graphics.PointF;
-import android.os.VibrationEffect;
 import android.os.Vibrator;
 
 import static android.opengl.GLES20.glGetUniformLocation;
 import static android.opengl.GLES20.glUniform1f;
-import static android.opengl.GLES20.glUniform2fv;
 
 import com.example.sweet.game20.R;
 import com.example.sweet.game20.util.Constants;
 import com.example.sweet.game20.util.ImageParser;
-import com.example.sweet.game20.util.PixelShapes;
 import com.example.sweet.game20.util.VectorFunctions;
 
 import java.util.ArrayList;
@@ -54,9 +50,6 @@ public class Player extends Drawable
     private int[] gunRight = new int[]{12, 22, 11, 21, 12, 21, 11, 22};
     private int[] gunFarRight = new int[]{4, 29, 3, 28, 4, 28, 3, 29};
 
-    private double
-            globalStartTime;
-
     private int
             xDispLoc,
             yDispLoc,
@@ -82,8 +75,6 @@ public class Player extends Drawable
             gunRightPixels = new Pixel[gunRight.length/2],
             gunFarRightPixels = new Pixel[gunFarRight.length/2];
 
-    private Vibrator vibrator;
-
     /*  0: Main Thrust
         1: Left Thrust
         2: Right Thrust
@@ -103,9 +94,8 @@ public class Player extends Drawable
             Y_DISP = "y_displacement",
             TILT = "tilt";
 
-    public Player(Context context, float sp, float xT, float yT, double gst, int textureID, int sL, int pSL, ParticleSystem ps)
+    public Player(Context context, float sp, float xT, float yT, int textureID, int sL, int pSL, ParticleSystem ps)
     {
-        globalStartTime = gst;
         particleSystem = ps;
         baseSpeed = sp;
         playerBody = ImageParser.parseImage(context, R.drawable.player, R.drawable.player_light, textureID, sL);
@@ -116,7 +106,16 @@ public class Player extends Drawable
 
         initParticleAttachments();
 
-        guns[0] = new GunComponent(gunMiddlePixels,1, playerBody.centerX, playerBody.centerY, (float)playerBody.angle, new BasicGun(gst, textureID, sL, pSL, context, ps), ps);
+        guns[0] = new GunComponent
+                (
+                        gunMiddlePixels,1, playerBody.centerX, playerBody.centerY, (float)playerBody.angle,
+                        new BasicGun
+                                (
+                                        ImageParser.parseImage(context, R.drawable.basicbullet, R.drawable.basicbullet_light, textureID, sL),
+                                        particleSystem
+                                ),
+                        particleSystem
+                );
         guns[1] = null;
         guns[2] = null;
         thrusters[0] = new ThrustComponent(mainBoostPixels, 0, 0, 0, 0, 0, 3, ps);
@@ -155,7 +154,7 @@ public class Player extends Drawable
             if(playerBody.getCenterY() + tempY < -3.5f || playerBody.getCenterY() + tempY > 3.5f)
                 tempY *=-1 ;
             playerBody.move(tempX,tempY);
-            addThrustParticles(mainBoostPixels,tempRatio,.05f);
+            addThrustParticles(mainBoostPixels,tempRatio,.054f);
             rotate(angleMoving,tempRatio);
         }
     }
@@ -182,12 +181,12 @@ public class Player extends Drawable
         {
             if (delta < -Math.PI || (delta > 0 && delta < Math.PI))
             {
-                addThrustParticles(leftBoostPixels, ratio, .034f);
+                addThrustParticles(leftBoostPixels, ratio, .042f);
                 //addThrustParticles(leftBoostPixels, ratio, .034f);
             }
             else
             {
-                addThrustParticles(rightBoostPixels, ratio, .034f);
+                addThrustParticles(rightBoostPixels, ratio, .042f);
                 //addThrustParticles(rightBoostPixels, ratio, .034f);
             }
         }
@@ -217,7 +216,7 @@ public class Player extends Drawable
                 float xDisp = p.xOriginal * playerBody.cosA + p.yOriginal * playerBody.sinA;
                 float yDisp = p.yOriginal * playerBody.cosA - p.xOriginal * playerBody.sinA;
                 float angle = (float)(Math.atan2(p.yDisp - playerBody.centerY, p.xDisp - playerBody.centerX) + Math.random() * .2 - .1);
-                for (int t = 0; t < 2; t++)
+                for (int t = 0; t < 4; t++)
                 {
                     particleSystem.addParticle(p.xDisp, p.yDisp,
                             (float)(-playerBody.angle+Math.PI),
@@ -290,8 +289,8 @@ public class Player extends Drawable
     {
         handleCosmetics();
         // Set shader uniform values for the player
-        glUniform1f(xDispLoc, playerBody.getCenterX());//+ (speed * (float)( Math.pow(-Math.cos(playerBody.angle),0) * interpolation)));
-        glUniform1f(yDispLoc, playerBody.getCenterY());// + (speed * (float)( Math.pow(Math.sin(playerBody.angle),0) * interpolation)));
+        //glUniform1f(xDispLoc, playerBody.getCenterX());//+ (speed * (float)( Math.pow(-Math.cos(playerBody.angle),0) * interpolation)));
+        //glUniform1f(yDispLoc, playerBody.getCenterY());// + (speed * (float)( Math.pow(Math.sin(playerBody.angle),0) * interpolation)));
         glUniform1f(tiltLoc, tiltAngle);
         //Draw the players PixelGroup
         playerBody.draw();

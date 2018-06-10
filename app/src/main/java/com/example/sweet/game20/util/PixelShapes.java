@@ -12,7 +12,7 @@ public class PixelShapes
 {
     public static ArrayList<Pixel> makeFillPixelCircle( int cX, int cY, int radius, float size)
     {
-        ArrayList<Pixel> p = new ArrayList<Pixel>();
+        ArrayList<Pixel> p = new ArrayList<>();
         Pixel[][] map = new Pixel[radius * 2 +  2][radius * 2 + 2];
         int d = (5 - radius * 4) / 4;
         int x = 0;

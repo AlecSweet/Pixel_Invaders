@@ -3,19 +3,16 @@ package com.example.sweet.game20;
 import android.content.Context;
 import android.graphics.Point;
 import android.opengl.GLSurfaceView;
-import android.os.Vibrator;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnTouchListener;
-import static android.opengl.EGL14.eglSwapInterval;
-
-import static android.content.Context.VIBRATOR_SERVICE;
 
 class GamePlayer
 {
     private final Context context;
 
     private GLSurfaceView glSurfaceView;
+
     private GameRenderer gameRender;
 
     private static final int INVALID_POINTER_ID = -1;
@@ -36,7 +33,7 @@ class GamePlayer
         globalStartTime = System.currentTimeMillis();
         this.context = context;
         glSurfaceView = glSV;
-        gameRender = new GameRenderer(context, globalStartTime, glSV);
+        gameRender = new GameRenderer(context, glSV);
         glSurfaceView.setEGLConfigChooser(8,8,8,8,16,0);
         glSurfaceView.setRenderer(gameRender);
         //eglSwapInterval(0);
@@ -60,16 +57,21 @@ class GamePlayer
                             movementPointerId = event.getPointerId(0);
                             movementDown = true;
 
-                            gameRender.movementDown = true;
+                            //gameRender.movementDown = true;
                             gameRender.ui.setMovementDown(true);
+                            gameRender.aiRunnable.movementDown = true;
 
                             final float normX = ((event.getX(event.findPointerIndex(movementPointerId)) / v.getWidth())*2 - 1)/gameRender.xScale;
                             final float normY = ((event.getY(event.findPointerIndex(movementPointerId)) / v.getHeight())*2 - 1)/gameRender.yScale;
 
-                            gameRender.movementOnDown.set(normX, normY);
-                            gameRender.movementOnMove.set(normX, normY);
+                            //gameRender.movementOnDown.set(normX, normY);
+                            //gameRender.movementOnMove.set(normX, normY);
                             gameRender.ui.movementOnDown.set(normX, normY);
                             gameRender.ui.movementOnMove.set(normX, normY);
+                            gameRender.aiRunnable.movementOnDownX = normX;
+                            gameRender.aiRunnable.movementOnDownY = normY;
+                            gameRender.aiRunnable.movementOnMoveX = normX;
+                            gameRender.aiRunnable.movementOnMoveY = normY;
                             break;
                         }
                         case MotionEvent.ACTION_UP:
@@ -77,14 +79,16 @@ class GamePlayer
                             if(movementDown){
                                 movementPointerId = event.INVALID_POINTER_ID;
                                 movementDown = false;
-                                gameRender.movementDown = false;
+                                //gameRender.movementDown = false;
                                 gameRender.ui.setMovementDown(false);
+                                gameRender.aiRunnable.movementDown = false;
                             }
                             if(shootingDown){
                                 shootingPointerId = event.INVALID_POINTER_ID;
                                 shootingDown = false;
-                                gameRender.shootingDown = false;
+                                //gameRender.shootingDown = false;
                                 gameRender.ui.setShootingDown(false);
+                                gameRender.aiRunnable.shootingDown = false;
                             }
                             break;
                         }
@@ -96,32 +100,42 @@ class GamePlayer
                                 shootingPointerId = pointerId;
                                 shootingDown = true;
 
-                                gameRender.shootingDown = true;
+                                //gameRender.shootingDown = true;
                                 gameRender.ui.setShootingDown(true);
+                                gameRender.aiRunnable.shootingDown = true;
 
                                 final float normX = ((event.getX(event.findPointerIndex(shootingPointerId)) / v.getWidth())*2 - 1)/gameRender.xScale;
                                 final float normY = ((event.getY(event.findPointerIndex(shootingPointerId)) / v.getHeight())*2 - 1)/gameRender.yScale;
 
-                                gameRender.shootingOnDown.set(normX, normY);
-                                gameRender.shootingOnMove.set(normX, normY);
+                                //gameRender.shootingOnDown.set(normX, normY);
+                                //gameRender.shootingOnMove.set(normX, normY);
                                 gameRender.ui.shootingOnDown.set(normX, normY);
                                 gameRender.ui.shootingOnMove.set(normX, normY);
+                                gameRender.aiRunnable.shootingOnDownX = normX;
+                                gameRender.aiRunnable.shootingOnDownY = normY;
+                                gameRender.aiRunnable.shootingOnMoveX = normX;
+                                gameRender.aiRunnable.shootingOnMoveY = normY;
                             }
                             else if(shootingDown && !movementDown)
                             {
                                 movementPointerId = pointerId;
                                 movementDown = true;
 
-                                gameRender.movementDown = true;
+                                //gameRender.movementDown = true;
                                 gameRender.ui.setMovementDown(true);
+                                gameRender.aiRunnable.movementDown = true;
 
                                 final float normX = ((event.getX(event.findPointerIndex(movementPointerId)) / v.getWidth())*2 - 1)/gameRender.xScale;
                                 final float normY = ((event.getY(event.findPointerIndex(movementPointerId)) / v.getHeight())*2 - 1)/gameRender.yScale;
 
-                                gameRender.movementOnDown.set(normX, normY);
-                                gameRender.movementOnMove.set(normX, normY);
+                                //gameRender.movementOnDown.set(normX, normY);
+                                //gameRender.movementOnMove.set(normX, normY);
                                 gameRender.ui.movementOnDown.set(normX, normY);
                                 gameRender.ui.movementOnMove.set(normX, normY);
+                                gameRender.aiRunnable.movementOnDownX = normX;
+                                gameRender.aiRunnable.movementOnDownY = normY;
+                                gameRender.aiRunnable.movementOnMoveX = normX;
+                                gameRender.aiRunnable.movementOnMoveY = normY;
                             }
                             break;
                         }
@@ -131,15 +145,17 @@ class GamePlayer
                             {
                                 shootingPointerId = event.INVALID_POINTER_ID;
                                 shootingDown = false;
-                                gameRender.shootingDown = false;
+                                //gameRender.shootingDown = false;
                                 gameRender.ui.setShootingDown(false);
+                                gameRender.aiRunnable.shootingDown = false;
                             }
                             else if (pointerId == movementPointerId && movementDown)
                             {
                                 movementPointerId = event.INVALID_POINTER_ID;
                                 movementDown = false;
-                                gameRender.movementDown = false;
+                                //gameRender.movementDown = false;
                                 gameRender.ui.setMovementDown(false);
+                                gameRender.aiRunnable.movementDown = false;
                             }
                             break;
                         }
@@ -151,15 +167,19 @@ class GamePlayer
                                 //System.out.println("moving shooting--------------------------------------" + shootingPointerId);
                                 final float normX = ((event.getX(event.findPointerIndex(shootingPointerId)) / v.getWidth())*2 - 1)/gameRender.xScale;
                                 final float normY = ((event.getY(event.findPointerIndex(shootingPointerId)) / v.getHeight())*2 - 1)/gameRender.yScale;
-                                gameRender.shootingOnMove.set(normX, normY);
+                                //gameRender.shootingOnMove.set(normX, normY);
                                 gameRender.ui.shootingOnMove.set(normX, normY);
+                                gameRender.aiRunnable.shootingOnMoveX = normX;
+                                gameRender.aiRunnable.shootingOnMoveY = normY;
                             }
                             if (movementDown)
                             {
                                 final float normX = ((event.getX(event.findPointerIndex(movementPointerId)) / v.getWidth())*2 - 1)/gameRender.xScale;
                                 final float normY = ((event.getY(event.findPointerIndex(movementPointerId)) / v.getHeight())*2 - 1)/gameRender.yScale;
-                                gameRender.movementOnMove.set(normX, normY);
+                                //gameRender.movementOnMove.set(normX, normY);
                                 gameRender.ui.movementOnMove.set(normX, normY);
+                                gameRender.aiRunnable.movementOnMoveX = normX;
+                                gameRender.aiRunnable.movementOnMoveY = normY;
                             }
                             break;
                         }

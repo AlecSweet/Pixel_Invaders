@@ -1,12 +1,5 @@
 package com.example.sweet.game20.Objects;
 
-import android.util.SparseArray;
-
-import com.example.sweet.game20.util.Constants;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-
 /**
  * Created by Sweet on 3/26/2018.
  */
@@ -15,9 +8,12 @@ public class Collidable
 {
     public volatile float
             centerX,
-            centerY,
+            centerY;
+
+    public float
             cosA = 0,
-            sinA = 0;
+            sinA = 0,
+            speed;
 
     public float
             halfSquareLength,
@@ -200,10 +196,10 @@ public class Collidable
         }
     }
 
-    public void knockBack(float angle, float extraRatio)
+    public void knockBack(float angle, float extraRatio, float dist)
     {
-        float tempDistX = (float)(knockBackFactor * extraRatio * Math.cos(angle));
-        float tempDistY = (float)(knockBackFactor * extraRatio * Math.sin(angle));
+        float tempDistX = (float)(dist * extraRatio * Math.cos(angle));
+        float tempDistY = (float)(dist * extraRatio * Math.sin(angle));
         centerX += tempDistX;
         centerY += tempDistY;
 
@@ -223,7 +219,7 @@ public class Collidable
                         {
                             p.xDisp += tempDistX;
                             p.yDisp += tempDistY;
-                            if(p.live)
+                            if(p.outside)
                                 groupCheck = true;
                         }
                         if(groupCheck)

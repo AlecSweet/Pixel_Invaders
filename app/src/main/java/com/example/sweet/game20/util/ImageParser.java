@@ -247,7 +247,7 @@ public class ImageParser
         glBufferData(GL_ARRAY_BUFFER, buf.capacity() * Constants.BYTES_PER_FLOAT, buf, GL_STATIC_DRAW);
         glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-        pixelGroup = new PixelGroup(pixels,(float)halfSquareLength * Constants.PIXEL_SIZE + Constants.PIXEL_SIZE, tempZones, textureID, sL,vBuffer);
+        pixelGroup = new PixelGroup(pixels,(float)halfSquareLength * Constants.PIXEL_SIZE + Constants.PIXEL_SIZE, tempZones, textureID, sL,vBuffer[0]);
         pixelGroup.setpMap(pMap);
         return pixelGroup;
     }

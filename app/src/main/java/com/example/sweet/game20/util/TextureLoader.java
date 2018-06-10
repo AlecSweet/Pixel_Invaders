@@ -6,9 +6,6 @@ import android.graphics.BitmapFactory;
 import android.opengl.GLES20;
 import android.opengl.GLUtils;
 
-import java.io.IOException;
-import java.io.InputStream;
-
 /**
  * Created by Sweet on 3/22/2018.
  */

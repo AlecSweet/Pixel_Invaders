@@ -7,12 +7,6 @@ import com.example.sweet.game20.Objects.Pixel;
 import com.example.sweet.game20.Objects.Zone;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Set;
-
 /**
  * Created by Sweet on 3/26/2018.
  */
@@ -218,7 +212,7 @@ public class CollisionHandler
                 }
             }
         }*/
-
+        numCheck++;
         if (Math.abs(c.getCenterX() - c2.getCenterX()) <= c.getHalfSquareLength() + c2.getHalfSquareLength() &&
                 Math.abs(c.getCenterY() - c2.getCenterY()) <= c.getHalfSquareLength() + c2.getHalfSquareLength())
         {
@@ -228,6 +222,7 @@ public class CollisionHandler
                 {
                     for (Zone z2 : c2.zones)
                     {
+                        numCheck++;
                         if (z2.live && Math.abs(z.x - z2.x) <= z.halfSquareLength + z2.halfSquareLength &&
                                 Math.abs(z.y - z2.y) <= z.halfSquareLength + z2.halfSquareLength)
                         {
@@ -237,6 +232,7 @@ public class CollisionHandler
                                 {
                                     for (CollidableGroup cG2 : z2.collidableGroups)
                                     {
+                                        numCheck++;
                                         if (cG2.live && Math.abs(cG.x - cG2.x) <= cG.halfSquareLength + cG2.halfSquareLength &&
                                                 Math.abs(cG.y - cG2.y) <= cG.halfSquareLength + cG2.halfSquareLength)
                                         {
@@ -248,6 +244,7 @@ public class CollisionHandler
                                                     {
                                                         if (p2.live && p2.outside)
                                                         {
+                                                            numCheck++;
                                                             if (Math.abs(p.xDisp - p2.xDisp) - .002 <= Constants.PIXEL_SIZE + .004 &&
                                                                     Math.abs(p.yDisp - p2.yDisp) - .002 <= Constants.PIXEL_SIZE + .004)
                                                             {
@@ -318,16 +315,27 @@ public class CollisionHandler
         return numCheck;
     }
 
-    public void preventOverlap(Collidable c, Collidable c2)
+    public static boolean preventOverlap(Collidable c, Collidable c2)
     {
-        float cX = c2.getCenterX() - c.getCenterX();
-        float cY = c2.getCenterY() - c.getCenterY();
-        float radius = c2.getHalfSquareLength() + c.getHalfSquareLength();
+        //if(c.totalPixels <= c2.totalPixels)
+        //{
+            float cX = c2.getCenterX() - c.getCenterX();
+            float cY = c2.getCenterY() - c.getCenterY();
+            float radius = c2.getHalfSquareLength() + c.getHalfSquareLength();
 
-        if(cX * cX + cY * cY < radius * radius)
-        {
-            c.knockBack((float)(Math.atan2(-cY, -cX)),1);
-        }
+            if (cX * cX + cY * cY < radius * radius)
+            {
+                /*float angle = (float) Math.atan2(-cY, -cX);
+                float dist = c.speed + c2.speed;
+                float totalSize = c.getTotalPixels() + c2.getTotalPixels();*/
+
+                if(c.totalPixels <= c2.totalPixels)
+                    c.knockBack((float) Math.atan2(-cY, -cX), 1, .003f);
+                return true;
+            }
+            else
+                return false;
+        //}
     }
 
     public void removeOrphanChunks(Collidable c)

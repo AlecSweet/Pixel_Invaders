@@ -12,7 +12,7 @@ public class CollidableGroup
 
     public Pixel[] pixels;
 
-    public volatile float
+    public float
             x,
             y;
 
@@ -21,7 +21,7 @@ public class CollidableGroup
             yOriginal,
             halfSquareLength;
 
-    public volatile boolean live = true;
+    public boolean live = true;
 
     public CollidableGroup(float x, float y, float halfSquareLength)
     {

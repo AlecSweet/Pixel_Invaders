@@ -1,8 +1,5 @@
 package com.example.sweet.game20.Objects;
 
-import android.content.Context;
-import android.opengl.Matrix;
-
 import com.example.sweet.game20.util.Constants;
 import com.example.sweet.game20.util.VectorFunctions;
 
@@ -30,9 +27,9 @@ public class Simple extends Enemy
     private boolean track = false;
     private boolean retreat = false;
 
-    public Simple(PixelGroup p, int sL, Gun g, ParticleSystem ps, float modifier)
+    public Simple(PixelGroup p, Gun g, ParticleSystem ps)
     {
-        super(p, sL, ps);
+        super(p, ps);
 
         for(int i = 0; i < thusterPixelCoordinates.length; i += 2)
             thrusterPixels[i/2] = enemyBody.getpMap()[thusterPixelCoordinates[i+1]][thusterPixelCoordinates[i]];
@@ -43,11 +40,12 @@ public class Simple extends Enemy
         guns = new GunComponent[1];
         thrusters = new ThrustComponent[1];
         thrusters[0] = new ThrustComponent(thrusterPixels, 0, 0, 0, 0, 0, 2, ps);
-        //guns[0] = new GunComponent(gun1Pixels, 1, 0, 0, 0, g, ps);
+        guns[0] = new GunComponent(gun1Pixels, 1, 0, 0, 0, g, ps);
         enemyBody.angle = 3.14;
         enemyBody.rotate(enemyBody.angle);
         baseSpeed = .005f;
-        hasGun = false;
+        p.speed = baseSpeed;
+        hasGun = true;
     }
 
     public void move(float pX, float pY)
@@ -73,7 +71,7 @@ public class Simple extends Enemy
             angleMoving = -(float)(Math.atan2(enemyBody.centerY - pY, enemyBody.centerX - pX));
 
 
-        rotate(angleMoving , .08f);
+        rotate(angleMoving , .06f);
 
         float tempDistX = -(float)(baseSpeed * thrusters[0].thrustPower * Math.cos(enemyBody.angle));
         float tempDistY = (float)(baseSpeed * thrusters[0].thrustPower * Math.sin(enemyBody.angle));
@@ -82,15 +80,15 @@ public class Simple extends Enemy
         {
             tempDistX *= .6;
             tempDistY *= .6;
-            ratio = .6f;
-            //guns[0].gun.shoot(guns[0].x + enemyBody.centerX, guns[0].y+ enemyBody.centerY, (float)enemyBody.angle + (float)Math.PI);
+            ratio = 0f;
+            guns[0].gun.shoot(guns[0].x + enemyBody.centerX, guns[0].y+ enemyBody.centerY, (float)enemyBody.angle + (float)Math.PI);
         }
 
         x+=tempDistX;
         y+=tempDistY;
         enemyBody.move(-tempDistX, -tempDistY);
-        //guns[0].gun.move();
-        addThrustParticles(thrusterPixels, ratio, .06f);
+        guns[0].gun.move();
+        addThrustParticles(thrusterPixels, ratio, .03f);
     }
 
     public void rotate(float angleMoving, float rotateSpeed)
@@ -126,8 +124,8 @@ public class Simple extends Enemy
                 {
                     particleSystem.addParticle(xDisp + enemyBody.centerX, yDisp + enemyBody.centerY,
                             //-enemyBody.cosA, enemyBody.sinA,
-                            (float)-enemyBody.angle,
-                            (float) (Math.random() * .2 + .8), 0, (float) (Math.random()), .7f,
+                            (float)-enemyBody.angle + (float)Math.PI,
+                            p.r, p.g, p.b, .7f,
                             (baseSpeed * thrusters[0].thrustPower * (float)(Math.random()*70+20)) * ratio, dist * ratio * (float)Math.random()*2, (float)(Math.random()*20)
                     );
                 }
@@ -138,21 +136,20 @@ public class Simple extends Enemy
     @Override
     public void draw(double interpolation)
     {
-        //guns[0].gun.draw(0);
-        glUniform1f(xDispLoc, enemyBody.getCenterX());
-        glUniform1f(yDispLoc, enemyBody.getCenterY());
+        guns[0].gun.draw(0);
         enemyBody.draw();
     }
+
     public void shoot()
     {
 
     }
+
     @Override
     public Simple clone()
     {
         //public Simple(PixelGroup p, int sL, Gun g, ParticleSystem ps, float modifier)
-        Simple s = new Simple(enemyBody.clone(),0, guns[0].gun.clone(), particleSystem, 0f);
-        s.setUniformLocs(xDispLoc, yDispLoc);
+        Simple s = new Simple(enemyBody.clone(), guns[0].gun.clone(), particleSystem);
         return s;
     }
 }

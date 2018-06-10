@@ -6,7 +6,6 @@ import android.graphics.PointF;
 
 import com.example.sweet.game20.Objects.Drawable;
 import com.example.sweet.game20.util.Constants;
-import com.example.sweet.game20.util.Shapes;
 import com.example.sweet.game20.util.TextureLoader;
 import com.example.sweet.game20.util.VectorFunctions;
 
@@ -16,10 +15,8 @@ import java.nio.FloatBuffer;
 
 import static android.opengl.GLES20.GL_ARRAY_BUFFER;
 import static android.opengl.GLES20.GL_FLOAT;
-import static android.opengl.GLES20.GL_POINTS;
 import static android.opengl.GLES20.GL_STATIC_DRAW;
 import static android.opengl.GLES20.GL_TRIANGLE_FAN;
-import static android.opengl.GLES20.GL_TRIANGLES;
 import static android.opengl.GLES20.glBindBuffer;
 import static android.opengl.GLES20.glBufferData;
 import static android.opengl.GLES20.glDrawArrays;
@@ -34,10 +31,6 @@ import static android.opengl.GLES20.GL_TEXTURE_2D;
 import static android.opengl.GLES20.glActiveTexture;
 import static android.opengl.GLES20.glBindTexture;
 import static android.opengl.GLES20.glUniform1i;
-import static android.opengl.GLES20.glTexParameteri;
-import static android.opengl.GLES20.GL_TEXTURE_MIN_FILTER;
-import static android.opengl.GLES20.GL_TEXTURE_MAG_FILTER;
-import static android.opengl.GLES20.GL_NEAREST;
 /**
  * Created by Sweet on 2/14/2018.
  */

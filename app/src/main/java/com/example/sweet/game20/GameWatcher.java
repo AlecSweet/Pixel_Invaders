@@ -2,7 +2,6 @@ package com.example.sweet.game20;
 
 import android.app.Activity;
 import android.app.ActivityManager;
-import android.opengl.EGLDisplay;
 import android.opengl.GLSurfaceView;
 import android.content.Context;
 import android.content.pm.ConfigurationInfo;
@@ -10,12 +9,6 @@ import android.os.Bundle;
 import android.os.Build;
 import android.graphics.Point;
 import android.view.Display;
-
-import static android.opengl.EGL14.eglGetDisplay;
-import static android.opengl.EGL14.eglSwapInterval;
-import static android.opengl.EGL14.EGL_DEFAULT_DISPLAY;
-import static android.opengl.EGL14.eglInitialize;
-
 
 public class GameWatcher extends Activity{
 
@@ -46,17 +39,11 @@ public class GameWatcher extends Activity{
                         || Build.MODEL.contains("Emulator")
                         || Build.MODEL.contains("Android SDK built for x86")));
 
-        //Finish GLSurfaceView initialization or exit based on compatibility
-
         if (supportsEs2) {
             glSurfaceView.setEGLContextClientVersion(2);
 
-            //glSurfaceView.setEGLConfigChooser(8, 8, 8, 8, 16, 0);
-           // glSurfaceView.setRenderer(new GameRenderer());
-            //glSurfaceView.setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
             isRendererSet = true;
         } else {
-            //Action for non compatible devices, Text then Exit?
             return;
         }
 

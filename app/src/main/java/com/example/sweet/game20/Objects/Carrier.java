@@ -4,7 +4,8 @@ import com.example.sweet.game20.util.VectorFunctions;
 import com.example.sweet.game20.util.Constants;
 import static android.opengl.GLES20.glUniform1f;
 
-public class Carrier extends Enemy {
+public class Carrier extends Enemy
+{
     private int[]
             gunPixelCoordinates = {0, 0},
             thusterPixelCoordinates = {0, 0};
@@ -19,8 +20,9 @@ public class Carrier extends Enemy {
     private boolean track = false;
     private boolean retreat = false;
 
-    public Carrier(PixelGroup p, int sL, ParticleSystem ps, float modifier) {
-        super(p, sL, ps);
+    public Carrier(PixelGroup p, ParticleSystem ps)
+    {
+        super(p, ps);
 
         for (int i = 0; i < thusterPixelCoordinates.length; i += 2)
             thrusterPixels[i / 2] = enemyBody.getpMap()[thusterPixelCoordinates[i + 1]][thusterPixelCoordinates[i]];
@@ -32,11 +34,12 @@ public class Carrier extends Enemy {
         thrusters[0] = new ThrustComponent(thrusterPixels, 0, 0, 0, 0, 0, 2, ps);
         //enemyBody.angle = 3.14;
         enemyBody.rotate(enemyBody.angle);
-        baseSpeed = .004f;
+        baseSpeed = .002f;
         hasGun = false;
     }
 
-    public void move(float pX, float pY) {
+    public void move(float pX, float pY)
+    {
         float distanceToPlayer = VectorFunctions.getMagnitude(pX - enemyBody.centerX, pY - enemyBody.centerY);
         float angleMoving = 0f;
         float ratio = 1;
@@ -68,13 +71,11 @@ public class Carrier extends Enemy {
             tempDistX *= .6;
             tempDistY *= .6;
             ratio = .6f;
-            //guns[0].gun.shoot(guns[0].x + enemyBody.centerX, guns[0].y+ enemyBody.centerY, (float)enemyBody.angle + (float)Math.PI);
         }
 
         x+=tempDistX;
         y+=tempDistY;
         enemyBody.move(-tempDistX, -tempDistY);
-        //guns[0].gun.move();
         //addThrustParticles(thrusterPixels, ratio, .06f);
     }
 
@@ -100,22 +101,19 @@ public class Carrier extends Enemy {
     }
 
     @Override
-    public void draw(double interpolation) {
-        //guns[0].gun.draw(0);
-        glUniform1f(xDispLoc, enemyBody.getCenterX());
-        glUniform1f(yDispLoc, enemyBody.getCenterY());
+    public void draw(double interpolation)
+    {
         enemyBody.draw();
     }
 
-    public void shoot() {
+    public void shoot()
+    {
 
     }
 
     @Override
-    public Carrier clone() {
-        //public Simple(PixelGroup p, int sL, Gun g, ParticleSystem ps, float modifier)
-        Carrier c = new Carrier(enemyBody.clone(), 0, particleSystem, 0f);
-        c.setUniformLocs(xDispLoc, yDispLoc);
-        return c;
+    public Carrier clone()
+    {
+        return new Carrier(enemyBody.clone(), particleSystem);
     }
 }

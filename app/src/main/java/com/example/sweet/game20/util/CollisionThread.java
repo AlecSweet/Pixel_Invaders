@@ -6,19 +6,20 @@ import com.example.sweet.game20.Objects.GunComponent;
 import com.example.sweet.game20.Objects.Player;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 
 public class CollisionThread implements Runnable
 {
     public Player player1;
-    public ArrayList<Enemy> entities;
+    //public ArrayList<Enemy> entities;
     public CollisionHandler collisionHandler;
-
+    public Enemy[] entities;
 
     public volatile boolean running = true;
     public volatile boolean checkCollision = true;
 
     private final long MILLIS_PER_SECOND = 1000;
-    private final long UPS = 60;
+    private final long UPS = 120;
 
     private final long mSPU = MILLIS_PER_SECOND / UPS;
 
@@ -27,34 +28,35 @@ public class CollisionThread implements Runnable
             pastTime,
             lag = 0.0;
 
-    public CollisionThread()
+    public CollisionThread(Enemy[] e)
     {
-        //globalStartTime = System.currentTimeMillis();
-        entities = new ArrayList<>();
-        //player1 = p;
-        //entities = e;
-        //collisionHandler = c;
+        entities = e;
+        globalStartTime = System.currentTimeMillis();
     }
 
     public void run()
     {
         while(running)
         {
-            /*double currentTime = System.currentTimeMillis()-globalStartTime;
-            double elapsedTime = currentTime - pastTime;
-            pastTime = currentTime;
-            lag += elapsedTime;
-
-            while( lag >= mSPU)
-            {
-                //if(!pause)
-                update();
-                lag -= mSPU;
-            }*/
             if(checkCollision)
+            {
+                double currentTime = System.currentTimeMillis() - globalStartTime;
+                double elapsedTime = currentTime - pastTime;
+                pastTime = currentTime;
+                lag += elapsedTime;
+
+
+                while (lag >= mSPU)
+                {
+                    //if(!pause)
+                    update();
+                    lag -= mSPU;
+                }
+            /*if(checkCollision)
             {
                 update();
                 checkCollision = false;
+            }*/
             }
         }
     }
@@ -119,54 +121,63 @@ public class CollisionThread implements Runnable
                 }
             }
         }*/
-        for(Enemy e: entities)
+        //Iterator<Enemy> itr = entities.iterator();
+        //while(itr.hasNext())
+        //for(Enemy e: entities)
+        for(int i = 0; i < Constants.ENTITIES_LENGTH; i++)
         {
-            if (e.getPixelGroup().getCollidableLive() && e.onScreen)
+            if(entities[i] != null && !entities[i].collisionRemoveConsensus)
             {
-                // Player -> Entity
-                collisionHandler.checkCollisions(player1.getPixelGroup(), e.getPixelGroup());
-
-                // Player Gun's Bullets -> Entity
-                for(GunComponent gc: player1.getGuns())
+                if (entities[i].getPixelGroup().getCollidableLive() && entities[i].onScreen)
                 {
-                    if (gc != null)
-                    {
-                        for(Bullet b: gc.gun.getBullets())
-                        {
-                            if(b.live)
-                            {
-                                collisionHandler.checkCollisions(b.pixelGroup, e.getPixelGroup());
-                            }
-                        }
-                    }
-                }
+                    // Player -> Entity
+                    collisionHandler.checkCollisions(player1.getPixelGroup(), entities[i].getPixelGroup());
 
-                // Entity Gun's Bullets -> Player
-                if(e.getHasGun())
-                {
-                    for(GunComponent gc: e.getGunComponents())
+                    // Player Gun's Bullets -> Entity
+                    for (GunComponent gc : player1.getGuns())
                     {
                         if (gc != null)
                         {
-                            for(Bullet b: gc.gun.getBullets())
+                            for (Bullet b : gc.gun.getBullets())
                             {
                                 if (b.live)
                                 {
-                                    collisionHandler.checkCollisions(b.pixelGroup, player1.getPixelGroup());
+                                    collisionHandler.checkCollisions(b.pixelGroup, entities[i].getPixelGroup());
+                                }
+                            }
+                        }
+                    }
+
+                    // Entity Gun's Bullets -> Player
+                    if (entities[i].getHasGun())
+                    {
+                        for (GunComponent gc : entities[i].getGunComponents())
+                        {
+                            if (gc != null)
+                            {
+                                for (Bullet b : gc.gun.getBullets())
+                                {
+                                    if (b.live)
+                                    {
+                                        collisionHandler.checkCollisions(b.pixelGroup, player1.getPixelGroup());
+                                    }
                                 }
                             }
                         }
                     }
                 }
+                else if (!entities[i].getPixelGroup().getCollidableLive())
+                {
+                    entities[i].collisionRemoveConsensus = true;
+                }
             }
-
-            for(Enemy e2: entities)
+            /*for(Enemy e2: entities)
             {
                 if (e != e2)
                 {
                     collisionHandler.preventOverlap(e.getPixelGroup(), e2.getPixelGroup());
                 }
-            }
+            }*/
         }
     }
 
@@ -227,11 +238,17 @@ public class CollisionThread implements Runnable
         }
     }*/
 
-    public synchronized void setEntities(ArrayList<Enemy> e)
+    /*public synchronized void setEntities(ArrayList<Enemy> e)
     {
         entities = e;
+        checkCollision = true;
     }
 
+    public synchronized void addEntity(Enemy e)
+    {
+        entities.add(e);
+    }
+    */
     public synchronized void setPlayer(Player p)
     {
         player1 = p;

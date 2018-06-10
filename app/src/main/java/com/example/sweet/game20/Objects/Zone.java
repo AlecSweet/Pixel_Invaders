@@ -1,7 +1,5 @@
 package com.example.sweet.game20.Objects;
 
-import com.example.sweet.game20.util.Constants;
-
 import java.util.ArrayList;
 
 /**
@@ -14,7 +12,7 @@ public class Zone
 
     public ArrayList<CollidableGroup> c;
 
-    public volatile float
+    public float
             x,
             y;
 
@@ -23,7 +21,7 @@ public class Zone
             yOriginal,
             halfSquareLength;
 
-    public volatile boolean live = true;
+    public boolean live = true;
 
     public Zone(float x, float y, float halfSquareLength)
     {
