@@ -90,10 +90,12 @@ public class Collidable
                         boolean groupCheck = false;
                         for(Pixel p: cG.pixels)
                         {
-                            p.xDisp += mX;
-                            p.yDisp += mY;
-                            if(p.outside)
+                            if(p.live && p.outside)
+                            {
+                                p.xDisp = p.xOriginal * cosA + p.yOriginal * sinA;
+                                p.yDisp = p.yOriginal * cosA - p.xOriginal * sinA;
                                 groupCheck = true;
+                            }
                         }
                         if(groupCheck)
                         {
@@ -118,28 +120,13 @@ public class Collidable
             if (z != null)
             {
                 z.rotate(cosA, sinA, centerX, centerY);
-                boolean zoneCheck = false;
                 for (CollidableGroup cG: z.collidableGroups)
                 {
                     if (cG != null)
                     {
                         cG.rotate(cosA, sinA, centerX, centerY);
-                        boolean groupCheck = false;
-                        for(Pixel p: cG.pixels)
-                        {
-                            p.xDisp = p.xOriginal*cosA + p.yOriginal*sinA + centerX;
-                            p.yDisp = p.yOriginal*cosA - p.xOriginal*sinA + centerY;
-                            if(p.outside)
-                                groupCheck = true;
-                        }
-                        if(groupCheck)
-                        {
-                            zoneCheck = true;
-                        }
-                        cG.live = groupCheck;
                     }
                 }
-                z.live = zoneCheck;
             }
         }
     }
@@ -170,13 +157,13 @@ public class Collidable
             if (z != null)
             {
                 z.setLoc(mX, mY);
-                boolean zoneCheck = false;
+                //boolean zoneCheck = false;
                 for (CollidableGroup cG: z.collidableGroups)
                 {
                     if (cG != null)
                     {
                         cG.setLoc(mX, mY);
-                        boolean groupCheck = false;
+                        /*boolean groupCheck = false;
                         for(Pixel p: cG.pixels)
                         {
                             p.xDisp = p.xOriginal*cosA + p.yOriginal*sinA + centerX;
@@ -188,18 +175,16 @@ public class Collidable
                         {
                             zoneCheck = true;
                         }
-                        cG.live = groupCheck;
+                        cG.live = groupCheck;*/
                     }
                 }
-                z.live = zoneCheck;
+                //z.live = zoneCheck;
             }
         }
     }
 
-    public void knockBack(float angle, float extraRatio, float dist)
+    public void knockBack(float tempDistX, float tempDistY)
     {
-        float tempDistX = (float)(dist * extraRatio * Math.cos(angle));
-        float tempDistY = (float)(dist * extraRatio * Math.sin(angle));
         centerX += tempDistX;
         centerY += tempDistY;
 
@@ -208,13 +193,13 @@ public class Collidable
             if (z != null)
             {
                 z.move(tempDistX, tempDistY);
-                boolean zoneCheck = false;
+                //boolean zoneCheck = false;
                 for (CollidableGroup cG: z.collidableGroups)
                 {
                     if (cG != null)
                     {
                         cG.move(tempDistX, tempDistY);
-                        boolean groupCheck = false;
+                        /*boolean groupCheck = false;
                         for(Pixel p: cG.pixels)
                         {
                             p.xDisp += tempDistX;
@@ -226,10 +211,10 @@ public class Collidable
                         {
                             zoneCheck = true;
                         }
-                        cG.live = groupCheck;
+                        cG.live = groupCheck;*/
                     }
                 }
-                z.live = zoneCheck;
+                //z.live = zoneCheck;
             }
         }
     }

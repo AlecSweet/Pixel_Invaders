@@ -21,33 +21,24 @@ public class LevelControllerThread implements Runnable
 {
     public Player player1;
 
-    //public Enemy[][] entityLists;
-
-    //private AIThread aiRunnable;
-
-    //private CollisionThread collisionRunnable;
-
-    //private Enemy[] uiEntities;
-
     public ConcurrentLinkedQueue<Enemy> enemiesToAdd = new ConcurrentLinkedQueue<>();
+
     private EnemyFactory enemyFactory;
 
     private Stack<Integer> openEntityIndices = new Stack<>();
 
     public volatile boolean running = true;
 
+    public float
+            xbound,
+            ybound;
+
     private double
             lastSpawn,
-            spawnDelay = 2000;
+            spawnDelay = 200;
 
-    //public LevelControllerThread(Enemy[][] e, EnemyFactory eF)
     public LevelControllerThread(EnemyFactory eF)
     {
-        //entityLists = e;
-        //aiRunnable = a;
-        //collisionRunnable = c;
-        //uiEntities = e;
-
         enemyFactory = eF;
         for(int i = 0; i < Constants.ENTITIES_LENGTH; i++)
         {
@@ -90,14 +81,14 @@ public class LevelControllerThread implements Runnable
             System.out.println("Spawned");
             Asteroid a = null;
 
-            switch((int)(Math.random()*5.9))
+            switch((int)(Math.random()*4.9))
             {
-                case 0: a = (Asteroid)enemyFactory.getNewEnemy(ASTEROID_GREY_MEDIUM); break;
+                case 0: a = (Asteroid)enemyFactory.getNewEnemy(ASTEROID_GREY_TINY); break;
                 case 1: a = (Asteroid)enemyFactory.getNewEnemy(ASTEROID_GREY_SMALL); break;
                 case 2: a = (Asteroid)enemyFactory.getNewEnemy(ASTEROID_GREY_TINY); break;
                 case 3: a = (Asteroid)enemyFactory.getNewEnemy(ASTEROID_RED_SMALL); break;
-                case 4: a = (Asteroid)enemyFactory.getNewEnemy(ASTEROID_RED_SMALL); break;
-                case 5: a = (Asteroid)enemyFactory.getNewEnemy(ASTEROID_RED_MEDIUM); break;
+                case 4: a = (Asteroid)enemyFactory.getNewEnemy(ASTEROID_RED_TINY); break;
+                //case 5: a = (Asteroid)enemyFactory.getNewEnemy(ASTEROID_RED_MEDIUM); break;
             }
             //distributeEnemy(a);
             //int index = openEntityIndices.pop();

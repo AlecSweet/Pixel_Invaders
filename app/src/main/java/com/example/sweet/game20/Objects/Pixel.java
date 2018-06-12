@@ -42,6 +42,21 @@ public class Pixel {
         yOriginal = y;
     }
 
+    public void killPixel(float cosA, float sinA)
+    {
+        live = false;
+        for(Pixel n: neighbors)
+        {
+            if (n != null)
+            {
+                //n.xDisp = n.xOriginal * cosA + n.yOriginal * sinA;
+                //n.yDisp = n.yOriginal * cosA - n.xOriginal * sinA;
+                n.outside = true;
+            }
+        }
+
+    }
+
     public void killPixel()
     {
         live = false;

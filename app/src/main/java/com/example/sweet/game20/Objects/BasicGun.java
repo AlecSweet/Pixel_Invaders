@@ -14,7 +14,7 @@ public class BasicGun extends Gun
 {
     public BasicGun(PixelGroup pG, ParticleSystem ps)
     {
-        super(1000, pG, ps, .014f);
+        super(100, pG, ps, .02f);
         spread = .04f;
     }
 
@@ -52,7 +52,7 @@ public class BasicGun extends Gun
                     if (p.live && p.outside)
                     {
                         masterParticleSystem.addParticle(
-                                p.xDisp, p.yDisp,
+                                p.xDisp  + b.pixelGroup.centerX, p.yDisp + b.pixelGroup.centerY,
                                 b.angle,
                                 p.r, p.g, p.b, .1f,
                                 .04f, .005f, 10f

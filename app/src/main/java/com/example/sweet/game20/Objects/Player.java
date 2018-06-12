@@ -111,7 +111,7 @@ public class Player extends Drawable
                         gunMiddlePixels,1, playerBody.centerX, playerBody.centerY, (float)playerBody.angle,
                         new BasicGun
                                 (
-                                        ImageParser.parseImage(context, R.drawable.basicbullet, R.drawable.basicbullet_light, textureID, sL),
+                                        ImageParser.parseImage(context, R.drawable.tiny, R.drawable.tiny_light, textureID, sL),
                                         particleSystem
                                 ),
                         particleSystem
@@ -218,7 +218,7 @@ public class Player extends Drawable
                 float angle = (float)(Math.atan2(p.yDisp - playerBody.centerY, p.xDisp - playerBody.centerX) + Math.random() * .2 - .1);
                 for (int t = 0; t < 4; t++)
                 {
-                    particleSystem.addParticle(p.xDisp, p.yDisp,
+                    particleSystem.addParticle(p.xDisp + playerBody.centerX, p.yDisp+ playerBody.centerY,
                             (float)(-playerBody.angle+Math.PI),
                             (float) (Math.random() * .2 + .8), (float) (Math.random()), 0, .7f,
                             (baseSpeed * thrusters[0].thrustPower * (float)(Math.random()*70+20)) * ratio, dist * ratio * (float)Math.random()*2, (float)(Math.random()*20)

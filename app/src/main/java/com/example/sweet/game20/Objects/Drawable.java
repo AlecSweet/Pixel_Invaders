@@ -9,7 +9,7 @@ public abstract class Drawable
 
     protected ParticleSystem particleSystem;
 
-    public boolean onScreen = false;
+    public volatile boolean onScreen = false;
 
     public void draw(double interpolation)
     {

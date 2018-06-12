@@ -72,6 +72,8 @@ public class PixelGroup extends Collidable
 
     private boolean glInit = false;
 
+    public boolean onScreen = false;
+
     public PixelGroup(Pixel[] p, float halfSquareLength, Zone[] z,int  tID, int sL, int vB)
     {
         super(0 , 0, halfSquareLength, p,true, z);
@@ -169,6 +171,19 @@ public class PixelGroup extends Collidable
                 cbuf.put((i + 1) * 4 - 1,0f);
             if(pixels[i].outside)
                 cbuf.put((i + 1) * 4 - 4, pixels[i].r + (float)(Math.random()* .5 - .25));
+            /*if(onScreen && pixels[i].outside)
+            {
+                cbuf.put((i + 1) * 4 - 4, 1f);
+                cbuf.put((i + 1) * 4 - 3, 1f);
+                cbuf.put((i + 1) * 4 - 2, 1f);
+            }
+            else if(pixels[i].outside)
+            {
+                cbuf.put((i + 1) * 4 - 4, pixels[i].r);
+                cbuf.put((i + 1) * 4 - 3, pixels[i].g);
+                cbuf.put((i + 1) * 4 - 2, pixels[i].b);
+            }*/
+
         }
 
         glBindBuffer(GL_ARRAY_BUFFER, cBuffer[0]);

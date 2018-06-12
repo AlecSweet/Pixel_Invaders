@@ -22,6 +22,10 @@ public abstract class Gun
             spread,
             speed;
 
+    protected float
+                x,
+                y;
+
     protected int
             textureID,
             shaderLocation;

@@ -19,6 +19,10 @@ public class EnemyFactory
 {
     private HashMap<EnemyType,Enemy> enemyCatalog = new HashMap<>();
 
+    private float
+            xbound,
+            ybound;
+
     public EnemyFactory()
     {
     }
@@ -31,6 +35,23 @@ public class EnemyFactory
     public void addEnemyToCatalog(EnemyType eT, Enemy e)
     {
         enemyCatalog.put(eT, e);
+    }
+
+    public void setBounds(float xb, float yb)
+    {
+        xbound = xb;
+        ybound = yb;
+        distrbuteBounds(xbound, ybound);
+    }
+
+    private void distrbuteBounds(float xb, float yb)
+    {
+        enemyCatalog.get(ASTEROID_GREY_MEDIUM).setBounds(xb, yb);
+        enemyCatalog.get(ASTEROID_GREY_SMALL).setBounds(xb, yb);
+        enemyCatalog.get(ASTEROID_GREY_TINY).setBounds(xb, yb);
+        enemyCatalog.get(ASTEROID_RED_MEDIUM).setBounds(xb, yb);
+        enemyCatalog.get(ASTEROID_RED_SMALL).setBounds(xb, yb);
+        enemyCatalog.get(ASTEROID_RED_TINY).setBounds(xb, yb);
     }
 
 }

@@ -32,6 +32,8 @@ public class Enemy extends Drawable
 
     public boolean live = true;
 
+    protected float xbound, ybound;
+
     public Enemy(PixelGroup p, ParticleSystem ps)
     {
         particleSystem = ps;
@@ -63,6 +65,15 @@ public class Enemy extends Drawable
         x+=sX;
         y+=sY;
         enemyBody.move(sX, sY);
+    }
+
+    public void knockBack(float angle, float extraRatio, float dist)
+    {
+        float tempDistX = (float)(dist * extraRatio * Math.cos(angle));
+        float tempDistY = (float)(dist * extraRatio * Math.sin(angle));
+        x += tempDistX;
+        y += tempDistY;
+        enemyBody.knockBack(tempDistX, tempDistY);
     }
 
     @Override
@@ -99,6 +110,12 @@ public class Enemy extends Drawable
     public GunComponent[] getGunComponents()
     {
         return guns;
+    }
+
+    public void setBounds(float xb, float yb)
+    {
+        xbound = xb;
+        ybound = yb;
     }
 
     @Override

@@ -15,7 +15,11 @@ public class Asteroid extends Enemy
             distX,
             distY;
 
-    public Asteroid(PixelGroup p, ParticleSystem ps)
+    private int offScreenFrames = 0;
+
+    private boolean screenEnterToggle = true;
+
+    public Asteroid(PixelGroup p, ParticleSystem ps, float xb, float yb)
     {
         super(p, ps);
         guns = null;
@@ -25,6 +29,8 @@ public class Asteroid extends Enemy
         baseSpeed = .005f;
         p.speed = baseSpeed;
         hasGun = false;
+        xbound = xb + .2f;
+        ybound = yb + .2f;
         generatePath();
     }
 
@@ -33,73 +39,104 @@ public class Asteroid extends Enemy
         float travelAngle = 0;
         switch((int)(Math.random()*3.99))
         {
-            case 0: enemyBody.setLoc((float)(Math.random()*9)-4.5f, 4.5f);
+            case 0: enemyBody.setLoc((float)(Math.random()*xbound*2)-xbound, ybound);
                     switch((int)(Math.random()*2.99))
                     {
-                        case 0: travelAngle = (float)Math.atan2(enemyBody.centerY - (-4.5), enemyBody.centerX - (Math.random() * 9 - 4.5f));
+                        case 0: travelAngle = (float)Math.atan2(enemyBody.centerY - (-ybound), enemyBody.centerX - (Math.random() * xbound * 2 - xbound));
                                 break;
-                        case 1: travelAngle = (float)Math.atan2(enemyBody.centerY - (Math.random() * 9 - 4.5f), enemyBody.centerX - 4.5f);
+                        case 1: travelAngle = (float)Math.atan2(enemyBody.centerY - (Math.random() * ybound * 2 - ybound), enemyBody.centerX - xbound);
                                 break;
-                        case 2: travelAngle = (float)Math.atan2(enemyBody.centerY - (Math.random() * 9 - 4.5f), enemyBody.centerX - (-4.5));
+                        case 2: travelAngle = (float)Math.atan2(enemyBody.centerY - (Math.random() * ybound * 2 - ybound), enemyBody.centerX - (-xbound));
                                 break;
                     }
                     break;
-            case 1: enemyBody.setLoc((float)(Math.random()*9)-4.5f, -4.5f);
+            case 1: enemyBody.setLoc((float)(Math.random()*xbound*2)-xbound, -ybound);
                     switch((int)(Math.random()*2.99))
                     {
-                        case 0: travelAngle = (float)Math.atan2(enemyBody.centerY - 4.5, enemyBody.centerX - (Math.random() * 9 - 4.5f));
+                        case 0: travelAngle = (float)Math.atan2(enemyBody.centerY - ybound, enemyBody.centerX - (Math.random() * xbound * 2- xbound));
                                 break;
-                        case 1: travelAngle = (float)Math.atan2(enemyBody.centerY - (Math.random() * 9 - 4.5f), enemyBody.centerX - 4.5f);
+                        case 1: travelAngle = (float)Math.atan2(enemyBody.centerY - (Math.random() * ybound * 2 - ybound), enemyBody.centerX - xbound);
                                 break;
-                        case 2: travelAngle = (float)Math.atan2(enemyBody.centerY - (Math.random() * 9 - 4.5f), enemyBody.centerX - (-4.5));
+                        case 2: travelAngle = (float)Math.atan2(enemyBody.centerY - (Math.random() * ybound * 2 - ybound), enemyBody.centerX - (-xbound));
                                 break;
                     }
                     break;
-            case 2: enemyBody.setLoc(4.5f, (float)(Math.random()*9)-4.5f);
+            case 2: enemyBody.setLoc(xbound, (float)(Math.random()*ybound*2)-ybound);
                     switch((int)(Math.random()*2.99))
                     {
-                        case 0: travelAngle = (float)Math.atan2(enemyBody.centerY - (-4.5), enemyBody.centerX - (Math.random() * 9 - 4.5f));
+                        case 0: travelAngle = (float)Math.atan2(enemyBody.centerY - (-ybound), enemyBody.centerX - (Math.random() * xbound * 2- xbound));
                                 break;
-                        case 1: travelAngle = (float)Math.atan2(enemyBody.centerY - 4.5f, enemyBody.centerX - (Math.random() * 9 - 4.5f));
+                        case 1: travelAngle = (float)Math.atan2(enemyBody.centerY - ybound, enemyBody.centerX - (Math.random() * xbound * 2- xbound));
                                 break;
-                        case 2: travelAngle = (float)Math.atan2(enemyBody.centerY - (Math.random() * 9 - 4.5f), enemyBody.centerX - (-4.5));
+                        case 2: travelAngle = (float)Math.atan2(enemyBody.centerY - (Math.random() * ybound * 2- ybound), enemyBody.centerX - (-xbound));
                                 break;
                     }
                     break;
-            case 3: enemyBody.setLoc(-4.5f, (float)(Math.random()*9)-4.5f);
+            case 3: enemyBody.setLoc(-xbound, (float)(Math.random()*xbound*2)-xbound);
                     switch((int)(Math.random()*2.99))
                     {
-                        case 0: travelAngle = (float)Math.atan2(enemyBody.centerY - (-4.5), enemyBody.centerX - (Math.random() * 9 - 4.5f));
+                        case 0: travelAngle = (float)Math.atan2(enemyBody.centerY - (-ybound), enemyBody.centerX - (Math.random() * xbound * 2 - xbound));
                                 break;
-                        case 1: travelAngle = (float)Math.atan2(enemyBody.centerY - 4.5f, enemyBody.centerX - (Math.random() * 9 - 4.5f));
+                        case 1: travelAngle = (float)Math.atan2(enemyBody.centerY - ybound, enemyBody.centerX - (Math.random() * xbound * 2 - xbound));
                                 break;
-                        case 2: travelAngle = (float)Math.atan2(enemyBody.centerY - (Math.random() * 9 - 4.5f), enemyBody.centerX - 4.5);
+                        case 2: travelAngle = (float)Math.atan2(enemyBody.centerY - (Math.random() * ybound * 2- ybound), enemyBody.centerX - xbound);
                                 break;
                     }
                     break;
         }
-        rotationSpeed = (float)(Math.random()*.02);
-        distX = -(float)(baseSpeed * Math.cos(travelAngle));
+        rotationSpeed = (float)(Math.random()*.06);
+        distX = (float)(baseSpeed * Math.cos(travelAngle));
         distY = (float)(baseSpeed * Math.sin(travelAngle));
+        x = enemyBody.centerX;
+        y = enemyBody.centerY;
         //enemyBody.setLoc(0f,0f);
-        enemyBody.move(.01f,.01f);
     }
 
     @Override
     public void move(float unused, float unused1)
     {
-        rotate();
-        x += distX;
-        y += distY;
-        enemyBody.move(-distX, -distY);
+        if(onScreen)
+        {
+            if(!screenEnterToggle)
+            {
+                screenEnterToggle = true;
+                enemyBody.angle += rotationSpeed * offScreenFrames;
+                rotate();
+                enemyBody.move(-distX * offScreenFrames, -distY * offScreenFrames);
+                offScreenFrames = 0;
+            }
+            else
+            {
+                enemyBody.angle += rotationSpeed;
+                rotate();
+                x += -distX;
+                y += -distY;
+                enemyBody.move(-distX, -distY);
+            }
+        }
+        else
+        {
+            if(screenEnterToggle)
+            {
+                screenEnterToggle = false;
+            }
+            offScreenFrames++;
+            x += -distX;
+            y += -distY;
+        }
 
-        //if( x > 4.5 || x < -4.5 || y > 4.5 || y < -4.5)
-         //   enemyBody.collidableLive = false;
+        if (x > xbound + .02f ||
+                x < -xbound - .02f ||
+                x > ybound + .02f ||
+                x < -ybound - .02f)
+        {
+            enemyBody.collidableLive = false;
+            System.out.println("Asteroid Dead");
+        }
     }
 
     public void rotate()
     {
-        enemyBody.angle += rotationSpeed;
         enemyBody.rotate(enemyBody.angle);
 
         if (enemyBody.angle > Math.PI)
@@ -115,9 +152,15 @@ public class Asteroid extends Enemy
         enemyBody.draw();
     }
 
+    public void setBounds(float xb, float yb)
+    {
+        xbound = xb + enemyBody.halfSquareLength;
+        ybound = yb + enemyBody.halfSquareLength;
+    }
+
     @Override
     public Asteroid clone()
     {
-        return new Asteroid(enemyBody.clone(), particleSystem);
+        return new Asteroid(enemyBody.clone(), particleSystem, xbound, ybound);
     }
 }

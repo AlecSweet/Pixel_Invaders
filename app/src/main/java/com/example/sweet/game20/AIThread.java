@@ -22,7 +22,17 @@ public class AIThread implements Runnable
     public volatile boolean running = true;
 
     public volatile long frameRequest = 0;
+
     private long currentFrame = 0;
+    private final long MILLIS_PER_SECOND = 1000;
+    private final long UPS = 60;
+
+    private final long mSPU = MILLIS_PER_SECOND / UPS;
+
+    private double
+            globalStartTime,
+            pastTime,
+            lag = 0.0;
 
     private PointF panToward = new PointF(0,0);
 
@@ -52,6 +62,7 @@ public class AIThread implements Runnable
     
     public AIThread(Enemy[] e)
     {
+        globalStartTime = System.currentTimeMillis();
         entities = e;
     }
 
@@ -59,12 +70,25 @@ public class AIThread implements Runnable
     {
         while(running)
         {
-            if(currentFrame < frameRequest)
+            double currentTime = System.currentTimeMillis() - globalStartTime;
+            double elapsedTime = currentTime - pastTime;
+            pastTime = currentTime;
+            lag += elapsedTime;
+
+
+            while (lag >= mSPU)
+            {
+                //if(!pause)
+                update();
+                lag -= mSPU;
+            }
+
+            /*if(currentFrame < frameRequest)
             {
                 //System.out.println("FRAME DIFFERENCE: " + (frameRequest - currentFrame));
                 currentFrame++;
                 update();
-            }
+            }*/
         }
     }
     
@@ -89,7 +113,7 @@ public class AIThread implements Runnable
                         {
                             if (e2.getPixelGroup().getCollidableLive() && entities[i] != e2)
                             {
-                                CollisionHandler.preventOverlap(entities[i].getPixelGroup(), e2.getPixelGroup());
+                                CollisionHandler.preventOverlap(entities[i], e2);
                             }
                         }
                     }

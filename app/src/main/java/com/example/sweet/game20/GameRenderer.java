@@ -57,9 +57,7 @@ import static android.opengl.GLES20.glUniform1f;
 public class GameRenderer implements Renderer
 {
     public boolean pause = false;
-    private double
-            lastSpawn,
-            spawnDelay = 2000;
+
     private double
             secondMark,
             interpolation = 0;
@@ -331,8 +329,6 @@ public class GameRenderer implements Renderer
                 }
             }
         }
-        
-
 
         glUseProgram(particleShaderProgram);
         glUniform1f(timeLocation, (float) ((System.currentTimeMillis() - globalStartTime) / 1000));
@@ -389,10 +385,11 @@ public class GameRenderer implements Renderer
             yScale = aspectRatio;
         }
 
-        xbound = 3 * xScale;
-        ybound = 3 * yScale;
-        aiRunnable.xbound = xbound;
-        aiRunnable.ybound = ybound;
+        xbound = 1.5f;
+        ybound = 1.5f;
+        aiRunnable.xbound = 1.5f;
+        aiRunnable.ybound = 1.5f;
+        enemyFactory.setBounds(2.5f,3f);
     }
 
     public void setInterpolation(double i)
@@ -412,15 +409,7 @@ public class GameRenderer implements Renderer
         player1.xscale = xScale;
         player1.yscale = yScale;
 
-        Enemy[] aiEntities = new Enemy[Constants.ENTITIES_LENGTH];
-        Enemy[] collisionEntities = new Enemy[Constants.ENTITIES_LENGTH];
         entities = new Enemy[Constants.ENTITIES_LENGTH];
-
-        Enemy[][] entityList = new Enemy[][]{
-                aiEntities,
-                collisionEntities,
-                entities
-        };
 
         aiRunnable = new AIThread(entities);
         aiThread = new Thread(aiRunnable);
@@ -431,7 +420,6 @@ public class GameRenderer implements Renderer
         collisionRunnable.setPlayer(player1);
         collisionRunnable.setCollisionHandler(collisionHandler);
 
-        //levelRunnable = new LevelControllerThread(entityList, enemyFactory);
         levelRunnable = new LevelControllerThread(enemyFactory);
         levelThread = new Thread(levelRunnable);
         levelRunnable.setPlayer(player1);
@@ -449,9 +437,9 @@ public class GameRenderer implements Renderer
             {
                 if (entities[i].getPixelGroup().getCollidableLive())
                 {
-                    if (Math.abs(entities[i].getPixelGroup().getCenterX() - aiRunnable.xScreenShift) * xScale <=
+                    if (Math.abs(entities[i].getX() - aiRunnable.xScreenShift) * xScale <=
                         1 + entities[i].getPixelGroup().getHalfSquareLength() &&
-                        Math.abs(entities[i].getPixelGroup().getCenterY() - aiRunnable.yScreenShift) * yScale <=
+                        Math.abs(entities[i].getY() - aiRunnable.yScreenShift) * yScale <=
                         1 + entities[i].getPixelGroup().getHalfSquareLength())
                     {
                         entities[i].onScreen = true;
@@ -493,8 +481,6 @@ public class GameRenderer implements Renderer
             {
                 int index = openEntityIndices.pop();
                 entities[index] = e;
-                aiRunnable.entities[index] = e;
-                collisionRunnable.entities[index] = e;
             }
             else
             {
@@ -502,30 +488,6 @@ public class GameRenderer implements Renderer
             }
         }
 
-        /*if(System.currentTimeMillis() - spawnDelay > lastSpawn)
-        {
-            lastSpawn = System.currentTimeMillis();
-            System.out.println("Spawned");
-            Asteroid a = null;
-
-            switch((int)(Math.random()*5.9))
-            {
-                case 0: a = (Asteroid)enemyFactory.getNewEnemy(ASTEROID_GREY_MEDIUM); break;
-                case 1: a = (Asteroid)enemyFactory.getNewEnemy(ASTEROID_GREY_SMALL); break;
-                case 2: a = (Asteroid)enemyFactory.getNewEnemy(ASTEROID_GREY_TINY); break;
-                case 3: a = (Asteroid)enemyFactory.getNewEnemy(ASTEROID_RED_SMALL); break;
-                case 4: a = (Asteroid)enemyFactory.getNewEnemy(ASTEROID_RED_SMALL); break;
-                case 5: a = (Asteroid)enemyFactory.getNewEnemy(ASTEROID_RED_MEDIUM); break;
-            }
-            //distributeEnemy(a);
-            int index = openEntityIndices.pop();
-            //aiRunnable.entities[index] = a;
-            //collisionRunnable.entities[index] = a;
-            entities[index] = a;
-            aiRunnable.entities[index] = a;
-            collisionRunnable.entities[index] = a;
-            //uiEntities[index] = a;
-        }*/
         aiRunnable.frameRequest++;
     }
 
@@ -599,7 +561,9 @@ public class GameRenderer implements Renderer
                         new Asteroid
                                 (
                                         ImageParser.parseImage(context, R.drawable.asteroidgraysmall, R.drawable.asteroidgraysmall_light, whiteTexture, shaderProgram),
-                                        enemyParticles
+                                        enemyParticles,
+                                        xbound,
+                                        ybound
                                 )
                 );
 
@@ -609,7 +573,9 @@ public class GameRenderer implements Renderer
                         new Asteroid
                                 (
                                         ImageParser.parseImage(context, R.drawable.asteroidredtiny, R.drawable.asteroidredtiny_light, whiteTexture, shaderProgram),
-                                        enemyParticles
+                                        enemyParticles,
+                                        xbound,
+                                        ybound
                                 )
                 );
 
@@ -619,7 +585,9 @@ public class GameRenderer implements Renderer
                         new Asteroid
                                 (
                                         ImageParser.parseImage(context, R.drawable.asteroidgraymedium, R.drawable.asteroidgraymedium_light, whiteTexture, shaderProgram),
-                                        enemyParticles
+                                        enemyParticles,
+                                        xbound,
+                                        ybound
                                 )
                 );
 
@@ -629,7 +597,9 @@ public class GameRenderer implements Renderer
                         new Asteroid
                                 (
                                         ImageParser.parseImage(context, R.drawable.asteroidredsmall, R.drawable.asteroidredsmall_light, whiteTexture, shaderProgram),
-                                        enemyParticles
+                                        enemyParticles,
+                                        xbound,
+                                        ybound
                                 )
                 );
 
@@ -639,7 +609,9 @@ public class GameRenderer implements Renderer
                         new Asteroid
                                 (
                                         ImageParser.parseImage(context, R.drawable.asteroidgraylarge, R.drawable.asteroidgraylarge_light, whiteTexture, shaderProgram),
-                                        enemyParticles
+                                        enemyParticles,
+                                        xbound,
+                                        ybound
                                 )
                 );
 
@@ -650,7 +622,9 @@ public class GameRenderer implements Renderer
                         new Asteroid
                                 (
                                         ImageParser.parseImage(context, R.drawable.asteroidredlarge, R.drawable.asteroidredlarge_light, whiteTexture, shaderProgram),
-                                        enemyParticles
+                                        enemyParticles,
+                                        xbound,
+                                        ybound
                                 )
                 );
 

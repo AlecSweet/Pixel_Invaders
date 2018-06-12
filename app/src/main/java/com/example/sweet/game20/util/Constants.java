@@ -8,15 +8,15 @@ public class Constants
 {
     public static final int BYTES_PER_FLOAT = 4;
 
-    public static final float PIXEL_SIZE = .007f;
+    public static final float PIXEL_SIZE = .008f;
 
     public static final float twoPI = (float)(2*Math.PI);
 
-    public static final float CELL_SIZE = .028f;
+    public static final float CELL_SIZE = .032f;
 
     public static final int CELL_LENGTH = 4;
 
-    public static final float ZONE_SIZE = .112f;
+    public static final float ZONE_SIZE = .128f;
 
     public static final int ZONE_LENGTH = 4;
 
