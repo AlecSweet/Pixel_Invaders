@@ -1,6 +1,7 @@
 package com.example.sweet.game20.Objects;
 
 import com.example.sweet.game20.util.Constants;
+import com.example.sweet.game20.util.DropFactory;
 
 import static android.opengl.GLES20.glUniform1f;
 
@@ -19,9 +20,13 @@ public class Asteroid extends Enemy
 
     private boolean screenEnterToggle = true;
 
-    public Asteroid(PixelGroup p, ParticleSystem ps, float xb, float yb)
+    private int
+            healthDropGoal,
+            healthDropRarity;
+
+    public Asteroid(PixelGroup p, ParticleSystem ps, float xb, float yb, DropFactory dF)
     {
-        super(p, ps);
+        super(p, ps, dF);
         guns = null;
         thrusters = null;
         enemyBody.angle = 3.14;
@@ -32,6 +37,8 @@ public class Asteroid extends Enemy
         xbound = xb + .2f;
         ybound = yb + .2f;
         generatePath();
+        healthDropRarity = (int)(Math.random()*140+40);
+        healthDropGoal = enemyBody.totalPixels  - (int)(Math.random() * healthDropRarity + 9);
     }
 
     public void generatePath()
@@ -133,6 +140,12 @@ public class Asteroid extends Enemy
             enemyBody.collidableLive = false;
             System.out.println("Asteroid Dead");
         }
+
+        if(enemyBody.numLivePixels < healthDropGoal)
+        {
+            dropsToAdd.add(dropFactory.getNewDrop(Constants.DropType.HEALTH, enemyBody.lastPixelKilled.xDisp + x, enemyBody.lastPixelKilled.yDisp + y));
+            healthDropGoal -= (int)(Math.random() * healthDropRarity + 9);
+        }
     }
 
     public void rotate()
@@ -161,6 +174,6 @@ public class Asteroid extends Enemy
     @Override
     public Asteroid clone()
     {
-        return new Asteroid(enemyBody.clone(), particleSystem, xbound, ybound);
+        return new Asteroid(enemyBody.clone(), particleSystem, xbound, ybound, dropFactory);
     }
 }

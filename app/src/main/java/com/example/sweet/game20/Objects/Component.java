@@ -14,9 +14,7 @@ public class Component
         1: Gun
         2: Mod
      */
-    public int
-            type,
-            texture;
+    public int type;
 
     public float
             x,

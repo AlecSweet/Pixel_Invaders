@@ -26,9 +26,7 @@ public abstract class Gun
                 x,
                 y;
 
-    protected int
-            textureID,
-            shaderLocation;
+    protected int shaderLocation;
 
     protected ParticleSystem masterParticleSystem;
 
@@ -69,6 +67,11 @@ public abstract class Gun
         {
             b.move();
         }
+    }
+
+    public void applyPauseLength(double p)
+    {
+        lastShotTime += p;
     }
 
     public boolean shoot(float x, float y, float angle)

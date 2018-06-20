@@ -9,9 +9,12 @@ import static android.opengl.GLES20.glUniform1f;
 import com.example.sweet.game20.R;
 import com.example.sweet.game20.util.Constants;
 import com.example.sweet.game20.util.ImageParser;
+import com.example.sweet.game20.util.ScreenShake;
 import com.example.sweet.game20.util.VectorFunctions;
 
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Stack;
 
 public class Player extends Drawable
 {
@@ -51,16 +54,12 @@ public class Player extends Drawable
     private int[] gunFarRight = new int[]{4, 29, 3, 28, 4, 28, 3, 29};
 
     private int
-            xDispLoc,
-            yDispLoc,
             tiltLoc,
             stageCounter = 0;
 
-    private boolean
-            movementDown = false;
+    private PixelGroup playerBody;
 
-    private PixelGroup playerBody,
-                        sheild;
+    private static final float EXCHANGABLE_DROP_RANGE = .2f;
 
     private Pixel[]
             gravParticlePixels = new Pixel[gravParticles.length/2],
@@ -89,20 +88,28 @@ public class Player extends Drawable
     //Can Be any Number
     private int maxMods = 1;
 
-    private String
-            X_DISP = "x_displacement",
-            Y_DISP = "y_displacement",
-            TILT = "tilt";
+    private String TILT = "tilt";
 
-    public Player(Context context, float sp, float xT, float yT, int textureID, int sL, int pSL, ParticleSystem ps)
+    public Drop[] type0Drops = new Drop[Constants.DROPS_LENGTH];
+
+    private int type0DropIndex = 0;
+
+    public Drop[] type1Drops = new Drop[100];
+
+    private int type1DropIndex = 0;
+
+    public boolean pause = false;
+
+    public ArrayList<ScreenShake>
+            screenShakeEventsX = new ArrayList<>(),
+            screenShakeEventsY = new ArrayList<>();
+
+    public Player(Context context, float sp, int sL, ParticleSystem ps)
     {
         particleSystem = ps;
         baseSpeed = sp;
-        playerBody = ImageParser.parseImage(context, R.drawable.player, R.drawable.player_light, textureID, sL);
-        //sheild = ImageParser.parseImage(context, R.drawable.sheild1, textureID, sL);
-        //sheild.setEnableOrphanChunkDeletion(false);
+        playerBody = ImageParser.parseImage(context, R.drawable.player, R.drawable.player_light, sL);
         playerBody.knockBackFactor = .01f;
-        //sheild.knockBackFactor = .01f;
 
         initParticleAttachments();
 
@@ -111,7 +118,7 @@ public class Player extends Drawable
                         gunMiddlePixels,1, playerBody.centerX, playerBody.centerY, (float)playerBody.angle,
                         new BasicGun
                                 (
-                                        ImageParser.parseImage(context, R.drawable.tiny, R.drawable.tiny_light, textureID, sL),
+                                        ImageParser.parseImage(context, R.drawable.basicbullet, R.drawable.basicbullet_light, sL),
                                         particleSystem
                                 ),
                         particleSystem
@@ -122,8 +129,6 @@ public class Player extends Drawable
         thrusters[1] = new ThrustComponent(leftBoostPixels, 0, 0, 0, 0, 1, 2, ps);
         thrusters[2] = new ThrustComponent(rightBoostPixels, 0, 0, 0, 0, 2, 2, ps);
 
-        xDispLoc = glGetUniformLocation(sL, X_DISP);
-        yDispLoc = glGetUniformLocation(sL, Y_DISP);
         tiltLoc = glGetUniformLocation(sL, TILT);
     }
 
@@ -157,6 +162,7 @@ public class Player extends Drawable
             addThrustParticles(mainBoostPixels,tempRatio,.054f);
             rotate(angleMoving,tempRatio);
         }
+
     }
 
     public void rotate(float angleMoving, float ratio)
@@ -182,17 +188,14 @@ public class Player extends Drawable
             if (delta < -Math.PI || (delta > 0 && delta < Math.PI))
             {
                 addThrustParticles(leftBoostPixels, ratio, .042f);
-                //addThrustParticles(leftBoostPixels, ratio, .034f);
             }
             else
             {
                 addThrustParticles(rightBoostPixels, ratio, .042f);
-                //addThrustParticles(rightBoostPixels, ratio, .034f);
             }
         }
 
         playerBody.rotate(playerBody.angle);
-        //sheild.rotate(playerBody.angle);
 
         if (playerBody.angle > Math.PI)
             playerBody.angle -= Constants.twoPI;
@@ -206,23 +209,14 @@ public class Player extends Drawable
         {
             if(p.live)
             {
-                /*double angle = Math.atan2(p.yDisp, p.xDisp);
-                float c = (float) Math.cos(-angle);
-                float s = (float) Math.sin(-angle);
-
-                float xShift = Constants.PIXEL_SIZE/2 * c + Constants.PIXEL_SIZE/2 * s;
-                float yShift = Constants.PIXEL_SIZE/2 * c - Constants.PIXEL_SIZE/2 * s;
-                */
-                float xDisp = p.xOriginal * playerBody.cosA + p.yOriginal * playerBody.sinA;
-                float yDisp = p.yOriginal * playerBody.cosA - p.xOriginal * playerBody.sinA;
-                float angle = (float)(Math.atan2(p.yDisp - playerBody.centerY, p.xDisp - playerBody.centerX) + Math.random() * .2 - .1);
                 for (int t = 0; t < 4; t++)
                 {
                     particleSystem.addParticle(p.xDisp + playerBody.centerX, p.yDisp+ playerBody.centerY,
                             (float)(-playerBody.angle+Math.PI),
                             (float) (Math.random() * .2 + .8), (float) (Math.random()), 0, .7f,
-                            (baseSpeed * thrusters[0].thrustPower * (float)(Math.random()*70+20)) * ratio, dist * ratio * (float)Math.random()*2, (float)(Math.random()*20)
-                            //0, 1, (float)(Math.random()*20)
+                            (baseSpeed * thrusters[0].thrustPower * (float)(Math.random()*70+20)) * ratio,
+                            dist * ratio * (float)Math.random()*2,
+                            (float)(Math.random()*20)
                     );
                 }
             }
@@ -234,17 +228,70 @@ public class Player extends Drawable
         float tX = (float)Math.cos(driftCount/200*Constants.twoPI)/6000;
         float tY = (float)Math.sin(driftCount/200*Constants.twoPI)/6000;
         playerBody.move(tX, tY);
-        if(driftCount <= -200) {
+        if(driftCount <= -200)
+        {
             driftDirection = 1;
-        }else if(driftCount >= 200) {
+        }else if(driftCount >= 200)
+        {
             driftDirection = -1;
         }
         driftCount += driftDirection;
-
-        //if(driftCount % 2 == 0)
-        //    addGravParticles();
     }
 
+    public void moveGuns()
+    {
+        if(getGuns()!= null)
+        {
+            for (GunComponent gC : getGuns())
+            {
+                if (gC != null)
+                {
+                    gC.gun.move();
+                }
+            }
+        }
+    }
+
+    public void addDrop(Drop d)
+    {
+        switch(d.type)
+        {
+            case 0: type0Drops[type0DropIndex] = d;
+                    type0DropIndex++;
+                    break;
+            case 1: type1Drops[type1DropIndex] = d;
+                    type1DropIndex++;
+                    break;
+        }
+    }
+
+    public void type0DropCollisionCheck()
+    {
+        for(Drop d: type0Drops)
+        {
+            if(d!= null && d.live)
+            {
+                d.checkAlive();
+                float dX = playerBody.centerX - d.x;
+                float dY = playerBody.centerY - d.y;
+                float distSquared = dX * dX + dY * dY;
+                if(distSquared < Constants.PUll_DROP_RADIUS * Constants.PUll_DROP_RADIUS)
+                {
+                    if (distSquared < .0025f)
+                    {
+                        d.live = false;
+                        revivePixels();
+                    }
+                    else
+                    {
+                        float speed = .0001f / distSquared;
+                        float dist = (float) Math.sqrt(distSquared);
+                        d.move(speed * (dX / dist), speed * (dY / dist));
+                    }
+                }
+            }
+        }
+    }
     /*public void addGravParticles()
     {
         for(Pixel p: gravParticlePixels)
@@ -269,36 +316,135 @@ public class Player extends Drawable
             }
         }
     }*/
+    public void applyPauseLength(double p)
+    {
+        for(GunComponent g: guns)
+        {
+            if(g != null)
+            {
+                //g.gun.applyPauseLength(p);
+            }
+        }
+    }
+
+    public ArrayList<Drop> getExchangableComponentDrops()
+    {
+        ArrayList<Drop> componentDrops = new ArrayList<>();
+        for(Drop d: type1Drops)
+        {
+            if(d != null)
+            {
+                float dX = playerBody.centerX - d.x;
+                float dY = playerBody.centerY - d.y;
+                float distSquared = dX * dX + dY * dY;
+                if (distSquared < EXCHANGABLE_DROP_RANGE * EXCHANGABLE_DROP_RANGE)
+                {
+                    componentDrops.add(d);
+                }
+            }
+        }
+        return componentDrops;
+    }
+
+    public void revivePixels()
+    {
+        HashSet<Pixel> affectedPixels = new HashSet<>();
+        int resNum = 24;
+        for(Pixel p: playerBody.pixels)
+        {
+            if(p.outside && p.live)
+            {
+                for(Pixel n: p.neighbors)
+                {
+                    if(n != null)
+                    {
+                        if (!n.live)
+                        {
+                            affectedPixels.add(p);
+                            resNum = revivePixelHelper(n, resNum, affectedPixels);
+                        }
+                    }
+                    if (resNum <= 0)
+                    {
+                        break;
+                    }
+                }
+            }
+            if(resNum <= 0)
+            {
+                break;
+            }
+        }
+
+        for(Pixel p: affectedPixels)
+        {
+            p.outside = false;
+            for(Pixel n: p.neighbors)
+            {
+                if((n != null && !n.live) || n == null)
+                {
+                    p.outside = true;
+                }
+            }
+        }
+        playerBody.needsUpdate = true;
+    }
+
+    private int revivePixelHelper(Pixel p, int rN, HashSet<Pixel> affectedPixels)
+    {
+        int resNum = rN;
+        p.live = true;
+        playerBody.numLivePixels++;
+        affectedPixels.add(p);
+        resNum--;
+        for(Pixel n: p.neighbors)
+        {
+            if(n != null)
+            {
+                if (n.live && n.outside)
+                {
+                    affectedPixels.add(n);
+                }
+
+                if (!n.live && resNum > 0)
+                {
+                    resNum = revivePixelHelper(n, resNum, affectedPixels);
+                }
+            }
+        }
+        return resNum;
+    }
 
     public void shoot(float sX, float sY)
     {
         float shootAngle = (float) (Math.atan2(sY, sX));
-        /*if(guns[0].shoot(playerBody.centerX, playerBody.centerY, shootAngle+(float)Math.PI, context))
-        {
-            //playerBody.knockBack(shootAngle, 1 + guns[0].speed);
-           // sheild.knockBack(shootAngle, 1 + guns[0].speed);
-        }*/
         for (GunComponent g : guns)
+        {
             if (g != null)
             {
-                g.gun.shoot(playerBody.centerX, playerBody.centerY, shootAngle + (float)Math.PI);
+                if(g.gun.shoot(playerBody.centerX, playerBody.centerY, shootAngle + (float) Math.PI))
+                {
+                    screenShakeEventsX.add(new ScreenShake(.02f, 30, g.gun.shootDelay/2));
+                    screenShakeEventsY.add(new ScreenShake(.02f, 30, g.gun.shootDelay/2));
+                }
             }
+        }
     }
+
     @Override
-    public void draw( double interpolation)
+    public void draw(double interpolation)
     {
         handleCosmetics();
-        // Set shader uniform values for the player
-        //glUniform1f(xDispLoc, playerBody.getCenterX());//+ (speed * (float)( Math.pow(-Math.cos(playerBody.angle),0) * interpolation)));
-        //glUniform1f(yDispLoc, playerBody.getCenterY());// + (speed * (float)( Math.pow(Math.sin(playerBody.angle),0) * interpolation)));
         glUniform1f(tiltLoc, tiltAngle);
-        //Draw the players PixelGroup
         playerBody.draw();
         glUniform1f(tiltLoc, 0);
-        //sheild.draw();
         for(GunComponent g: guns)
-            if(g != null)
+        {
+            if (g != null)
+            {
                 g.gun.draw(interpolation);
+            }
+        }
     }
 
     @Override
@@ -309,15 +455,22 @@ public class Player extends Drawable
 
     public void handleCosmetics()
     {
-        if(stageCounter >= 120)
-            stageDirection = -1;
-        else if( stageCounter <= 0)
-            stageDirection = 1;
+        if(!pause)
+        {
+            if (stageCounter >= 120)
+            {
+                stageDirection = -1;
+            }
+            else if (stageCounter <= 0)
+            {
+                stageDirection = 1;
+            }
 
-        tiltAngle = (float)Math.sin(((double)stageCounter - 60)/240);
-        drift();
+            tiltAngle = (float) Math.sin(((double) stageCounter - 60) / 240);
+            drift();
 
-        stageCounter += stageDirection;
+            stageCounter += stageDirection;
+        }
     }
 
     public void initParticleAttachments()
@@ -355,11 +508,6 @@ public class Player extends Drawable
         return playerBody;
     }
 
-    public PixelGroup getPlayerSheild()
-    {
-        return sheild;
-    }
-
     public float getSpeed()
     {
         return baseSpeed;
@@ -370,8 +518,4 @@ public class Player extends Drawable
         return guns;
     }
 
-    public void setMovementDown(boolean mD)
-    {
-        movementDown = mD;
-    }
 }

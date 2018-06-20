@@ -11,12 +11,12 @@ import java.util.Iterator;
 public class CollisionThread implements Runnable
 {
     public Player player1;
-    //public ArrayList<Enemy> entities;
     public CollisionHandler collisionHandler;
     public Enemy[] entities;
 
-    public volatile boolean running = true;
-    public volatile boolean checkCollision = true;
+    public volatile boolean
+            running = true,
+            pause = false;
 
     private final long MILLIS_PER_SECOND = 1000;
     private final long UPS = 120;
@@ -28,6 +28,11 @@ public class CollisionThread implements Runnable
             pastTime,
             lag = 0.0;
 
+
+    private boolean saveTime = false;
+
+    private double pauseTime = 0;
+
     public CollisionThread(Enemy[] e)
     {
         entities = e;
@@ -38,13 +43,18 @@ public class CollisionThread implements Runnable
     {
         while(running)
         {
-            if(checkCollision)
+            if(!pause)
             {
+                if(!saveTime)
+                {
+                    pastTime = System.currentTimeMillis() - globalStartTime;
+                    saveTime = true;
+                }
+
                 double currentTime = System.currentTimeMillis() - globalStartTime;
                 double elapsedTime = currentTime - pastTime;
                 pastTime = currentTime;
                 lag += elapsedTime;
-
 
                 while (lag >= mSPU)
                 {
@@ -52,11 +62,13 @@ public class CollisionThread implements Runnable
                     update();
                     lag -= mSPU;
                 }
-            /*if(checkCollision)
+            }
+            else
             {
-                update();
-                checkCollision = false;
-            }*/
+                if(saveTime)
+                {
+                    saveTime = false;
+                }
             }
         }
     }
@@ -64,6 +76,7 @@ public class CollisionThread implements Runnable
     public void update()
     {
         checkCollisions();
+        player1.type0DropCollisionCheck();
     }
 
     public void checkCollisions()

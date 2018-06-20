@@ -41,6 +41,8 @@ public class UI extends Drawable
             joyStickRadius = .32f;
 
     public PointF
+            menuOnDown = new PointF(0,0),
+            menuOnMove = new PointF(0,0),
             movementOnDown = new PointF(0,0),
             movementOnMove = new PointF(0,0),
             shootingOnDown = new PointF(0,0),
@@ -55,10 +57,15 @@ public class UI extends Drawable
 
     private int
             swapButtonTexture,
+            resumeButtonTexture,
             moveJoyStickBaseTexture,
             moveJoyStickTexture,
             shootJoyStickBaseTexture,
-            shootJoyStickTexture;
+            shootJoyStickTexture,
+            screenShadeTexture,
+            componentSqaureTexture;
+
+    public boolean menuPointerDown = false;
 
     private boolean
             movementDown = false,
@@ -107,21 +114,67 @@ public class UI extends Drawable
             COLOR_COMPONENT_COUNT = 4,
             STRIDE = Constants.BYTES_PER_FLOAT * (POSITION_COMPONENT_COUNT + COLOR_COMPONENT_COUNT);
 
+    private static final float
+            UNPAUSE_BUTTON_XBOUND = .8f,
+            UNPAUSE_BUTTON_YBOUND = .4f;
+
+    private float[] resumeButton = new float[]{
+            UNPAUSE_BUTTON_XBOUND + .1f,  UNPAUSE_BUTTON_YBOUND + .3f, 0.5f, 0.5f,
+            1f,  1f,   1f, 1f,
+            1f, UNPAUSE_BUTTON_YBOUND,   1f, 0f,
+            UNPAUSE_BUTTON_XBOUND, UNPAUSE_BUTTON_YBOUND,   0f, 0f,
+            UNPAUSE_BUTTON_XBOUND,  1f,   0f, 1f,
+            1f,  1f,   1f, 1f,
+    };
+
+    private float[] screenShade = new float[]{
+            0f,  0f, 0.5f, 0.5f,
+            1f,  1f,   1f, 1f,
+            1f, -1f,   1f, 0f,
+            -1f, -1f,   0f, 0f,
+            -1f,  1f,   0f, 1f,
+            1f,  1f,   1f, 1f,
+    };
+    
+    private float[] componentSquare = new float[]{
+            0f,  0f, 0.5f, 0.5f,
+            .2f,  2f,   1f, 1f,
+            .2f, -.2f,   1f, 0f,
+            -.2f, -.2f,   0f, 0f,
+            -.2f,  .2f,   0f, 1f,
+            .2f,  .2f,   1f, 1f,
+    };
+
+    public float
+            xScale,
+            yScale;
+
     private int
             joyBaseMovementVBO[] = new int[1],
             joyStickMovementVBO[] = new int[1],
             joyBaseShootingVBO[] = new int[1],
             joyStickShootingVBO[] = new int[1],
-            swapButtonVBO[] = new int[1];
+            swapButtonVBO[] = new int[1],
+            resumeButtonVBO[] = new int[1],
+            screenShadeVBO[] = new int[1],
+            componentSquareVBO[] = new int[1];
 
     private FloatBuffer
             joyBaseMovementBuf,
             joyStickMovementBuf,
             joyBaseShootingBuf,
             joyStickShootingBuf,
-            swapButtonBuf;
+            swapButtonBuf,
+            resumeButtonBuf,
+            screenShadeBuf,
+            componentSquareBuf;
 
-    
+    /*
+    0: Main Menu
+    1: In Game
+    2: Paused
+     */
+    public int gameState = 0;
 
     public UI(Context context, int shaderLocation)
     {
@@ -132,6 +185,9 @@ public class UI extends Drawable
         uTextureLocation = glGetUniformLocation(shaderLocation, U_TEXTURE);
 
         //swapButtonTexture = TextureLoader.loadTexture(context, R.drawable.swap);
+        componentSqaureTexture = TextureLoader.loadTexture(context, R.drawable.square);
+        screenShadeTexture = TextureLoader.loadTexture(context, R.drawable.shade);
+        resumeButtonTexture = TextureLoader.loadTexture(context, R.drawable.resume);
         moveJoyStickBaseTexture = TextureLoader.loadTexture(context, R.drawable.mjb);
         moveJoyStickTexture = TextureLoader.loadTexture(context, R.drawable.mj);
         shootJoyStickBaseTexture = TextureLoader.loadTexture(context, R.drawable.sjb);
@@ -139,12 +195,6 @@ public class UI extends Drawable
         
         fillUIBuffers();
         initVBOs();
-    }
-
-    @Override
-    public void draw(double interpolation)
-    {
-        drawJoySticks();
     }
 
     public void initVBOs()
@@ -169,120 +219,21 @@ public class UI extends Drawable
         glBindBuffer(GL_ARRAY_BUFFER, swapButtonVBO[0]);
         glBufferData(GL_ARRAY_BUFFER, swapButtonBuf.capacity() * Constants.BYTES_PER_FLOAT, swapButtonBuf, GL_STATIC_DRAW);
 
+        glGenBuffers(1, resumeButtonVBO, 0);
+        glBindBuffer(GL_ARRAY_BUFFER, resumeButtonVBO[0]);
+        glBufferData(GL_ARRAY_BUFFER, resumeButtonBuf.capacity() * Constants.BYTES_PER_FLOAT, resumeButtonBuf, GL_STATIC_DRAW);
+
+        glGenBuffers(1, resumeButtonVBO, 0);
+        glBindBuffer(GL_ARRAY_BUFFER, resumeButtonVBO[0]);
+        glBufferData(GL_ARRAY_BUFFER, resumeButtonBuf.capacity() * Constants.BYTES_PER_FLOAT, resumeButtonBuf, GL_STATIC_DRAW);
+
+        glGenBuffers(1, resumeButtonVBO, 0);
+        glBindBuffer(GL_ARRAY_BUFFER, resumeButtonVBO[0]);
+        glBufferData(GL_ARRAY_BUFFER, resumeButtonBuf.capacity() * Constants.BYTES_PER_FLOAT, resumeButtonBuf, GL_STATIC_DRAW);
     }
 
     private void fillUIBuffers()
     {
-        //Create JoyStick Base
-       /* float[] temp = Shapes.makeCircle(joyBasePoints,joyStickRadius,0,0);
-        
-        //Fill arrays and then create buffer for the base of the joystick. Movement
-        joyBasePoints = temp.length/2;
-        joyBaseMovement = new float[temp.length*3];
-        joyBaseMovement[0] = temp[0];
-        joyBaseMovement[1] = temp[1];
-        joyBaseMovement[2] = .3f;
-        joyBaseMovement[3] = .3f;
-        joyBaseMovement[4] = .3f;
-        joyBaseMovement[5] = .3f;
-        for(int i = 2; i < temp.length; i+=2)
-        {
-            int tI = i*3;
-            joyBaseMovement[tI] = temp[i];
-            joyBaseMovement[tI+1] = temp[i+1];
-            joyBaseMovement[tI+2] = .4f;
-            joyBaseMovement[tI+3] = .4f;
-            joyBaseMovement[tI+4] = .4f;
-            joyBaseMovement[tI+5] = .8f;
-        }
-        joyBaseMovementBuf = ByteBuffer
-                .allocateDirect(joyBaseMovement.length * Constants.BYTES_PER_FLOAT)
-                .order(ByteOrder.nativeOrder())
-                .asFloatBuffer()
-                .put(joyBaseMovement);
-        joyBaseMovementBuf.position(0);
-        
-        //Fill arrays and then create buffer for the base of the joystick. Shooting
-        joyBasePoints = temp.length/2;
-        joyBaseShooting = new float[temp.length*3];
-        joyBaseShooting[0] = temp[0];
-        joyBaseShooting[1] = temp[1];
-        joyBaseShooting[2] = .5f;
-        joyBaseShooting[3] = .3f;
-        joyBaseShooting[4] = .3f;
-        joyBaseShooting[5] = .3f;
-        for(int i = 2; i < temp.length; i+=2)
-        {
-            int tI = i*3;
-            joyBaseShooting[tI] = temp[i];
-            joyBaseShooting[tI+1] = temp[i+1];
-            joyBaseShooting[tI+2] = .8f;
-            joyBaseShooting[tI+3] = .4f;
-            joyBaseShooting[tI+4] = .4f;
-            joyBaseShooting[tI+5] = .8f;
-        }
-        joyBaseShootingBuf = ByteBuffer
-                .allocateDirect(joyBaseShooting.length * Constants.BYTES_PER_FLOAT)
-                .order(ByteOrder.nativeOrder())
-                .asFloatBuffer()
-                .put(joyBaseShooting);
-        joyBaseShootingBuf.position(0);
-
-        //Create JoyStick
-        float[] temp1 = Shapes.makeCircle(joyStickPoints,.1f,0,0);
-        
-        //Fill arrays and then create buffer for the joystick. Movement
-        joyStickPoints = temp1.length/2;
-        joyStickMovement = new float[temp1.length*3];
-        joyStickMovement[0] = temp1[0];
-        joyStickMovement[1] = temp1[1];
-        joyStickMovement[2] = .9f;
-        joyStickMovement[3] = .9f;
-        joyStickMovement[4] = .9f;
-        joyStickMovement[5] = .94f;
-        for(int i = 2; i < temp1.length; i+=2)
-        {
-            int tI = i*3;
-            joyStickMovement[tI] = temp1[i];
-            joyStickMovement[tI+1] = temp1[i+1];
-            joyStickMovement[tI+2] = .5f;
-            joyStickMovement[tI+3] = .5f;
-            joyStickMovement[tI+4] = .5f;
-            joyStickMovement[tI+5] = .94f;
-        }
-        joyStickMovementBuf = ByteBuffer
-                .allocateDirect(joyStickMovement.length * Constants.BYTES_PER_FLOAT)
-                .order(ByteOrder.nativeOrder())
-                .asFloatBuffer()
-                .put(joyStickMovement);
-        joyStickMovementBuf.position(0);
-
-        //Fill arrays and then create buffer for the joystick. Shooting
-        joyStickPoints = temp1.length/2;
-        joyStickShooting = new float[temp1.length*3];
-        joyStickShooting[0] = temp1[0];
-        joyStickShooting[1] = temp1[1];
-        joyStickShooting[2] = .99f;
-        joyStickShooting[3] = .9f;
-        joyStickShooting[4] = .9f;
-        joyStickShooting[5] = .94f;
-        for(int i = 2; i < temp1.length; i+=2)
-        {
-            int tI = i*3;
-            joyStickShooting[tI] = temp1[i];
-            joyStickShooting[tI+1] = temp1[i+1];
-            joyStickShooting[tI+2] = .8f;
-            joyStickShooting[tI+3] = .5f;
-            joyStickShooting[tI+4] = .5f;
-            joyStickShooting[tI+5] = .94f;
-        }
-        joyStickShootingBuf = ByteBuffer
-                .allocateDirect(joyStickShooting.length * Constants.BYTES_PER_FLOAT)
-                .order(ByteOrder.nativeOrder())
-                .asFloatBuffer()
-                .put(joyStickShooting);
-        joyStickShootingBuf.position(0);*/
-
         joyStickMovementBuf = ByteBuffer
                 .allocateDirect(joyStickMovement.length * Constants.BYTES_PER_FLOAT)
                 .order(ByteOrder.nativeOrder())
@@ -317,17 +268,17 @@ public class UI extends Drawable
                 .asFloatBuffer()
                 .put(swapButton);
         swapButtonBuf.position(0);
+
+        resumeButtonBuf = ByteBuffer
+                .allocateDirect(swapButton.length * Constants.BYTES_PER_FLOAT)
+                .order(ByteOrder.nativeOrder())
+                .asFloatBuffer()
+                .put(resumeButton);
+        resumeButtonBuf.position(0);
     }
     
     public void bindAttributes()
     {
-        /*glEnableVertexAttribArray(aPositionLocation);
-        glVertexAttribPointer (aPositionLocation, POSITION_COMPONENT_COUNT,
-                GL_FLOAT, false, STRIDE,0 );
-
-        glEnableVertexAttribArray(aColorLocation);
-        glVertexAttribPointer (aColorLocation, COLOR_COMPONENT_COUNT,
-                GL_FLOAT, false, STRIDE,POSITION_COMPONENT_COUNT * Constants.BYTES_PER_FLOAT);*/
         glEnableVertexAttribArray(aPositionLocation);
         glVertexAttribPointer (aPositionLocation, 2,
                 GL_FLOAT, false, Constants.BYTES_PER_FLOAT * 4,0 );
@@ -339,67 +290,6 @@ public class UI extends Drawable
 
     public void drawJoySticks()
     {
-        /*if(movementDown)
-        {
-            glUniform1f(xDispLoc, movementOnDown.x);
-            glUniform1f(yDispLoc, -movementOnDown.y);
-
-            glBindBuffer(GL_ARRAY_BUFFER, joyBaseMovementVBO[0]);
-            bindJoyStickAttributes();
-
-            glDrawArrays(GL_TRIANGLE_FAN, 0, joyBasePoints);
-
-            //Set displacement, clamp max displacement from base, and draw the joystick.
-            float xTempDifference = (movementOnMove.x - movementOnDown.x);
-            float yTempDifference = (movementOnMove.y - movementOnDown.y);
-            float tempMagnitude = VectorFunctions.getMagnitude(xTempDifference, yTempDifference);
-
-            if (tempMagnitude > joyStickRadius * .8f) {
-                glUniform1f(xDispLoc, joyStickRadius * .8f * (xTempDifference / tempMagnitude) + movementOnDown.x);
-                glUniform1f(yDispLoc, -(joyStickRadius * .8f * (yTempDifference / tempMagnitude) + movementOnDown.y));
-            } else {
-                glUniform1f(xDispLoc, movementOnMove.x);
-                glUniform1f(yDispLoc, -movementOnMove.y);
-            }
-
-            glBindBuffer(GL_ARRAY_BUFFER, joyStickMovementVBO[0]);
-            bindJoyStickAttributes();
-
-            glDrawArrays(GL_TRIANGLE_FAN, 0, joyStickPoints);
-
-            glBindBuffer(GL_ARRAY_BUFFER, 0);
-        }
-        if(shootingDown)
-        {
-
-            glUniform1f(xDispLoc, shootingOnDown.x);
-            glUniform1f(yDispLoc, -shootingOnDown.y);
-
-            glBindBuffer(GL_ARRAY_BUFFER, joyBaseShootingVBO[0]);
-            bindJoyStickAttributes();
-
-            glDrawArrays(GL_TRIANGLE_FAN, 0, joyBasePoints);
-
-            //Set displacement, clamp max displacement from base, and draw the joystick.
-            float xTempDifference = (shootingOnMove.x - shootingOnDown.x);
-            float yTempDifference = (shootingOnMove.y - shootingOnDown.y);
-            float tempMagnitude = VectorFunctions.getMagnitude(xTempDifference, yTempDifference);
-
-            if (tempMagnitude > joyStickRadius * .8f) {
-                glUniform1f(xDispLoc, joyStickRadius * .8f * (xTempDifference / tempMagnitude) + shootingOnDown.x);
-                glUniform1f(yDispLoc, -(joyStickRadius * .8f * (yTempDifference / tempMagnitude) + shootingOnDown.y));
-            } else {
-                glUniform1f(xDispLoc, shootingOnMove.x);
-                glUniform1f(yDispLoc, -shootingOnMove.y);
-            }
-
-            glBindBuffer(GL_ARRAY_BUFFER, joyStickShootingVBO[0]);
-            bindJoyStickAttributes();
-
-            glDrawArrays(GL_TRIANGLE_FAN, 0, joyStickPoints);
-
-            glBindBuffer(GL_ARRAY_BUFFER, 0);
-        }*/
         if(movementDown)
         {
             glActiveTexture(GL_TEXTURE0);
@@ -486,6 +376,65 @@ public class UI extends Drawable
 
         glDrawArrays(GL_TRIANGLE_FAN, 0, 6);*/
     }
+
+    @Override
+    public void draw(double i)
+    {
+        if(gameState == 1)
+        {
+            drawJoySticks();
+        }
+        else if(gameState == 2)
+        {
+            drawPausedMenu();
+        }
+    }
+
+    public void drawPausedMenu()
+    {
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, resumeButtonTexture);
+        glUniform1i(uTextureLocation, 0);
+
+        glUniform1f(xDispLoc, 0);
+        glUniform1f(yDispLoc, 0f);
+
+        glBindBuffer(GL_ARRAY_BUFFER, resumeButtonVBO[0]);
+        bindAttributes();
+
+        glDrawArrays(GL_TRIANGLE_FAN, 0, 6);
+    }
+
+
+    public boolean checkPause(float x, float y)
+    {
+        System.out.println(x + ", " + y + "    " + xScale + ", " + yScale);
+        if(x >= UNPAUSE_BUTTON_XBOUND / xScale && y <= -UNPAUSE_BUTTON_YBOUND / yScale)
+        {
+            return false;
+        }
+        else
+        {
+            return true;
+        }
+    }
+
+    public void setScale(float xS,float yS)
+    {
+        xScale = xS;
+        yScale = yS;
+
+        for(int i = 4; i <= resumeButton.length; i += 4)
+        {
+            resumeButton[i-4] = resumeButton[i-4] / xScale;
+            resumeButton[i-3] = resumeButton[i-3] / yScale;
+            resumeButtonBuf.put(resumeButton);
+            resumeButtonBuf.position(0);
+            glBindBuffer(GL_ARRAY_BUFFER, resumeButtonVBO[0]);
+            glBufferData(GL_ARRAY_BUFFER, resumeButtonBuf.capacity() * Constants.BYTES_PER_FLOAT, resumeButtonBuf, GL_STATIC_DRAW);
+        }
+    }
+
     public void setMovementDown(boolean b)
     {
         movementDown = b;

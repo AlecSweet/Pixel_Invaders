@@ -14,4 +14,9 @@ public class VectorFunctions {
     {
         return (x1 - x) * (x1 - x) + (y1 - y) * (y1 - y);
     }
+
+    public static float getSquaredMagnitude(float tX, float tY)
+    {
+        return tX * tX + tY * tY;
+    }
 }

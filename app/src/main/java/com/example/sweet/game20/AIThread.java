@@ -8,35 +8,33 @@ import com.example.sweet.game20.Objects.GunComponent;
 import com.example.sweet.game20.Objects.Player;
 import com.example.sweet.game20.util.CollisionHandler;
 import com.example.sweet.game20.util.Constants;
+import com.example.sweet.game20.util.ScreenShake;
 import com.example.sweet.game20.util.VectorFunctions;
 
 import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.concurrent.ConcurrentLinkedQueue;
+
 
 public class AIThread implements Runnable
 {
     public Player player1;
 
     public Enemy[] entities;
-    public volatile boolean running = true;
+
+    public volatile boolean
+            running = true,
+            pause = false;
+
+    private boolean saveTime = false;
+
+    private double pauseTime = 0;
 
     public volatile long frameRequest = 0;
-
     private long currentFrame = 0;
-    private final long MILLIS_PER_SECOND = 1000;
-    private final long UPS = 60;
-
-    private final long mSPU = MILLIS_PER_SECOND / UPS;
-
-    private double
-            globalStartTime,
-            pastTime,
-            lag = 0.0;
 
     private PointF panToward = new PointF(0,0);
 
-    public volatile float
+    public float
             xbound = 0,
             ybound = 0,
             xScreenShift = 0,
@@ -44,9 +42,11 @@ public class AIThread implements Runnable
             cameraSpeed = .014f,
             cameraPanX = 0f,
             cameraPanY = 0f,
-            cameraClamp = .16f;
+            cameraClamp = .16f,
+            screenShakeX = 0,
+            screenShakeY = 0;
 
-    public volatile float
+    public float
             movementOnDownX = 0f,
             movementOnMoveX = 0f,
             shootingOnDownX = 0f,
@@ -56,13 +56,12 @@ public class AIThread implements Runnable
             shootingOnDownY = 0f,
             shootingOnMoveY = 0f;
 
-    public volatile boolean
+    public boolean
             movementDown = false,
             shootingDown = false;
-    
+
     public AIThread(Enemy[] e)
     {
-        globalStartTime = System.currentTimeMillis();
         entities = e;
     }
 
@@ -70,7 +69,7 @@ public class AIThread implements Runnable
     {
         while(running)
         {
-            double currentTime = System.currentTimeMillis() - globalStartTime;
+            /*double currentTime = System.currentTimeMillis() - globalStartTime;
             double elapsedTime = currentTime - pastTime;
             pastTime = currentTime;
             lag += elapsedTime;
@@ -81,14 +80,38 @@ public class AIThread implements Runnable
                 //if(!pause)
                 update();
                 lag -= mSPU;
-            }
-
-            /*if(currentFrame < frameRequest)
-            {
-                //System.out.println("FRAME DIFFERENCE: " + (frameRequest - currentFrame));
-                currentFrame++;
-                update();
             }*/
+            if(!pause)
+            {
+                if(!saveTime)
+                {
+                    double pauseLength = System.currentTimeMillis() - pauseTime;
+                    player1.applyPauseLength(pauseLength);
+                    for(Enemy e: entities)
+                    {
+                        if(e != null)
+                        {
+                            e.applyPauseLength(pauseLength);
+                        }
+                    }
+                    saveTime = true;
+                }
+
+                if (currentFrame < frameRequest)
+                {
+                    //System.out.println("FRAME DIFFERENCE: " + (frameRequest - currentFrame));
+                    currentFrame++;
+                    update();
+                }
+            }
+            else
+            {
+                if(saveTime)
+                {
+                    pauseTime = System.currentTimeMillis();
+                    saveTime = false;
+                }
+            }
         }
     }
     
@@ -153,16 +176,7 @@ public class AIThread implements Runnable
             }
         }
 
-        if(player1.getGuns()!= null)
-        {
-            for (GunComponent gC : player1.getGuns())
-            {
-                if (gC != null)
-                {
-                    gC.gun.move();
-                }
-            }
-        }
+        player1.moveGuns();
     }
 
     public void moveCamera()
@@ -211,8 +225,44 @@ public class AIThread implements Runnable
         {
             yScreenShift = player1.getPixelGroup().getCenterY() - cameraPanY;
         }
+
+        handleScreenShake();
     }
 
+    public void handleScreenShake()
+    {
+        Iterator<ScreenShake> itrX = player1.screenShakeEventsX.iterator();
+        while(itrX.hasNext())
+        {
+            ScreenShake s = itrX.next();
+            if(!s.live)
+            {
+                itrX.remove();
+            }
+            else
+            {
+                screenShakeX += s.getShake();
+            }
+        }
+
+        Iterator<ScreenShake> itrY = player1.screenShakeEventsY.iterator();
+        while(itrY.hasNext())
+        {
+            ScreenShake s = itrY.next();
+            if(!s.live)
+            {
+                itrY.remove();
+            }
+            else
+            {
+                screenShakeY += s.getShake();
+            }
+        }
+        xScreenShift += screenShakeX;
+        yScreenShift -= screenShakeY;
+        screenShakeX = 0;
+        screenShakeY = 0;
+    }
     /*public synchronized void setEntities(ArrayList<Enemy> e)
     {
         //entities = e;

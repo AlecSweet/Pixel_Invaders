@@ -65,10 +65,12 @@ public class CollisionHandler
                                                                 addParticleHelper(p, c);
                                                                 p.killPixel(c.cosA, c.sinA);
                                                                 c.numLivePixels--;
+                                                                c.lastPixelKilled = p;
 
                                                                 addParticleHelper(p2, c2);
                                                                 p2.killPixel(c2.cosA, c2.sinA);
                                                                 c2.numLivePixels--;
+                                                                c2.lastPixelKilled = p2;
 
                                                                 collision = true;
                                                                 break;

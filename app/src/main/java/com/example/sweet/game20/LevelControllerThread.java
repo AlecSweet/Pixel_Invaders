@@ -27,7 +27,11 @@ public class LevelControllerThread implements Runnable
 
     private Stack<Integer> openEntityIndices = new Stack<>();
 
-    public volatile boolean running = true;
+    public volatile boolean
+            running = true,
+            pause = false;
+
+    private boolean saveTime = false;
 
     public float
             xbound,
@@ -35,7 +39,8 @@ public class LevelControllerThread implements Runnable
 
     private double
             lastSpawn,
-            spawnDelay = 200;
+            spawnDelay = 500,
+            pauseTime = 0;
 
     public LevelControllerThread(EnemyFactory eF)
     {
@@ -50,7 +55,24 @@ public class LevelControllerThread implements Runnable
     {
         while(running)
         {
-            levelController();
+            if(!pause)
+            {
+                if(!saveTime)
+                {
+                    double pauseLength = System.currentTimeMillis() - pauseTime;
+                    lastSpawn += pauseLength;
+                    saveTime = true;
+                }
+                levelController();
+            }
+            else
+            {
+                if(saveTime)
+                {
+                    pauseTime = System.currentTimeMillis();
+                    saveTime = false;
+                }
+            }
         }
     }
 

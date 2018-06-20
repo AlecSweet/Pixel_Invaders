@@ -27,7 +27,7 @@ import static android.opengl.GLES20.glGenBuffers;
 
 public class ImageParser
 {
-    public static PixelGroup parseImage(Context context, int resourceID, int lightingID, int textureID, int sL)
+    public static PixelGroup parseImage(Context context, int resourceID, int lightingID, int sL)
     {
         PixelGroup pixelGroup;
         ArrayList<Pixel> p = new ArrayList<>();
@@ -154,7 +154,7 @@ public class ImageParser
                 //tempZones[tempItr].xOriginal -= Constants.PIXEL_SIZE;
                 //tempZones[tempItr].yOriginal -= Constants.PIXEL_SIZE;
                 //tempZones[tempItr].move(-Constants.PIXEL_SIZE,-Constants.PIXEL_SIZE);
-                tempZones[tempItr].halfSquareLength+= Constants.PIXEL_SIZE;
+                tempZones[tempItr].halfSquareLength+= Constants.PIXEL_SIZE*3;
                 tempZones[tempItr].initCollidableGroupArray();
                 tempItr++;
             }
@@ -247,7 +247,7 @@ public class ImageParser
         glBufferData(GL_ARRAY_BUFFER, buf.capacity() * Constants.BYTES_PER_FLOAT, buf, GL_STATIC_DRAW);
         glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-        pixelGroup = new PixelGroup(pixels,(float)halfSquareLength * Constants.PIXEL_SIZE + Constants.PIXEL_SIZE, tempZones, textureID, sL,vBuffer[0]);
+        pixelGroup = new PixelGroup(pixels,(float)halfSquareLength * Constants.PIXEL_SIZE + Constants.PIXEL_SIZE, tempZones, sL,vBuffer[0]);
         pixelGroup.setpMap(pMap);
         return pixelGroup;
     }

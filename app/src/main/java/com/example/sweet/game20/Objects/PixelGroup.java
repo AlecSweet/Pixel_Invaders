@@ -42,20 +42,11 @@ public class PixelGroup extends Collidable
     private int
             aPositionLocation,
             aColorLocation,
-            uTextureLocation,
             uAngleLocation,
             uSquareLengthLocation,
             xDispLoc,
-            yDispLoc;
-
-    private static final String
-            A_COLOR = "a_Color",
-            A_POSITION = "a_Position",
-            U_TEXTURE = "u_Texture",
-            U_ANGLE = "angle",
-            U_SQUARELENGTH = "squareLength",
-            X_DISP = "x_displacement",
-            Y_DISP = "y_displacement";
+            yDispLoc,
+            uTiltAngleLocation;
 
     private float[] colorVA;
 
@@ -63,8 +54,7 @@ public class PixelGroup extends Collidable
 
     private int[]
             vBuffer = new int[1],
-            cBuffer = new int[1],
-            textureID = new int[1];
+            cBuffer = new int[1];
 
     private Pixel[][] pMap;
 
@@ -74,10 +64,9 @@ public class PixelGroup extends Collidable
 
     public boolean onScreen = false;
 
-    public PixelGroup(Pixel[] p, float halfSquareLength, Zone[] z,int  tID, int sL, int vB)
+    public PixelGroup(Pixel[] p, float halfSquareLength, Zone[] z, int sL, int vB)
     {
         super(0 , 0, halfSquareLength, p,true, z);
-        textureID[0] = tID;
         shaderLocation = sL;
         vBuffer[0] = vB;
     }
@@ -89,9 +78,6 @@ public class PixelGroup extends Collidable
             initGlCalls();
         }
 
-        glUniform1f(xDispLoc, centerX);
-        glUniform1f(yDispLoc, centerY);
-
         if(needsUpdate)
         {
             updatePixels();
@@ -101,11 +87,8 @@ public class PixelGroup extends Collidable
         if(numLivePixels < totalPixels * livablePercentage)
             collidableLive = false;
 
-        glActiveTexture(GL_TEXTURE0);
-        // Bind the texture to this unit.
-        glBindTexture(GL_TEXTURE_2D, textureID[0]);
-        // Tell the texture uniform sampler to use this texture in the shader by binding to texture unit 0.
-        glUniform1i(uTextureLocation, 0);
+        glUniform1f(xDispLoc, centerX);
+        glUniform1f(yDispLoc, centerY);
         glUniform1f(uAngleLocation, (float)angle);
         glUniform1f(uSquareLengthLocation, halfSquareLength);
 
@@ -119,6 +102,33 @@ public class PixelGroup extends Collidable
 
         glDrawArrays(GL_POINTS, 0, pixels.length);
 
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
+    }
+
+    public void softDraw(float x, float y, float ang, float tiltAng)
+    {
+        if(!glInit)
+        {
+            initGlCalls();
+        }
+
+        glUniform1f(xDispLoc, x);
+        glUniform1f(yDispLoc, y);
+        glUniform1f(uAngleLocation, ang);
+        glUniform1f(uSquareLengthLocation, halfSquareLength);
+        glUniform1f(uTiltAngleLocation, tiltAng);
+
+        glBindBuffer(GL_ARRAY_BUFFER, vBuffer[0]);
+        glEnableVertexAttribArray(aPositionLocation);
+        glVertexAttribPointer(aPositionLocation, POSITION_COMPONENT_COUNT, GL_FLOAT, false, 0, 0);
+
+        glBindBuffer(GL_ARRAY_BUFFER, cBuffer[0]);
+        glEnableVertexAttribArray(aColorLocation);
+        glVertexAttribPointer(aColorLocation, COLOR_COMPONENT_COUNT, GL_FLOAT, false, 0, 0);
+
+        glDrawArrays(GL_POINTS, 0, pixels.length);
+
+        glUniform1f(uTiltAngleLocation, 0);
         glBindBuffer(GL_ARRAY_BUFFER, 0);
     }
 
@@ -170,20 +180,11 @@ public class PixelGroup extends Collidable
             else
                 cbuf.put((i + 1) * 4 - 1,0f);
             if(pixels[i].outside)
-                cbuf.put((i + 1) * 4 - 4, pixels[i].r + (float)(Math.random()* .5 - .25));
-            /*if(onScreen && pixels[i].outside)
             {
-                cbuf.put((i + 1) * 4 - 4, 1f);
-                cbuf.put((i + 1) * 4 - 3, 1f);
-                cbuf.put((i + 1) * 4 - 2, 1f);
+                cbuf.put((i + 1) * 4 - 4, 1);
+                cbuf.put((i + 1) * 4 - 3, 1);
+                cbuf.put((i + 1) * 4 - 2, 1);
             }
-            else if(pixels[i].outside)
-            {
-                cbuf.put((i + 1) * 4 - 4, pixels[i].r);
-                cbuf.put((i + 1) * 4 - 3, pixels[i].g);
-                cbuf.put((i + 1) * 4 - 2, pixels[i].b);
-            }*/
-
         }
 
         glBindBuffer(GL_ARRAY_BUFFER, cBuffer[0]);
@@ -192,13 +193,13 @@ public class PixelGroup extends Collidable
 
     public void initGlCalls()
     {
-        aPositionLocation = glGetAttribLocation(shaderLocation, A_POSITION);
-        aColorLocation = glGetAttribLocation(shaderLocation, A_COLOR);
-        uTextureLocation = glGetUniformLocation(shaderLocation, U_TEXTURE);
-        uAngleLocation = glGetUniformLocation(shaderLocation,U_ANGLE);
-        uSquareLengthLocation = glGetUniformLocation(shaderLocation,U_SQUARELENGTH);
-        xDispLoc = glGetUniformLocation(shaderLocation,X_DISP);
-        yDispLoc = glGetUniformLocation(shaderLocation,Y_DISP);
+        aPositionLocation = glGetAttribLocation(shaderLocation, "a_Position");
+        aColorLocation = glGetAttribLocation(shaderLocation, "a_Color");
+        uAngleLocation = glGetUniformLocation(shaderLocation,"angle");
+        uSquareLengthLocation = glGetUniformLocation(shaderLocation,"squareLength");
+        xDispLoc = glGetUniformLocation(shaderLocation,"x_displacement");
+        yDispLoc = glGetUniformLocation(shaderLocation,"y_displacement");
+        uTiltAngleLocation = glGetUniformLocation(shaderLocation,"tilt");
 
         initBuffers();
         glInit = true;
@@ -254,6 +255,7 @@ public class PixelGroup extends Collidable
         needsUpdate = true;
         numLivePixels = totalPixels;
     }
+
     @Override
     public PixelGroup clone()
     {
@@ -350,7 +352,7 @@ public class PixelGroup extends Collidable
                 tempItr++;
             }
 
-        PixelGroup pixelGroup = new PixelGroup(pArr,(float)halfSquareLength * Constants.PIXEL_SIZE, tempZones, textureID[0], shaderLocation, vBuffer[0]);
+        PixelGroup pixelGroup = new PixelGroup(pArr,(float)halfSquareLength * Constants.PIXEL_SIZE, tempZones, shaderLocation, vBuffer[0]);
         pixelGroup.setpMap(cloneMap);
         return pixelGroup;
     }

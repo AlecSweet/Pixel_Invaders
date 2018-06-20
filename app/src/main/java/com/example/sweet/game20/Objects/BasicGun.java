@@ -14,7 +14,7 @@ public class BasicGun extends Gun
 {
     public BasicGun(PixelGroup pG, ParticleSystem ps)
     {
-        super(100, pG, ps, .02f);
+        super(330, pG, ps, .028f);
         spread = .04f;
     }
 

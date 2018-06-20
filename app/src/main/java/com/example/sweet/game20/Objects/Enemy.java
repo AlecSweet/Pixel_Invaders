@@ -1,5 +1,9 @@
 package com.example.sweet.game20.Objects;
 
+import com.example.sweet.game20.util.DropFactory;
+
+import java.util.concurrent.ConcurrentLinkedQueue;
+
 import static android.opengl.GLES20.glGetUniformLocation;
 import static android.opengl.GLES20.glUniform1f;
 
@@ -12,6 +16,10 @@ public class Enemy extends Drawable
     protected PixelGroup enemyBody;
 
     protected ParticleSystem particleSystem;
+
+    protected DropFactory dropFactory;
+
+    public ConcurrentLinkedQueue<Drop> dropsToAdd = new ConcurrentLinkedQueue<>();
 
     protected volatile float
             x,
@@ -34,13 +42,14 @@ public class Enemy extends Drawable
 
     protected float xbound, ybound;
 
-    public Enemy(PixelGroup p, ParticleSystem ps)
+    public Enemy(PixelGroup p, ParticleSystem ps, DropFactory dF)
     {
         particleSystem = ps;
         x = 0.0f;
         y = 0.0f;
         enemyBody = p;
         enemyBody.setEnableOrphanChunkDeletion(true);
+        dropFactory = dF;
     }
 
     public void move(float mX, float mY)
@@ -87,6 +96,11 @@ public class Enemy extends Drawable
 
     }
 
+    public void applyPauseLength(double p)
+    {
+
+    }
+
     public PixelGroup getPixelGroup()
     {
         return enemyBody;
@@ -121,7 +135,7 @@ public class Enemy extends Drawable
     @Override
     public Enemy clone()
     {
-        Enemy e = new Enemy(enemyBody.clone(), particleSystem);
+        Enemy e = new Enemy(enemyBody.clone(), particleSystem, dropFactory);
         e.setLoc(x, y);
         return e;
     }

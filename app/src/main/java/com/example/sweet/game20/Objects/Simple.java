@@ -1,6 +1,7 @@
 package com.example.sweet.game20.Objects;
 
 import com.example.sweet.game20.util.Constants;
+import com.example.sweet.game20.util.DropFactory;
 import com.example.sweet.game20.util.VectorFunctions;
 
 import static android.opengl.GLES20.glUniform1f;
@@ -27,9 +28,9 @@ public class Simple extends Enemy
     private boolean track = false;
     private boolean retreat = false;
 
-    public Simple(PixelGroup p, Gun g, ParticleSystem ps)
+    public Simple(PixelGroup p, Gun g, ParticleSystem ps, DropFactory dF)
     {
-        super(p, ps);
+        super(p, ps, dF);
 
         for(int i = 0; i < thusterPixelCoordinates.length; i += 2)
             thrusterPixels[i/2] = enemyBody.getpMap()[thusterPixelCoordinates[i+1]][thusterPixelCoordinates[i]];
@@ -132,7 +133,12 @@ public class Simple extends Enemy
             }
         }
     }
-    
+
+    public void applyPauseLength(double p)
+    {
+        guns[0].gun.applyPauseLength(p);
+    }
+
     @Override
     public void draw(double interpolation)
     {
@@ -149,7 +155,7 @@ public class Simple extends Enemy
     public Simple clone()
     {
         //public Simple(PixelGroup p, int sL, Gun g, ParticleSystem ps, float modifier)
-        Simple s = new Simple(enemyBody.clone(), guns[0].gun.clone(), particleSystem);
+        Simple s = new Simple(enemyBody.clone(), guns[0].gun.clone(), particleSystem, dropFactory);
         return s;
     }
 }

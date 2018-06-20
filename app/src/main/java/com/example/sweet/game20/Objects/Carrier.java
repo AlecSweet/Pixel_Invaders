@@ -1,5 +1,6 @@
 package com.example.sweet.game20.Objects;
 
+import com.example.sweet.game20.util.DropFactory;
 import com.example.sweet.game20.util.VectorFunctions;
 import com.example.sweet.game20.util.Constants;
 import static android.opengl.GLES20.glUniform1f;
@@ -20,9 +21,9 @@ public class Carrier extends Enemy
     private boolean track = false;
     private boolean retreat = false;
 
-    public Carrier(PixelGroup p, ParticleSystem ps)
+    public Carrier(PixelGroup p, ParticleSystem ps, DropFactory dF)
     {
-        super(p, ps);
+        super(p, ps, dF);
 
         for (int i = 0; i < thusterPixelCoordinates.length; i += 2)
             thrusterPixels[i / 2] = enemyBody.getpMap()[thusterPixelCoordinates[i + 1]][thusterPixelCoordinates[i]];
@@ -114,6 +115,6 @@ public class Carrier extends Enemy
     @Override
     public Carrier clone()
     {
-        return new Carrier(enemyBody.clone(), particleSystem);
+        return new Carrier(enemyBody.clone(), particleSystem, dropFactory);
     }
 }

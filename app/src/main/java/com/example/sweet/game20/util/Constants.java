@@ -22,7 +22,13 @@ public class Constants
 
     public static final int ENTITIES_LENGTH = 200;
 
-    public static final int SCREEN_BOUND = 4;
+    public static final int DROPS_LENGTH = 200;
+
+    public static final double TYPE_0_DROP_LIVETIME = 40000;
+
+    public static final double TYPE_1_DROP_LIVETIME = 120000;
+
+    public static final float PUll_DROP_RADIUS = .5f;
 
     public enum EnemyType
     {
@@ -35,5 +41,15 @@ public class Constants
         ASTEROID_GREY_SMALL,
         ASTEROID_RED_MEDIUM,
         ASTEROID_GREY_MEDIUM
+    }
+
+    public enum DropType
+    {
+        HEALTH,
+        GUN,
+        THRUSTER,
+        MOD_FIRERATE,
+        MOD_EXTRAMODS,
+        MOD_EXTRASHOTS,
     }
 }

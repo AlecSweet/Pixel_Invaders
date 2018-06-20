@@ -42,6 +42,8 @@ public class Collidable
             totalPixels,
             numLivePixels;
 
+    public Pixel lastPixelKilled;
+
     public Collidable(float x, float y, float hSL, Pixel[] p, boolean chunkDeletion, Zone[] z)
     {
         centerX = x;
@@ -90,7 +92,7 @@ public class Collidable
                         boolean groupCheck = false;
                         for(Pixel p: cG.pixels)
                         {
-                            if(p.live && p.outside)
+                            if(p.live)
                             {
                                 p.xDisp = p.xOriginal * cosA + p.yOriginal * sinA;
                                 p.yDisp = p.yOriginal * cosA - p.xOriginal * sinA;
