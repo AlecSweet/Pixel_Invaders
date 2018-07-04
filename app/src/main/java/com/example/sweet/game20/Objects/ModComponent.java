@@ -1,6 +1,8 @@
 package com.example.sweet.game20.Objects;
 
 
+import com.example.sweet.game20.util.Constants;
+
 /**
  * Created by Sweet on 4/30/2018.
  */
@@ -18,9 +20,9 @@ public class ModComponent extends Component
 
     public int modLevel;
 
-    public ModComponent(Pixel[] p, int t, float x, float y, float a, int mType, int mLevel, ParticleSystem ps)
+    public ModComponent(Pixel[] p, float x, float y, float a, int mType, int mLevel, ParticleSystem ps)
     {
-        super(p, t, x, y, a, ps);
+        super(p, x, y, a, ps, Constants.DropType.MOD);
         modType = mType;
         modLevel = mLevel;
     }

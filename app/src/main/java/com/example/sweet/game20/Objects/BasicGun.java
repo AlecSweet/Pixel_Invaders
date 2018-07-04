@@ -12,9 +12,9 @@ import com.example.sweet.game20.util.ImageParser;
 
 public class BasicGun extends Gun
 {
-    public BasicGun(PixelGroup pG, ParticleSystem ps)
+    public BasicGun(PixelGroup pG, ParticleSystem ps, double delay)
     {
-        super(330, pG, ps, .028f);
+        super(delay, pG, ps, .028f);
         spread = .04f;
     }
 
@@ -83,6 +83,6 @@ public class BasicGun extends Gun
     @Override
     public BasicGun clone()
     {
-        return new BasicGun(pixelGroupTemplate.clone(), masterParticleSystem);
+        return new BasicGun(pixelGroupTemplate.clone(), masterParticleSystem, shootDelay);
     }
 }

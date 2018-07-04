@@ -4,33 +4,27 @@ import android.content.Context;
 import android.graphics.PointF;
 
 
+import com.example.sweet.game20.Objects.Button;
+import com.example.sweet.game20.Objects.Component;
 import com.example.sweet.game20.Objects.Drawable;
+import com.example.sweet.game20.Objects.Drop;
+import com.example.sweet.game20.Objects.ImageContainer;
+import com.example.sweet.game20.Objects.Player;
 import com.example.sweet.game20.util.Constants;
+import com.example.sweet.game20.util.TextPresenter;
 import com.example.sweet.game20.util.TextureLoader;
 import com.example.sweet.game20.util.VectorFunctions;
 
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-import java.nio.FloatBuffer;
-
-import static android.opengl.GLES20.GL_ARRAY_BUFFER;
-import static android.opengl.GLES20.GL_FLOAT;
-import static android.opengl.GLES20.GL_STATIC_DRAW;
-import static android.opengl.GLES20.GL_TRIANGLE_FAN;
-import static android.opengl.GLES20.glBindBuffer;
-import static android.opengl.GLES20.glBufferData;
-import static android.opengl.GLES20.glDrawArrays;
-import static android.opengl.GLES20.glEnableVertexAttribArray;
-import static android.opengl.GLES20.glGenBuffers;
-import static android.opengl.GLES20.glGetAttribLocation;
-import static android.opengl.GLES20.glGetUniformLocation;
-import static android.opengl.GLES20.glUniform1f;
-import static android.opengl.GLES20.glVertexAttribPointer;
 import static android.opengl.GLES20.GL_TEXTURE0;
 import static android.opengl.GLES20.GL_TEXTURE_2D;
 import static android.opengl.GLES20.glActiveTexture;
 import static android.opengl.GLES20.glBindTexture;
 import static android.opengl.GLES20.glUniform1i;
+import static android.opengl.GLES20.glUseProgram;
+import static com.example.sweet.game20.util.Constants.*;
+import static android.opengl.GLES20.glGetAttribLocation;
+import static android.opengl.GLES20.glGetUniformLocation;
+
 /**
  * Created by Sweet on 2/14/2018.
  */
@@ -41,29 +35,12 @@ public class UI extends Drawable
             joyStickRadius = .32f;
 
     public PointF
-            menuOnDown = new PointF(0,0),
-            menuOnMove = new PointF(0,0),
-            movementOnDown = new PointF(0,0),
-            movementOnMove = new PointF(0,0),
-            shootingOnDown = new PointF(0,0),
-            shootingOnMove = new PointF(0,0);
-
-    private int
-            xDispLoc,
-            yDispLoc,
-            aPositionLocation,
-            aTextureCoordLocation,
-            uTextureLocation;
-
-    private int
-            swapButtonTexture,
-            resumeButtonTexture,
-            moveJoyStickBaseTexture,
-            moveJoyStickTexture,
-            shootJoyStickBaseTexture,
-            shootJoyStickTexture,
-            screenShadeTexture,
-            componentSqaureTexture;
+            menuOnDown = new PointF(0, 0),
+            menuOnMove = new PointF(0, 0),
+            movementOnDown = new PointF(0, 0),
+            movementOnMove = new PointF(0, 0),
+            shootingOnDown = new PointF(0, 0),
+            shootingOnMove = new PointF(0, 0);
 
     public boolean menuPointerDown = false;
 
@@ -71,242 +48,372 @@ public class UI extends Drawable
             movementDown = false,
             shootingDown = false;
 
-    private static final String
-            A_POSITION = "a_Position",
-            A_TEXTURECOORDINATE = "a_TexCoordinate",
-            U_TEXTURE = "u_Texture",
-            X_DISP = "x_displacement",
-            Y_DISP = "y_displacement";
-
-    private float[] joyBaseMovement = new float[]{
-            0f,    0f, 0.5f, 0.5f,
-            -joyStickRadius, -joyStickRadius,   0f, 1f,
-            joyStickRadius, -joyStickRadius,   1f, 1f,
-            joyStickRadius,  joyStickRadius,   1f, 0f,
-            -joyStickRadius,  joyStickRadius,   0f, 0f,
-            -joyStickRadius, -joyStickRadius,   0f, 1f
-            };
-
-    private float[] joyStickMovement = new float[]{
-            0f,    0f, 0.5f, 0.5f,
-            -joyStickRadius/1.8f, -joyStickRadius/1.8f,   0f, 1f,
-            joyStickRadius/1.8f, -joyStickRadius/1.8f,   1f, 1f,
-            joyStickRadius/1.8f,  joyStickRadius/1.8f,   1f, 0f,
-            -joyStickRadius/1.8f,  joyStickRadius/1.8f,   0f, 0f,
-            -joyStickRadius/1.8f, -joyStickRadius/1.8f,   0f, 1f
-    };
-
-    private float[]
-            joyBaseShooting = joyBaseMovement,
-            joyStickShooting = joyStickMovement;
-
-    private float[] swapButton = new float[]{
-            0f,    0f, 0.5f, 0.5f,
-            -0.5f, -0.1f,   0f, 1f,
-            0.5f, -0.1f,   1f, 1f,
-            0.5f,  0.1f,   1f, 0f,
-            -0.5f,  0.1f,   0f, 0f,
-            -0.5f, -0.1f,   0f, 1f
-    };
-
-    private static final int
-            POSITION_COMPONENT_COUNT = 2,
-            COLOR_COMPONENT_COUNT = 4,
-            STRIDE = Constants.BYTES_PER_FLOAT * (POSITION_COMPONENT_COUNT + COLOR_COMPONENT_COUNT);
-
-    private static final float
-            UNPAUSE_BUTTON_XBOUND = .8f,
-            UNPAUSE_BUTTON_YBOUND = .4f;
-
-    private float[] resumeButton = new float[]{
-            UNPAUSE_BUTTON_XBOUND + .1f,  UNPAUSE_BUTTON_YBOUND + .3f, 0.5f, 0.5f,
-            1f,  1f,   1f, 1f,
-            1f, UNPAUSE_BUTTON_YBOUND,   1f, 0f,
-            UNPAUSE_BUTTON_XBOUND, UNPAUSE_BUTTON_YBOUND,   0f, 0f,
-            UNPAUSE_BUTTON_XBOUND,  1f,   0f, 1f,
-            1f,  1f,   1f, 1f,
-    };
-
-    private float[] screenShade = new float[]{
-            0f,  0f, 0.5f, 0.5f,
-            1f,  1f,   1f, 1f,
-            1f, -1f,   1f, 0f,
-            -1f, -1f,   0f, 0f,
-            -1f,  1f,   0f, 1f,
-            1f,  1f,   1f, 1f,
-    };
-    
-    private float[] componentSquare = new float[]{
-            0f,  0f, 0.5f, 0.5f,
-            .2f,  2f,   1f, 1f,
-            .2f, -.2f,   1f, 0f,
-            -.2f, -.2f,   0f, 0f,
-            -.2f,  .2f,   0f, 1f,
-            .2f,  .2f,   1f, 1f,
-    };
-
     public float
             xScale,
-            yScale;
+            yScale,
+            pointSize;
 
-    private int
-            joyBaseMovementVBO[] = new int[1],
-            joyStickMovementVBO[] = new int[1],
-            joyBaseShootingVBO[] = new int[1],
-            joyStickShootingVBO[] = new int[1],
-            swapButtonVBO[] = new int[1],
-            resumeButtonVBO[] = new int[1],
-            screenShadeVBO[] = new int[1],
-            componentSquareVBO[] = new int[1];
+    public int
+            uiShaderProgram,
+            pixelShaderProgram,
+            whiteTexture,
+            uTextureLocation;
 
-    private FloatBuffer
-            joyBaseMovementBuf,
-            joyStickMovementBuf,
-            joyBaseShootingBuf,
-            joyStickShootingBuf,
-            swapButtonBuf,
-            resumeButtonBuf,
-            screenShadeBuf,
-            componentSquareBuf;
+    private Button heldDropButton;
+    private Button selectedButton = null;
 
-    /*
-    0: Main Menu
-    1: In Game
-    2: Paused
-     */
-    public int gameState = 0;
+    public GameState gameState = GameState.MAIN_MENU;
+
+    private ImageContainer
+            joyBaseMove,
+            joyStickMove,
+            joyBaseShoot,
+            joyStickShoot,
+            screenShade,
+            allInfoBox,
+            modPanel,
+            gunPanel,
+            thrusterPanel;
+
+    private Button
+            resumeButton,
+            optionsButton,
+            exitButton;
+
+    private float
+            playerModelX = 0.16f,
+            playerModelY = -.672f;
+
+    public Player player;
+
+    private float mag = 2.8f;
+
+    private int score = 0;
+
+    public boolean exitFlag = false;
+
+    private Button[][] componentPanel = new Button[4][2];
+
+    private Button[] playerGuns = new Button[3];
+    float u = .024f;
+    private PointF[] gunOffsets = new PointF[]{
+            //new PointF(-.06f * mag + u, -.072f * mag),
+            //new PointF(-.06f * mag + u, .056f * mag),
+            new PointF(0 + u, -.008f * mag),
+            new PointF(.056f * mag + u, -.088f * mag),
+            new PointF(.056f * mag + u, .072f * mag)
+    };
+
+    private Button[] playerThrusters = new Button[3];
+    private PointF[] thrusterOffsets = new PointF[]{
+            new PointF(-.132f * mag, -.112f * mag),
+            new PointF(-.132f * mag, -.008f * mag),
+            new PointF(-.132f * mag, .096f * mag)
+    };
+
+    private Button[] playerMods = new Button[5];
+    private PointF modLeftOffset = new PointF(-.46f, -.235f);
+
+    private Button[] allComponentButtons = new Button[
+            componentPanel.length * componentPanel[0].length +
+            playerGuns.length +
+            playerMods.length +
+            playerThrusters.length
+            ];
+
+    private TextPresenter textPresenter;
 
     public UI(Context context, int shaderLocation)
     {
-        xDispLoc = glGetUniformLocation(shaderLocation,X_DISP);
-        yDispLoc = glGetUniformLocation(shaderLocation,Y_DISP);
-        aPositionLocation = glGetAttribLocation(shaderLocation, A_POSITION);
-        aTextureCoordLocation = glGetAttribLocation(shaderLocation, A_TEXTURECOORDINATE);
-        uTextureLocation = glGetUniformLocation(shaderLocation, U_TEXTURE);
+        int[] glVarLocations = new int[5];
+        glVarLocations[0] = glGetUniformLocation(shaderLocation, "x_displacement");
+        glVarLocations[1] = glGetUniformLocation(shaderLocation, "y_displacement");
+        glVarLocations[2] = glGetAttribLocation(shaderLocation, "a_Position");
+        glVarLocations[3] = glGetAttribLocation(shaderLocation, "a_TexCoordinate");
+        glVarLocations[4] = glGetUniformLocation(shaderLocation, "u_Texture");
 
-        //swapButtonTexture = TextureLoader.loadTexture(context, R.drawable.swap);
-        componentSqaureTexture = TextureLoader.loadTexture(context, R.drawable.square);
-        screenShadeTexture = TextureLoader.loadTexture(context, R.drawable.shade);
-        resumeButtonTexture = TextureLoader.loadTexture(context, R.drawable.resume);
-        moveJoyStickBaseTexture = TextureLoader.loadTexture(context, R.drawable.mjb);
-        moveJoyStickTexture = TextureLoader.loadTexture(context, R.drawable.mj);
-        shootJoyStickBaseTexture = TextureLoader.loadTexture(context, R.drawable.sjb);
-        shootJoyStickTexture = TextureLoader.loadTexture(context, R.drawable.sj);
-        
-        fillUIBuffers();
-        initVBOs();
-    }
+        textPresenter = new TextPresenter(context, glVarLocations);
 
-    public void initVBOs()
-    {
-        glGenBuffers(1, joyBaseMovementVBO, 0);
-        glBindBuffer(GL_ARRAY_BUFFER, joyBaseMovementVBO[0]);
-        glBufferData(GL_ARRAY_BUFFER, joyBaseMovementBuf.capacity() * Constants.BYTES_PER_FLOAT, joyBaseMovementBuf, GL_STATIC_DRAW);
+        joyBaseMove = new ImageContainer
+                (
+                        TextureLoader.loadTexture(context, R.drawable.mjb),
+                        joyBaseMoveVA,
+                        0, 0,
+                        "joyBaseMove",
+                        glVarLocations,
+                        -1, -1
+                );
+        joyStickMove = new ImageContainer
+                (
+                        TextureLoader.loadTexture(context, R.drawable.mj),
+                        joyStickMoveVA,
+                        0, 0,
+                        "joyStickMove",
+                        glVarLocations,
+                        -1, -1
+                );
+        joyBaseShoot = new ImageContainer
+                (
+                        TextureLoader.loadTexture(context, R.drawable.sjb),
+                        joyBaseShootVA,
+                        0, 0,
+                        "joyBaseShoot",
+                        glVarLocations,
+                        -1, -1
+                );
+        joyStickShoot = new ImageContainer
+                (
+                        TextureLoader.loadTexture(context, R.drawable.sj),
+                        joyStickShootVA,
+                        0, 0,
+                        "joyStickShoot",
+                        glVarLocations,
+                        -1, -1
+                );
+        screenShade = new ImageContainer
+                (
+                        TextureLoader.loadTexture(context, R.drawable.shade),
+                        screenShadeVA,
+                        0, 0,
+                        "screenShade",
+                        glVarLocations,
+                        -1, -1
+                );
+        modPanel = new ImageContainer
+                (
+                        TextureLoader.loadTexture(context, R.drawable.modpanel),
+                        infoPanelVA,
+                        -.024f + .02f, .936f,
+                        "modPanel",
+                        glVarLocations,
+                        -1, -1
+                );
+        gunPanel = new ImageContainer
+                (
+                        TextureLoader.loadTexture(context, R.drawable.gunpanel),
+                        infoPanelVA,
+                        -.024f + .02f, .936f,
+                        "gunPanel",
+                        glVarLocations,
+                        -1, -1
+                );
+        thrusterPanel = new ImageContainer
+                (
+                        TextureLoader.loadTexture(context, R.drawable.thrusterpanel),
+                        infoPanelVA,
+                        -.024f + .02f, .936f,
+                        "thrusterPanel",
+                        glVarLocations,
+                        -1, -1
+                );
+        allInfoBox = new ImageContainer
+                (
+                        TextureLoader.loadTexture(context, R.drawable.largebox),
+                        allInfoBoxVA,
+                        -.024f - .144f + .02f, 0,
+                        "largeBox",
+                        glVarLocations,
+                        -1, -1
+                );
 
-        glGenBuffers(1, joyStickMovementVBO, 0);
-        glBindBuffer(GL_ARRAY_BUFFER, joyStickMovementVBO[0]);
-        glBufferData(GL_ARRAY_BUFFER, joyStickMovementBuf.capacity() * Constants.BYTES_PER_FLOAT, joyStickMovementBuf, GL_STATIC_DRAW);
+        resumeButton = new Button
+                (
+                        new ImageContainer
+                                (
+                                        TextureLoader.loadTexture(context, R.drawable.resume),
+                                        resumeButtonVA,
+                                        .82f + .02f, .55f,
+                                        "resumeButton",
+                                        glVarLocations,
+                                        rbL, rbW
+                                ),
+                        new ImageContainer
+                                (
+                                        TextureLoader.loadTexture(context, R.drawable.resume2),
+                                        resumeButtonHoveredVA,
+                                        .82f + .02f, .55f,
+                                        "resumeButtonHover",
+                                        glVarLocations,
+                                        rbL, rbW
+                                ),
+                        null
+                );
 
-        glGenBuffers(1, joyBaseShootingVBO, 0);
-        glBindBuffer(GL_ARRAY_BUFFER, joyBaseShootingVBO[0]);
-        glBufferData(GL_ARRAY_BUFFER, joyBaseShootingBuf.capacity() * Constants.BYTES_PER_FLOAT, joyBaseShootingBuf, GL_STATIC_DRAW);
+        optionsButton = new Button
+                (
+                        new ImageContainer
+                                (
+                                        TextureLoader.loadTexture(context, R.drawable.options),
+                                        resumeButtonVA,
+                                        .82f + .02f, 0,
+                                        "optionsButton",
+                                        glVarLocations,
+                                        rbL, rbW
+                                ),
+                        new ImageContainer
+                                (
+                                        TextureLoader.loadTexture(context, R.drawable.options2),
+                                        resumeButtonHoveredVA,
+                                        .82f + .02f, 0,
+                                        "optionsButtonHover",
+                                        glVarLocations,
+                                        rbL, rbW
+                                ),
+                        null
+                );
 
-        glGenBuffers(1, joyStickShootingVBO, 0);
-        glBindBuffer(GL_ARRAY_BUFFER, joyStickShootingVBO[0]);
-        glBufferData(GL_ARRAY_BUFFER, joyStickShootingBuf.capacity() * Constants.BYTES_PER_FLOAT, joyStickShootingBuf, GL_STATIC_DRAW);
+        exitButton = new Button
+                (
+                        new ImageContainer
+                                (
+                                        TextureLoader.loadTexture(context, R.drawable.exit),
+                                        resumeButtonVA,
+                                        .82f + .02f, -.55f,
+                                        "exitButton",
+                                        glVarLocations,
+                                        rbL, rbW
+                                ),
+                        new ImageContainer
+                                (
+                                        TextureLoader.loadTexture(context, R.drawable.exit2),
+                                        resumeButtonHoveredVA,
+                                        .82f + .02f, -.55f,
+                                        "exitButtonHover",
+                                        glVarLocations,
+                                        rbL, rbW
+                                ),
+                        null
+                );
 
-        glGenBuffers(1, swapButtonVBO, 0);
-        glBindBuffer(GL_ARRAY_BUFFER, swapButtonVBO[0]);
-        glBufferData(GL_ARRAY_BUFFER, swapButtonBuf.capacity() * Constants.BYTES_PER_FLOAT, swapButtonBuf, GL_STATIC_DRAW);
-
-        glGenBuffers(1, resumeButtonVBO, 0);
-        glBindBuffer(GL_ARRAY_BUFFER, resumeButtonVBO[0]);
-        glBufferData(GL_ARRAY_BUFFER, resumeButtonBuf.capacity() * Constants.BYTES_PER_FLOAT, resumeButtonBuf, GL_STATIC_DRAW);
-
-        glGenBuffers(1, resumeButtonVBO, 0);
-        glBindBuffer(GL_ARRAY_BUFFER, resumeButtonVBO[0]);
-        glBufferData(GL_ARRAY_BUFFER, resumeButtonBuf.capacity() * Constants.BYTES_PER_FLOAT, resumeButtonBuf, GL_STATIC_DRAW);
-
-        glGenBuffers(1, resumeButtonVBO, 0);
-        glBindBuffer(GL_ARRAY_BUFFER, resumeButtonVBO[0]);
-        glBufferData(GL_ARRAY_BUFFER, resumeButtonBuf.capacity() * Constants.BYTES_PER_FLOAT, resumeButtonBuf, GL_STATIC_DRAW);
-    }
-
-    private void fillUIBuffers()
-    {
-        joyStickMovementBuf = ByteBuffer
-                .allocateDirect(joyStickMovement.length * Constants.BYTES_PER_FLOAT)
-                .order(ByteOrder.nativeOrder())
-                .asFloatBuffer()
-                .put(joyStickMovement);
-        joyStickMovementBuf.position(0);
-
-        joyBaseMovementBuf = ByteBuffer
-                .allocateDirect(joyBaseMovement.length * Constants.BYTES_PER_FLOAT)
-                .order(ByteOrder.nativeOrder())
-                .asFloatBuffer()
-                .put(joyBaseMovement);
-        joyBaseMovementBuf.position(0);
-
-        joyStickShootingBuf = ByteBuffer
-                .allocateDirect(joyStickShooting.length * Constants.BYTES_PER_FLOAT)
-                .order(ByteOrder.nativeOrder())
-                .asFloatBuffer()
-                .put(joyStickShooting);
-        joyStickShootingBuf.position(0);
-
-        joyBaseShootingBuf = ByteBuffer
-                .allocateDirect(joyBaseShooting.length * Constants.BYTES_PER_FLOAT)
-                .order(ByteOrder.nativeOrder())
-                .asFloatBuffer()
-                .put(joyBaseShooting);
-        joyBaseShootingBuf.position(0);
-        
-        swapButtonBuf = ByteBuffer
-                .allocateDirect(swapButton.length * Constants.BYTES_PER_FLOAT)
-                .order(ByteOrder.nativeOrder())
-                .asFloatBuffer()
-                .put(swapButton);
-        swapButtonBuf.position(0);
-
-        resumeButtonBuf = ByteBuffer
-                .allocateDirect(swapButton.length * Constants.BYTES_PER_FLOAT)
-                .order(ByteOrder.nativeOrder())
-                .asFloatBuffer()
-                .put(resumeButton);
-        resumeButtonBuf.position(0);
-    }
-    
-    public void bindAttributes()
-    {
-        glEnableVertexAttribArray(aPositionLocation);
-        glVertexAttribPointer (aPositionLocation, 2,
-                GL_FLOAT, false, Constants.BYTES_PER_FLOAT * 4,0 );
-
-        glEnableVertexAttribArray(aTextureCoordLocation);
-        glVertexAttribPointer (aTextureCoordLocation, 2,
-                GL_FLOAT, false, Constants.BYTES_PER_FLOAT * 4,Constants.BYTES_PER_FLOAT * 2);
-    }
-
-    public void drawJoySticks()
-    {
-        if(movementDown)
+        int itrAllCompButtons = 0;
+        int squareTexture = TextureLoader.loadTexture(context, R.drawable.square);
+        float midX = .429f + .02f;
+        float midY = .098f;
+        for (int r = 0; r < componentPanel.length; r++)
         {
-            glActiveTexture(GL_TEXTURE0);
-            glBindTexture(GL_TEXTURE_2D, moveJoyStickBaseTexture);
-            glUniform1i(uTextureLocation, 0);
+            float xL = midX - r * (radius * 2 + .048f);
+            for (int c = 0; c < componentPanel[0].length; c++)
+            {
+                float yL = midY + c * (radius * 2 + .048f);
+                componentPanel[r][c] = new Button
+                        (
+                                new ImageContainer
+                                        (
+                                                squareTexture,
+                                                componentSquareVA,
+                                                xL, yL,
+                                                "square",
+                                                glVarLocations,
+                                                radius, radius
+                                        ),
+                                new ImageContainer
+                                        (
+                                                squareTexture,
+                                                componentSquareHoverVA,
+                                                xL, yL,
+                                                "squareHover",
+                                                glVarLocations,
+                                                radius, radius
+                                        ),
+                                DropType.ANY
+                        );
+                allComponentButtons[itrAllCompButtons] = componentPanel[r][c];
+                itrAllCompButtons++;
+            }
+        }
 
-            glUniform1f(xDispLoc, movementOnDown.x);
-            glUniform1f(yDispLoc, -movementOnDown.y);
+        int square2Texture = TextureLoader.loadTexture(context, R.drawable.square2);
+        for (int i = 0; i < playerGuns.length; i++)
+        {
+            playerGuns[i] = new Button
+                    (
+                            new ImageContainer
+                                    (
+                                            square2Texture,
+                                            playerSquareVA,
+                                            playerModelX + gunOffsets[i].x, playerModelY + gunOffsets[i].y,
+                                            "square",
+                                            glVarLocations,
+                                            r2, r2
+                                    ),
+                            new ImageContainer
+                                    (
+                                            square2Texture,
+                                            playerSquareHoverVA,
+                                            playerModelX + gunOffsets[i].x, playerModelY + gunOffsets[i].y,
+                                            "squareHover",
+                                            glVarLocations,
+                                            r2, r2
+                                    ),
+                            DropType.GUN
+                    );
+            allComponentButtons[itrAllCompButtons] = playerGuns[i];
+            itrAllCompButtons++;
+        }
 
-            glBindBuffer(GL_ARRAY_BUFFER, joyBaseMovementVBO[0]);
-            bindAttributes();
-            glDrawArrays(GL_TRIANGLE_FAN, 0, 6);
+        for (int i = 0; i < playerThrusters.length; i++)
+        {
+            playerThrusters[i] = new Button
+                    (
+                            new ImageContainer
+                                    (
+                                            square2Texture,
+                                            playerSquareVA,
+                                            playerModelX + thrusterOffsets[i].x, playerModelY + thrusterOffsets[i].y,
+                                            "square",
+                                            glVarLocations,
+                                            r2, r2
+                                    ),
+                            new ImageContainer
+                                    (
+                                            square2Texture,
+                                            playerSquareHoverVA,
+                                            playerModelX + thrusterOffsets[i].x, playerModelY + thrusterOffsets[i].y,
+                                            "squareHover",
+                                            glVarLocations,
+                                            r2, r2
+                                    ),
+                            DropType.THRUSTER
+                    );
+            allComponentButtons[itrAllCompButtons] = playerThrusters[i];
+            itrAllCompButtons++;
+        }
 
+        for (int i = 0; i < playerMods.length; i++)
+        {
+            playerMods[i] = new Button
+                    (
+                            new ImageContainer
+                                    (
+                                            square2Texture,
+                                            playerSquareVA,
+                                            modLeftOffset.x, modLeftOffset.y - i * (.038f + r2 * 2),
+                                            "square",
+                                            glVarLocations,
+                                            r2, r2
+                                    ),
+                            new ImageContainer
+                                    (
+                                            square2Texture,
+                                            playerSquareHoverVA,
+                                            modLeftOffset.x, modLeftOffset.y - i * (.038f + r2 * 2),
+                                            "squareHover",
+                                            glVarLocations,
+                                            r2, r2
+                                    ),
+                            DropType.MOD
+                    );
+            allComponentButtons[itrAllCompButtons] = playerMods[i];
+            itrAllCompButtons++;
+        }
+    }
 
-            glActiveTexture(GL_TEXTURE0);
-            glBindTexture(GL_TEXTURE_2D, moveJoyStickTexture);
-            glUniform1i(uTextureLocation, 0);
+    public void moveJoySticks()
+    {
+        if (movementDown)
+        {
+            joyBaseMove.x = movementOnDown.x;
+            joyBaseMove.y = -movementOnDown.y;
 
             float xTempDifference = (movementOnMove.x - movementOnDown.x);
             float yTempDifference = (movementOnMove.y - movementOnDown.y);
@@ -314,103 +421,279 @@ public class UI extends Drawable
 
             if (tempMagnitude > joyStickRadius * .8f)
             {
-                glUniform1f(xDispLoc, joyStickRadius * .8f * (xTempDifference / tempMagnitude) + movementOnDown.x);
-                glUniform1f(yDispLoc, -(joyStickRadius * .8f * (yTempDifference / tempMagnitude) + movementOnDown.y));
-            } else
-            {
-                glUniform1f(xDispLoc, movementOnMove.x);
-                glUniform1f(yDispLoc, -movementOnMove.y);
+                joyStickMove.x = joyStickRadius * .8f * (xTempDifference / tempMagnitude) + movementOnDown.x;
+                joyStickMove.y = -(joyStickRadius * .8f * (yTempDifference / tempMagnitude) + movementOnDown.y);
             }
-
-            glBindBuffer(GL_ARRAY_BUFFER, joyStickMovementVBO[0]);
-            bindAttributes();
-            glDrawArrays(GL_TRIANGLE_FAN, 0, 6);
+            else
+            {
+                joyStickMove.x = movementOnMove.x;
+                joyStickMove.y = -movementOnMove.y;
+            }
         }
-        if(shootingDown)
+
+        if (shootingDown)
         {
-            glActiveTexture(GL_TEXTURE0);
-            glBindTexture(GL_TEXTURE_2D, shootJoyStickBaseTexture);
-            glUniform1i(uTextureLocation, 0);
+            joyBaseShoot.x = shootingOnDown.x;
+            joyBaseShoot.y = -shootingOnDown.y;
 
-            glUniform1f(xDispLoc, shootingOnDown.x);
-            glUniform1f(yDispLoc, -shootingOnDown.y);
-
-            glBindBuffer(GL_ARRAY_BUFFER, joyBaseShootingVBO[0]);
-            bindAttributes();
-            glDrawArrays(GL_TRIANGLE_FAN, 0, 6);
-
-            glActiveTexture(GL_TEXTURE0);
-            glBindTexture(GL_TEXTURE_2D, shootJoyStickTexture);
-            glUniform1i(uTextureLocation, 0);
-
-            //Set displacement, clamp max displacement from base, and draw the joystick.
             float xTempDifference = (shootingOnMove.x - shootingOnDown.x);
             float yTempDifference = (shootingOnMove.y - shootingOnDown.y);
             float tempMagnitude = VectorFunctions.getMagnitude(xTempDifference, yTempDifference);
 
             if (tempMagnitude > joyStickRadius * .8f)
             {
-                glUniform1f(xDispLoc, joyStickRadius * .8f * (xTempDifference / tempMagnitude) + shootingOnDown.x);
-                glUniform1f(yDispLoc, -(joyStickRadius * .8f * (yTempDifference / tempMagnitude) + shootingOnDown.y));
+                joyStickShoot.x = joyStickRadius * .8f * (xTempDifference / tempMagnitude) + shootingOnDown.x;
+                joyStickShoot.y = -(joyStickRadius * .8f * (yTempDifference / tempMagnitude) + shootingOnDown.y);
             }
             else
             {
-                glUniform1f(xDispLoc, shootingOnMove.x);
-                glUniform1f(yDispLoc, -shootingOnMove.y);
+                joyStickShoot.x = shootingOnMove.x;
+                joyStickShoot.y = -shootingOnMove.y;
             }
-
-            glBindBuffer(GL_ARRAY_BUFFER, joyStickShootingVBO[0]);
-            bindAttributes();
-            glDrawArrays(GL_TRIANGLE_FAN, 0, 6);
         }
-
-        /*glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, swapButtonTexture);
-        glUniform1i(uTextureLocation, 0);
-
-        glUniform1f(xDispLoc, 0);
-        glUniform1f(yDispLoc, .7f);
-
-        glBindBuffer(GL_ARRAY_BUFFER, swapButtonVBO[0]);
-        bindAttributes();
-
-        glDrawArrays(GL_TRIANGLE_FAN, 0, 6);*/
     }
 
     @Override
-    public void draw(double i)
+    public void draw(double interp)
     {
-        if(gameState == 1)
+        if (gameState == GameState.IN_GAME)
         {
-            drawJoySticks();
+            moveJoySticks();
+            if (movementDown)
+            {
+                joyBaseMove.draw();
+                joyStickMove.draw();
+            }
+            if (shootingDown)
+            {
+                joyBaseShoot.draw();
+                joyStickShoot.draw();
+            }
+            textPresenter.drawInt(score++, -.9f, 0f - String.valueOf(score).length() / 2 * dSkipY);
         }
-        else if(gameState == 2)
+        else if (gameState == GameState.PAUSE_MENU)
         {
-            drawPausedMenu();
+            //drawPausedMenu();
+            screenShade.draw();
+
+            glUseProgram(pixelShaderProgram);
+            glActiveTexture(GL_TEXTURE0);
+            glBindTexture(GL_TEXTURE_2D, whiteTexture);
+            glUniform1i(uTextureLocation, 0);
+            player.getPixelGroup().softDraw(playerModelX + player.driftX,
+                    playerModelY + player.driftY,
+                    0,
+                    player.tiltAngle,
+                    mag,
+                    pointSize * mag);
+
+            for(int g = 0; g < player.getMaxGuns(); g++)
+            {
+                if(playerGuns[g].drop != null)
+                {
+                    playerGuns[g].drop.menuDraw(
+                            playerGuns[g].regular.x,
+                            playerGuns[g].regular.y,
+                            1f,
+                            pointSize
+                    );
+                }
+            }
+
+            if(heldDropButton != null)
+            {
+                heldDropButton.drop.menuDraw(menuOnMove.x, -menuOnMove.y, 2f, pointSize * 2f);
+            }
+
+            for (Button[] bA : componentPanel)
+            {
+                for (Button b : bA)
+                {
+                    if (b.drop != null && b != heldDropButton)
+                    {
+                        b.drop.menuDraw(b.regular.x, b.regular.y, 1, pointSize);
+                    }
+                }
+            }
+
+            if(selectedButton != null)
+            {
+                if(selectedButton.drop != null)
+                {
+                    if(selectedButton.drop.component.type == DropType.GUN)
+                    {
+                        selectedButton.drop.component.gun.getTemplate().softDraw(
+                                Constants.gpBulletX,
+                                Constants.gpBulletY,
+                                0,0
+                        );
+                    }
+                }
+            }
+
+            glUseProgram(uiShaderProgram);
+            allInfoBox.draw();
+            //playerBox.draw();
+            resumeButton.draw(menuOnMove.x, menuOnMove.y);
+            optionsButton.draw(menuOnMove.x, menuOnMove.y);
+            exitButton.draw(menuOnMove.x, menuOnMove.y);
+
+
+            if(selectedButton != null &&
+                    selectedButton.drop != null &&
+                    selectedButton.drop.component != null)
+            {
+                switch (selectedButton.drop.component.type)
+                {
+                    case THRUSTER: thrusterPanel.draw();
+                            break;
+                    case GUN: gunPanel.draw();
+                            textPresenter.drawInt(
+                                    (int)selectedButton.drop.component.gun.getShotDelay(),
+                                    Constants.iPnum1X, Constants.infoPanelY
+                            );
+                            textPresenter.drawInt(
+                                    selectedButton.drop.component.gun.getTemplate().totalPixels,
+                                    Constants.iPnum2X, Constants.infoPanelY
+                            );
+                            textPresenter.drawInt(
+                                    (int)(selectedButton.drop.component.gun.getTemplate().totalPixels *
+                                            (1000 / selectedButton.drop.component.gun.getShotDelay())),
+                                    Constants.iPnum3X, Constants.infoPanelY
+                            );
+                            break;
+                    case MOD: modPanel.draw();
+                            break;
+                }
+            }
+            for (Button[] bA : componentPanel)
+            {
+                for (Button b : bA)
+                {
+                    b.draw(menuOnMove.x, menuOnMove.y);
+                }
+            }
+
+            for (int g = 0; g < player.getMaxGuns(); g++)
+            {
+                playerGuns[g].draw(menuOnMove.x, menuOnMove.y);
+            }
+
+            for (Button b : playerThrusters)
+            {
+                b.draw(menuOnMove.x, menuOnMove.y);
+            }
+
+            for(int m = 0; m < playerMods.length; m++)
+            {
+                if (m >= player.getMaxMods())
+                {
+                    break;
+                }
+                else
+                {
+                    playerMods[m].draw(menuOnMove.x, menuOnMove.y);
+                }
+            }
+
+            textPresenter.drawInt(score, -.86f, -.07f);
         }
     }
 
-    public void drawPausedMenu()
+    public void pointerDown()
     {
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, resumeButtonTexture);
-        glUniform1i(uTextureLocation, 0);
-
-        glUniform1f(xDispLoc, 0);
-        glUniform1f(yDispLoc, 0f);
-
-        glBindBuffer(GL_ARRAY_BUFFER, resumeButtonVBO[0]);
-        bindAttributes();
-
-        glDrawArrays(GL_TRIANGLE_FAN, 0, 6);
+        if (gameState == GameState.PAUSE_MENU)
+        {
+            for(Button b: allComponentButtons)
+            {
+                if(b.drop != null && b.pointOnButton(menuOnDown.x, menuOnDown.y))
+                {
+                    heldDropButton = b;
+                    selectedButton = b;
+                }
+            }
+        }
     }
 
-
-    public boolean checkPause(float x, float y)
+    public void pointerUp()
     {
-        System.out.println(x + ", " + y + "    " + xScale + ", " + yScale);
-        if(x >= UNPAUSE_BUTTON_XBOUND / xScale && y <= -UNPAUSE_BUTTON_YBOUND / yScale)
+        for(Button b: allComponentButtons)
         {
+            if(b.cursorOnButton)
+            {
+                selectedButton = b;
+                break;
+            }
+        }
+
+        if( heldDropButton != null &&
+            heldDropButton.drop != null &&
+            heldDropButton.drop.component != null)
+        {
+            if( selectedButton.type == DropType.ANY ||
+                selectedButton.type == heldDropButton.drop.component.type)
+            {
+                if( selectedButton.drop != null)
+                {
+                    Component t = selectedButton.drop.component;
+
+                    selectedButton.drop.component = heldDropButton.drop.component;
+                    if (selectedButton.drop.component != null)
+                    {
+                        selectedButton.drop.creationTime = System.currentTimeMillis();
+                        selectedButton.drop.pixelGroup.setWhiteToColor(
+                                selectedButton.drop.component.r,
+                                selectedButton.drop.component.g,
+                                selectedButton.drop.component.b
+                        );
+                    }
+
+                    heldDropButton.drop.component = t;
+                    if(heldDropButton.drop.component != null)
+                    {
+                        heldDropButton.drop.creationTime = System.currentTimeMillis();
+                        heldDropButton.drop.pixelGroup.setWhiteToColor(
+                                heldDropButton.drop.component.r,
+                                heldDropButton.drop.component.g,
+                                heldDropButton.drop.component.b
+                        );
+                    }
+                }
+                else
+                {
+                    selectedButton.drop = heldDropButton.drop;
+
+                    heldDropButton.drop = null;
+                }
+            }
+        }
+
+        heldDropButton = null;
+
+        if (exitButton.cursorOnButton)
+        {
+            exitFlag = true;
+        }
+    }
+
+    public boolean checkPause()
+    {
+        if (resumeButton.cursorOnButton)
+        {
+            for(int g = 0; g < player.gunDrops.length; g++)
+            {
+                player.gunDrops[g] = playerGuns[g].drop;
+            }
+            for(Button[] row: componentPanel)
+            {
+                for(Button b: row)
+                {
+                    if(b.drop != null)
+                    {
+                        b.drop.held = false;
+                    }
+                }
+            }
             return false;
         }
         else
@@ -419,20 +702,13 @@ public class UI extends Drawable
         }
     }
 
-    public void setScale(float xS,float yS)
+    public void setScale(float xS, float yS)
     {
         xScale = xS;
         yScale = yS;
-
-        for(int i = 4; i <= resumeButton.length; i += 4)
-        {
-            resumeButton[i-4] = resumeButton[i-4] / xScale;
-            resumeButton[i-3] = resumeButton[i-3] / yScale;
-            resumeButtonBuf.put(resumeButton);
-            resumeButtonBuf.position(0);
-            glBindBuffer(GL_ARRAY_BUFFER, resumeButtonVBO[0]);
-            glBufferData(GL_ARRAY_BUFFER, resumeButtonBuf.capacity() * Constants.BYTES_PER_FLOAT, resumeButtonBuf, GL_STATIC_DRAW);
-        }
+        resumeButton.applyScale(xS, yS);
+        exitButton.applyScale(xS, yS);
+        optionsButton.applyScale(xS, yS);
     }
 
     public void setMovementDown(boolean b)
@@ -443,5 +719,31 @@ public class UI extends Drawable
     public void setShootingDown(boolean b)
     {
         shootingDown = b;
+    }
+
+    public void freeMemory()
+    {
+
+    }
+
+    public void setDropsInRange(Drop[] drops)
+    {
+        int i = 0;
+        for (Button[] bA : componentPanel)
+        {
+            for (Button b : bA)
+            {
+                b.drop = null;
+                if (drops[i] != null)
+                {
+                    b.drop = drops[i];
+                }
+                i++;
+            }
+        }
+        for(int g = 0; g < player.gunDrops.length; g++)
+        {
+            playerGuns[g].drop = player.gunDrops[g];
+        }
     }
 }

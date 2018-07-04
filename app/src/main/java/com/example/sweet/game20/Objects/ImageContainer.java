@@ -7,10 +7,21 @@ import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 
 import static android.opengl.GLES20.GL_ARRAY_BUFFER;
+import static android.opengl.GLES20.GL_FLOAT;
 import static android.opengl.GLES20.GL_STATIC_DRAW;
+import static android.opengl.GLES20.GL_TEXTURE0;
+import static android.opengl.GLES20.GL_TEXTURE_2D;
+import static android.opengl.GLES20.GL_TRIANGLE_FAN;
+import static android.opengl.GLES20.glActiveTexture;
 import static android.opengl.GLES20.glBindBuffer;
+import static android.opengl.GLES20.glBindTexture;
 import static android.opengl.GLES20.glBufferData;
+import static android.opengl.GLES20.glDrawArrays;
+import static android.opengl.GLES20.glEnableVertexAttribArray;
 import static android.opengl.GLES20.glGenBuffers;
+import static android.opengl.GLES20.glUniform1f;
+import static android.opengl.GLES20.glUniform1i;
+import static android.opengl.GLES20.glVertexAttribPointer;
 
 /**
  * Created by Sweet on 6/20/2018.
@@ -22,24 +33,40 @@ public class ImageContainer
 
     public FloatBuffer buffer;
 
-    //public float[] vertArr;
-
     public int textureHandle;
 
     public boolean dynamicLocation = false;
 
     public float
             x,
-            y;
+            y,
+            halfLength,
+            halfWidth,
+            xScale = 1,
+            yScale = 1;
 
     public String name;
 
-    public ImageContainer(int texture, float[] vA, float x, float y, String n)
+    private int
+            xDispLoc,
+            yDispLoc,
+            aPositionLocation,
+            aTextureCoordLocation,
+            uTextureLocation;
+
+    public ImageContainer(int texture, float[] vA, float x, float y, String n, int[] glVarLocations, float hL, float hW)
     {
         textureHandle = texture;
         this.x = x;
         this.y = y;
         name = n;
+        halfLength = hL;
+        halfWidth = hW;
+        xDispLoc = glVarLocations[0];
+        yDispLoc = glVarLocations[1];
+        aPositionLocation = glVarLocations[2];
+        aTextureCoordLocation = glVarLocations[3];
+        uTextureLocation  = glVarLocations[4];
 
         buffer = ByteBuffer
                 .allocateDirect(vA.length * Constants.BYTES_PER_FLOAT)
@@ -52,4 +79,67 @@ public class ImageContainer
         glBindBuffer(GL_ARRAY_BUFFER, vboHandle[0]);
         glBufferData(GL_ARRAY_BUFFER, buffer.capacity() * Constants.BYTES_PER_FLOAT, buffer, GL_STATIC_DRAW);
     }
+
+    public void bindAttributes()
+    {
+        glEnableVertexAttribArray(aPositionLocation);
+        glVertexAttribPointer (aPositionLocation, 2,
+                GL_FLOAT, false, Constants.BYTES_PER_FLOAT * 4,0 );
+
+        glEnableVertexAttribArray(aTextureCoordLocation);
+        glVertexAttribPointer (aTextureCoordLocation, 2,
+                GL_FLOAT, false, Constants.BYTES_PER_FLOAT * 4,Constants.BYTES_PER_FLOAT * 2);
+    }
+
+    public void draw()
+    {
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, textureHandle);
+        glUniform1i(uTextureLocation, 0);
+
+        glUniform1f(xDispLoc, x);
+        glUniform1f(yDispLoc, y);
+
+        glBindBuffer(GL_ARRAY_BUFFER, vboHandle[0]);
+        bindAttributes();
+        glDrawArrays(GL_TRIANGLE_FAN, 0, 6);
+    }
+
+    public void applyScale(float xS, float yS)
+    {
+        if(xS != xScale || yS != yScale)
+        {
+            if (halfWidth == -1 || halfLength == -1)
+            {
+                x = (x / xS) * xScale;
+                y = (y / yS) * yScale;
+            } else
+            {
+                //x += halfLength;
+                //y += halfWidth;
+                x = (x / xS) * xScale;
+                y = (y / yS) * yScale;
+                //x -= (halfLength / xS) * xScale;
+                //y -= (halfWidth / yS) * yScale;
+            }
+            xScale = xS;
+            yScale = yS;
+        }
+    }
+
+    /*public void setScale(float xS,float yS)
+    {
+        xScale = xS;
+        yScale = yS;
+
+        for(int i = 4; i <= resumeButton.length; i += 4)
+        {
+            resumeButton[i-4] = resumeButton[i-4] / xScale;
+            resumeButton[i-3] = resumeButton[i-3] / yScale;
+            resumeButtonBuf.put(resumeButton);
+            resumeButtonBuf.position(0);
+            glBindBuffer(GL_ARRAY_BUFFER, resumeButtonVBO[0]);
+            glBufferData(GL_ARRAY_BUFFER, resumeButtonBuf.capacity() * Constants.BYTES_PER_FLOAT, resumeButtonBuf, GL_STATIC_DRAW);
+        }
+    }*/
 }

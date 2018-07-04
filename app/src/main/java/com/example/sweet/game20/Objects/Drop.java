@@ -1,5 +1,7 @@
 package com.example.sweet.game20.Objects;
 
+import com.example.sweet.game20.util.Constants;
+
 /**
  * Created by Sweet on 6/12/2018.
  */
@@ -19,6 +21,8 @@ public class Drop
             angle;
 
     public volatile boolean live = true;
+
+    public boolean held = false;
 
     /*
     0: Health Drop
@@ -47,12 +51,19 @@ public class Drop
         component = c;
         liveTime = lT;
         creationTime = System.currentTimeMillis();
+        pixelGroup.setWhiteToColor(component.r, component.g, component.b);
     }
 
     public void draw()
     {
         tiltAngle += .01;
         pixelGroup.softDraw(x, y, angle, tiltAngle);
+    }
+
+    public void menuDraw(float mx, float my, float mag, float pS)
+    {
+        tiltAngle += .01;
+        pixelGroup.softDraw(mx, my, angle, tiltAngle, mag, pS);
     }
 
     public void checkAlive()
@@ -67,5 +78,13 @@ public class Drop
     {
         x += mX;
         y += mY;
+    }
+
+    public void freeMemory()
+    {
+        if (component.type == Constants.DropType.GUN && component.gun != null)
+        {
+            component.gun.freeMemory();
+        }
     }
 }

@@ -56,9 +56,7 @@ public class ParticleSystem
             aColorLocation,
             aDirectionLocation,
             aMaxDistanceLocation,
-            aRotationSpeedLocation,
-            uTimeLocation,
-            uTextureLocation;
+            aRotationSpeedLocation;
 
     private static final String
             A_COLOR = "a_Color",
@@ -67,9 +65,7 @@ public class ParticleSystem
             A_STARTTIME = "a_StartTime",
             A_SPEED = "a_Speed",
             A_MAXDISTANCE = "a_MaxDistance",
-            A_ROTATIONSPEED = "a_RotationSpeed",
-            U_TIME = "u_Time",
-            U_TEXTURE = "u_Texture";
+            A_ROTATIONSPEED = "a_RotationSpeed";
 
     private static final int STRIDE = TOTAL_COMPONENT_COUNT * Constants.BYTES_PER_FLOAT;
 
@@ -90,8 +86,8 @@ public class ParticleSystem
             nextParticle;
 
     private int shaderLocation;
-    private boolean
-            needsUpdate = false;
+
+    private boolean needsUpdate = false;
 
     public ParticleSystem(int maxParticleCount, int sL, int tID, double gst)
     {
@@ -117,8 +113,6 @@ public class ParticleSystem
         aDirectionLocation = glGetAttribLocation(shaderLocation, A_DIRECTIONVECTOR);
         aMaxDistanceLocation = glGetAttribLocation(shaderLocation, A_MAXDISTANCE);
         aRotationSpeedLocation = glGetAttribLocation(shaderLocation, A_ROTATIONSPEED);
-        uTimeLocation = glGetUniformLocation(shaderLocation, U_TIME);
-        uTextureLocation = glGetUniformLocation(shaderLocation, U_TEXTURE);
 
         textureID[0] = tID;
         glGenBuffers(1, particleVBO, 0);
@@ -176,19 +170,9 @@ public class ParticleSystem
             needsUpdate = false;
         }
 
-        glActiveTexture(GL_TEXTURE0);
-        // Bind the texture to this unit.
-        glBindTexture(GL_TEXTURE_2D, textureID[0]);
-        // Tell the texture uniform sampler to use this texture in the shader by binding to texture unit 0.
-        glUniform1i(uTextureLocation, 0);
-
-        glUniform1f(uTimeLocation,(float)((System.currentTimeMillis() - globalStartTime) / 1000));
-
         bindAttributes();
 
         glDrawArrays(GL_POINTS, 0, maxParticleCount);
-
-        glBindBuffer(GL_ARRAY_BUFFER, 0);
     }
 
 

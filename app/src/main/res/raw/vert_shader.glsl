@@ -11,8 +11,10 @@ uniform float x_displacement;
 uniform float y_displacement;
 uniform highp float angle;
 uniform float tilt;
+uniform float mag;
 uniform float squareLength;
 uniform vec2 shadingPoint;
+uniform float pointSize;
 
 varying vec4 v_Color;
 varying highp float v_Angle;
@@ -26,14 +28,13 @@ void main()
 	v_CosA = cos(v_Angle);
 	v_SinA = sin(v_Angle);
 
-	gl_PointSize = 9.0;
+	gl_PointSize = pointSize;
 	gl_Position = vec4( a_Position.x, a_Position.y, 0.0, 1.0);
 	
 	float tempY  = cos(tilt) * a_Position.y;
 	
 	highp vec2 rotated = vec2(v_CosA * a_Position.x + v_SinA * tempY,
 						v_CosA * tempY - v_SinA * a_Position.x);
-	
 	
 	float normX = -rotated.x;
 	float normY = rotated.y;
@@ -52,9 +53,9 @@ void main()
 			v_Color.b *= factor;
 		}
 	}
-	
-	gl_Position.x = (rotated.x + x_displacement - x_ScreenShift) * x_Scale;
-	gl_Position.y = (rotated.y + y_displacement - y_ScreenShift) * y_Scale;
+
+	gl_Position.x = ((rotated.x * mag) + x_displacement - x_ScreenShift) * x_Scale;
+	gl_Position.y = ((rotated.y * mag) + y_displacement - y_ScreenShift) * y_Scale;
 	
 }
 

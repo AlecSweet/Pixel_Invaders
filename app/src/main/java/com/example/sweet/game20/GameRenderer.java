@@ -2,7 +2,6 @@ package com.example.sweet.game20;
 
 import android.content.Context;
 
-import android.opengl.GLSurfaceView;
 import android.opengl.GLSurfaceView.Renderer;
 
 import java.nio.ByteBuffer;
@@ -10,7 +9,6 @@ import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 import java.util.LinkedList;
 import java.util.Stack;
-
 import com.example.sweet.game20.util.*;
 import com.example.sweet.game20.Objects.*;
 
@@ -55,9 +53,17 @@ import static android.opengl.GLES20.glUniform1f;
 
 public class GameRenderer implements Renderer
 {
-    private final Context context;
-    
+    private Context context;
+
+    private ExitListener exitListener = null;
+
+    public interface ExitListener
+    {
+        public void onExit();
+    }
+
     private EnemyFactory enemyFactory;
+    private DropFactory dropFactory;
 
     public float
             xScale,
@@ -84,7 +90,10 @@ public class GameRenderer implements Renderer
             aTextureCoordLocation,
             uTextureLocation,
             xDispLocation,
-            yDispLocation;
+            yDispLocation,
+            pointSizeLocation,
+            particlePointSizeLocation,
+            uMagLoc;
 
     private static final String
             X_SCALE = "x_Scale",
@@ -96,9 +105,14 @@ public class GameRenderer implements Renderer
             A_TEXTURECOORDINATE = "a_TexCoordinate",
             U_TEXTURE = "u_Texture",
             X_DISP = "x_displacement",
-            Y_DISP = "y_displacement";
+            Y_DISP = "y_displacement",
+            POINT_SIZE = "pointSize";
 
     private int frames;
+
+    private float
+            pointSize = 0,
+            particlePointSize = 0;
 
     private final long MILLIS_PER_SECOND = 1000;
     private final long UPS = 60;
@@ -125,18 +139,19 @@ public class GameRenderer implements Renderer
     private boolean
             isPlaying = false,
             init = false,
-            saveTime = false;
+            saveTime = false,
+            scaleSet = false;
 
     private Player player1;
 
     public UI ui;
 
     private double
-            pastTime,
+            pastTime = 0.0,
             lag = 0.0,
-            globalStartTime,
-            secondMark,
-            interpolation;
+            globalStartTime = 0.0,
+            secondMark = 0.0,
+            interpolation = 0.0;
 
     private float[] background = new float[]{
             0f,    0f, 0.5f, 0.5f,
@@ -209,25 +224,28 @@ public class GameRenderer implements Renderer
         particleShaderProgram = ShaderHelper.linkProgram(particleVertShader, particleFragShader);
         plainShaderProgram = ShaderHelper.linkProgram(plainVertShader, plainFragShader);
 
-        xDispLocation = glGetUniformLocation(plainShaderProgram,X_DISP);
-        yDispLocation = glGetUniformLocation(plainShaderProgram,Y_DISP);
+        xDispLocation = glGetUniformLocation(plainShaderProgram, X_DISP);
+        yDispLocation = glGetUniformLocation(plainShaderProgram, Y_DISP);
         aPositionLocation = glGetAttribLocation(plainShaderProgram, A_POSITION);
         aTextureCoordLocation = glGetAttribLocation(plainShaderProgram, A_TEXTURECOORDINATE);
         uTextureLocation = glGetUniformLocation(plainShaderProgram, U_TEXTURE);
 
-        xScaleLocationParticle = glGetUniformLocation(particleShaderProgram,X_SCALE);
-        yScaleLocationParticle = glGetUniformLocation(particleShaderProgram,Y_SCALE);
+        xScaleLocationParticle = glGetUniformLocation(particleShaderProgram, X_SCALE);
+        yScaleLocationParticle = glGetUniformLocation(particleShaderProgram, Y_SCALE);
         xScreenShiftLocationParticle = glGetUniformLocation(particleShaderProgram, X_SCREENSHIFT);
         yScreenShiftLocationParticle = glGetUniformLocation(particleShaderProgram, Y_SCREENSHIFT);
-        timeLocation = glGetUniformLocation(particleShaderProgram,U_TIME);
+        timeLocation = glGetUniformLocation(particleShaderProgram, U_TIME);
+        particlePointSizeLocation = glGetUniformLocation(particleShaderProgram, POINT_SIZE);
 
         xScreenShiftLocation = glGetUniformLocation(shaderProgram, X_SCREENSHIFT);
         yScreenShiftLocation = glGetUniformLocation(shaderProgram, Y_SCREENSHIFT);
-        xScaleLocation = glGetUniformLocation(shaderProgram,X_SCALE);
-        yScaleLocation = glGetUniformLocation(shaderProgram,Y_SCALE);
+        xScaleLocation = glGetUniformLocation(shaderProgram, X_SCALE);
+        yScaleLocation = glGetUniformLocation(shaderProgram, Y_SCALE);
+        pointSizeLocation = glGetUniformLocation(shaderProgram, POINT_SIZE);
+        uMagLoc = glGetUniformLocation(shaderProgram, "mag");
 
-        xScaleLocationPlain = glGetUniformLocation(plainShaderProgram,X_SCALE);
-        yScaleLocationPlain = glGetUniformLocation(plainShaderProgram,Y_SCALE);
+        xScaleLocationPlain = glGetUniformLocation(plainShaderProgram, X_SCALE);
+        yScaleLocationPlain = glGetUniformLocation(plainShaderProgram, Y_SCALE);
 
         glUseProgram(particleShaderProgram);
         glEnable(GL_TEXTURE_2D);
@@ -275,26 +293,16 @@ public class GameRenderer implements Renderer
             isPlaying = true;
         }
 
-        if (System.currentTimeMillis() - secondMark >= 1000)
+        if(System.currentTimeMillis() - secondMark >= 1000)
         {
             secondMark = System.currentTimeMillis();
-            //System.out.println(frames);
             frames = 0;
         }
 
-       /* double currentTime = System.currentTimeMillis();
-        double elapsedTime = currentTime - pastTime;
-        pastTime = currentTime;
-        lag += elapsedTime;
-
-        while(lag >= mSPU)
+        if(ui.exitFlag)
         {
-            //if(!pause)
-            update();
-            aiRunnable.frameRequest++;
-            frames++;
-            lag -= mSPU;
-        }*/
+            exitGame();
+        }
 
         if(!pause)
         {
@@ -309,9 +317,8 @@ public class GameRenderer implements Renderer
             pastTime = currentTime;
             lag += elapsedTime;
 
-            while (lag >= mSPU)
+            while(lag >= mSPU)
             {
-                //if(!pause)
                 update();
                 aiRunnable.frameRequest++;
                 frames++;
@@ -336,6 +343,11 @@ public class GameRenderer implements Renderer
         glUniform1f(timeLocation, (float) ((System.currentTimeMillis() - globalStartTime) / 1000));
         glUniform1f(xScreenShiftLocationParticle, aiRunnable.xScreenShift);
         glUniform1f(yScreenShiftLocationParticle, aiRunnable.yScreenShift);
+        glUniform1f(particlePointSizeLocation, particlePointSize);
+
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, whiteTexture);
+        glUniform1i(uTextureLocation, 0);
 
         enemyParticles.draw();
         playerParticles.draw();
@@ -343,17 +355,27 @@ public class GameRenderer implements Renderer
         glUseProgram(shaderProgram);
         glUniform1f(xScreenShiftLocation, aiRunnable.xScreenShift);
         glUniform1f(yScreenShiftLocation, aiRunnable.yScreenShift);
+        glUniform1f(pointSizeLocation, pointSize);
+        glUniform1f(uMagLoc, 1);
+
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, whiteTexture);
         glUniform1i(uTextureLocation, 0);
 
-        for(Drop d: drops)
+        /*for(Drop d: player1.consumableDrops)
         {
-            if (d != null && d.live)
+            if(d != null && d.live)
             {
                 d.draw();
             }
         }
+        for(Drop d: player1.Drops)
+        {
+            if(d != null && d.live)
+            {
+                d.draw();
+            }
+        }*/
 
         player1.draw(interpolation);
 
@@ -369,24 +391,39 @@ public class GameRenderer implements Renderer
                 {
                     for (GunComponent gC: e.getGunComponents())
                     {
-                        gC.gun.draw(0);
+                        if(gC != null)
+                        {
+                            gC.gun.draw(0);
+                        }
                     }
                 }
             }
         }
 
+        if(pause)
+        {
+            glUniform1f(xScreenShiftLocation, 0);
+            glUniform1f(yScreenShiftLocation, 0);
+        }
+
         glUseProgram(particleShaderProgram);
+
         glUniform1f(timeLocation, (float) ((System.currentTimeMillis() - globalStartTime) / 1000));
         glUniform1f(xScreenShiftLocationParticle, aiRunnable.xScreenShift);
         glUniform1f(yScreenShiftLocationParticle, aiRunnable.yScreenShift);
+        glUniform1f(particlePointSizeLocation, particlePointSize);
+
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, whiteTexture);
+        glUniform1i(uTextureLocation, 0);
 
         collisionParticles.draw();
 
         glUseProgram(plainShaderProgram);
         if(!pause)
-            ui.gameState = 1;
+            ui.gameState = Constants.GameState.IN_GAME;
         else
-            ui.gameState = 2;
+            ui.gameState = Constants.GameState.PAUSE_MENU;
         ui.draw(interpolation);
 
     }
@@ -394,55 +431,74 @@ public class GameRenderer implements Renderer
     @Override
     public void onSurfaceChanged(GL10 unused, int width, int height)
     {
-        glViewport(0, 0, width, height);
-        float aspectRatio = width > height ?
-                (float) height / (float) width :
-                (float) width / (float) height;
-
-        if (width > height)
+        if(!scaleSet)
         {
-            glUseProgram(shaderProgram);
-            glUniform1f(xScaleLocation, aspectRatio);
-            glUniform1f(yScaleLocation, 1);
+            glViewport(0, 0, width, height);
+            float aspectRatio = width > height ?
+                    (float) height / (float) width :
+                    (float) width / (float) height;
 
-            glUseProgram(particleShaderProgram);
-            glUniform1f(xScaleLocationParticle, aspectRatio);
-            glUniform1f(yScaleLocationParticle, 1);
+            float numPixels = 2 / Constants.PIXEL_SIZE;
 
-            glUseProgram(plainShaderProgram);
-            glUniform1f(xScaleLocationPlain, aspectRatio);
-            glUniform1f(yScaleLocationPlain, 1);
-            xScale = aspectRatio;
-            yScale = 1;
-            ui.xScale = xScale;
-            ui.yScale = yScale;
+            if(width > height)
+            {
+                glUseProgram(shaderProgram);
+                glUniform1f(xScaleLocation, aspectRatio);
+                glUniform1f(yScaleLocation, 1);
+
+                glUseProgram(particleShaderProgram);
+                glUniform1f(xScaleLocationParticle, aspectRatio);
+                glUniform1f(yScaleLocationParticle, 1);
+
+                glUseProgram(plainShaderProgram);
+                glUniform1f(xScaleLocationPlain, aspectRatio);
+                glUniform1f(yScaleLocationPlain, 1);
+
+                xScale = aspectRatio;
+                yScale = 1;
+                ui.xScale = xScale;
+                ui.yScale = yScale;
+                player1.setScale(xScale, yScale);
+                System.out.println(yScale);
+                float pSize = (height / numPixels);
+                pointSize = 2.02f * pSize;
+                particlePointSize = 3.02f * pSize;
+                ui.pointSize = pointSize;
+            }
+            else
+            {
+                glUseProgram(shaderProgram);
+                glUniform1f(xScaleLocation, 1);
+                glUniform1f(yScaleLocation, aspectRatio);
+
+                glUseProgram(particleShaderProgram);
+                glUniform1f(xScaleLocationParticle, 1);
+                glUniform1f(yScaleLocationParticle, aspectRatio);
+
+                glUseProgram(plainShaderProgram);
+                glUniform1f(xScaleLocationPlain, 1);
+                glUniform1f(yScaleLocationPlain, aspectRatio);
+
+                xScale = 1;
+                yScale = aspectRatio;
+                ui.xScale = xScale;
+                ui.yScale = yScale;
+                player1.setScale(xScale, yScale);
+                System.out.println(yScale);
+                float pSize = (width / numPixels);
+                pointSize = 2.02f * pSize;
+                particlePointSize = 3.02f * pSize;
+                ui.pointSize = pointSize;
+            }
+
+            xbound = 1.5f;
+            ybound = 1.5f;
+            aiRunnable.xbound = 1.5f;
+            aiRunnable.ybound = 1.5f;
+            ui.setScale(xScale, yScale);
+            enemyFactory.setBounds(2.5f, 3f);
+            scaleSet = true;
         }
-        else
-        {
-            glUseProgram(shaderProgram);
-            glUniform1f(xScaleLocation, 1);
-            glUniform1f(yScaleLocation, aspectRatio);
-
-            glUseProgram(particleShaderProgram);
-            glUniform1f(xScaleLocationParticle, 1);
-            glUniform1f(yScaleLocationParticle, aspectRatio);
-
-            glUseProgram(plainShaderProgram);
-            glUniform1f(xScaleLocationPlain, 1);
-            glUniform1f(yScaleLocationPlain, aspectRatio);
-
-            xScale = 1;
-            yScale = aspectRatio;
-            ui.xScale = xScale;
-            ui.yScale = yScale;
-        }
-
-        xbound = 1.5f;
-        ybound = 1.5f;
-        aiRunnable.xbound = 1.5f;
-        aiRunnable.ybound = 1.5f;
-        ui.setScale(xScale, yScale);
-        enemyFactory.setBounds(2.5f,3f);
     }
 
     public void setInterpolation(double i)
@@ -458,9 +514,20 @@ public class GameRenderer implements Renderer
             openEntityIndices.push(i);
         }
 
-        player1 = new Player(context, .004f, shaderProgram, playerParticles);
+        player1 = new Player(dropFactory,
+                context,
+                .004f,
+                shaderProgram,
+                playerParticles,ImageParser.parseImage(context, R.drawable.player, R.drawable.player_light, shaderProgram)
+        );
         player1.xscale = xScale;
         player1.yscale = yScale;
+        ui.player = player1;
+        ui.pointSize = pointSize;
+        ui.pixelShaderProgram = shaderProgram;
+        ui.uiShaderProgram = plainShaderProgram;
+        ui.whiteTexture = whiteTexture;
+        ui.uTextureLocation = uTextureLocation;
 
         drops = new Drop[Constants.DROPS_LENGTH];
 
@@ -595,7 +662,7 @@ public class GameRenderer implements Renderer
 
     public EnemyFactory initEnemyFactory()
     {
-        DropFactory dropFactory = initDropFactory();
+        dropFactory = initDropFactory();
         EnemyFactory e = new EnemyFactory();
 
         e.addEnemyToCatalog
@@ -607,7 +674,8 @@ public class GameRenderer implements Renderer
                                         new BasicGun
                                                 (
                                                         ImageParser.parseImage(context, R.drawable.basicbullet, R.drawable.basicbullet_light, shaderProgram),
-                                                        enemyParticles
+                                                        enemyParticles,
+                                                        1000
                                                 ),
                                         enemyParticles,
                                         dropFactory
@@ -713,26 +781,92 @@ public class GameRenderer implements Renderer
 
         d.addDropToCatalog(HEALTH, ImageParser.parseImage(context, R.drawable.health, R.drawable.health_light, shaderProgram));
 
+        d.addDropToCatalog(GUN, ImageParser.parseImage(context, R.drawable.guncomponent, R.drawable.guncomponent, shaderProgram));
+
+        d.addDropToCatalog(THRUSTER, ImageParser.parseImage(context, R.drawable.thrustercomponent, R.drawable.thrustercomponent, shaderProgram));
+
+        d.addDropToCatalog(MOD, ImageParser.parseImage(context, R.drawable.modcomponent, R.drawable.modcomponent, shaderProgram));
         return d;
     }
 
     public void inGamePause()
     {
         pause = true;
-        aiRunnable.pause = true;
-        collisionRunnable.pause = true;
-        levelRunnable.pause = true;
+        pauseThreads();
         player1.pause = true;
-        player1.getExchangableComponentDrops();
+        ui.setDropsInRange(player1.getExchangableComponentDrops());
     }
 
     public void inGameUnpause()
     {
         pause = false;
-        aiRunnable.pause = false;
-        collisionRunnable.pause = false;
-        levelRunnable.pause = false;
+        unpauseThreads();
         player1.pause = false;
     }
 
+    public void pauseThreads()
+    {
+        if(init)
+        {
+            aiRunnable.pause = true;
+            collisionRunnable.pause = true;
+            levelRunnable.pause = true;
+        }
+    }
+
+    public void unpauseThreads()
+    {
+        if(init)
+        {
+            aiRunnable.pause = false;
+            collisionRunnable.pause = false;
+            levelRunnable.pause = false;
+        }
+    }
+
+    public void exitGame()
+    {
+        levelRunnable.running = false;
+        aiRunnable.running = false;
+        collisionRunnable.running = false;
+        try
+        {
+            levelThread.join();
+            aiThread.join();
+            collisionThread.join();
+        }
+        catch(InterruptedException e)
+        {
+        }
+        /*for(int i = 0; i < Constants.ENTITIES_LENGTH; i++)
+        {
+            if(entities[i] != null)
+            {
+                if (entities[i].getHasGun())
+                {
+                    for (GunComponent gC : entities[i].getGunComponents())
+                    {
+                        if (gC != null)
+                        {
+                            for (Bullet b : gC.gun.getBullets())
+                            {
+                                b.freeResources();
+                            }
+                        }
+                    }
+                }
+                entities[i].getPixelGroup().freeMemory();
+            }
+        }
+
+        ui.freeMemory();
+        */
+        //context.finish();
+        exitListener.onExit();
+    }
+
+    public void setExitListener(ExitListener e)
+    {
+        exitListener = e;
+    }
 }

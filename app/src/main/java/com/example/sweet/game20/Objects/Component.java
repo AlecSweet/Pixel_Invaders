@@ -1,5 +1,7 @@
 package com.example.sweet.game20.Objects;
 
+import com.example.sweet.game20.util.Constants;
+
 /**
  * Created by Sweet on 4/15/2018.
  */
@@ -14,12 +16,19 @@ public class Component
         1: Gun
         2: Mod
      */
-    public int type;
+    public Constants.DropType type;
 
     public float
             x,
             y,
             angle;
+
+    public float
+            r,
+            g,
+            b;
+
+    public Gun gun = null;
 
     protected ParticleSystem masterParticleSystem;
 
@@ -28,11 +37,11 @@ public class Component
 
     }
 
-    public Component(Pixel[] p, int t, float x, float y, float a, ParticleSystem ps)
+    public Component(Pixel[] p, float x, float y, float a, ParticleSystem ps, Constants.DropType dT)
     {
         masterParticleSystem = ps;
         attachmentPixels = p;
-        type = t;
+        type = dT;
         this.x = x;
         this.y = y;
         angle = a;

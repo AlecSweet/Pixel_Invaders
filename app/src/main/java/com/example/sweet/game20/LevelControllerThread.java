@@ -1,8 +1,10 @@
 package com.example.sweet.game20;
 
 import com.example.sweet.game20.Objects.Asteroid;
+import com.example.sweet.game20.Objects.BasicGun;
 import com.example.sweet.game20.Objects.Enemy;
 import com.example.sweet.game20.Objects.Player;
+import com.example.sweet.game20.Objects.Simple;
 import com.example.sweet.game20.util.CollisionThread;
 import com.example.sweet.game20.util.Constants;
 import com.example.sweet.game20.util.EnemyFactory;
@@ -39,7 +41,7 @@ public class LevelControllerThread implements Runnable
 
     private double
             lastSpawn,
-            spawnDelay = 500,
+            spawnDelay = 3000,
             pauseTime = 0;
 
     public LevelControllerThread(EnemyFactory eF)
@@ -76,6 +78,7 @@ public class LevelControllerThread implements Runnable
         }
     }
 
+    public boolean spawnonce =  false;
     public void levelController()
     {
         /*if(false == true)
@@ -97,7 +100,7 @@ public class LevelControllerThread implements Runnable
             }
         }*/
 
-        if(System.currentTimeMillis() - spawnDelay > lastSpawn)
+        if(System.currentTimeMillis() - spawnDelay > lastSpawn && !spawnonce)
         {
             lastSpawn = System.currentTimeMillis();
             System.out.println("Spawned");
@@ -112,12 +115,16 @@ public class LevelControllerThread implements Runnable
                 case 4: a = (Asteroid)enemyFactory.getNewEnemy(ASTEROID_RED_TINY); break;
                 //case 5: a = (Asteroid)enemyFactory.getNewEnemy(ASTEROID_RED_MEDIUM); break;
             }
+
+            Simple s = (Simple)enemyFactory.getNewEnemy(SIMPLE);
             //distributeEnemy(a);
             //int index = openEntityIndices.pop();
             //aiRunnable.entities[index] = a;
             //collisionRunnable.entities[index] = a;
-            enemiesToAdd.add(a);
+            enemiesToAdd.add(s);
+            //enemiesToAdd.add(a);
             //uiEntities[index] = a;
+            spawnonce = true;
         }
     }
 

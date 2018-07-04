@@ -11,6 +11,7 @@ uniform float y_Scale;
 uniform float u_Time;
 uniform float x_ScreenShift;
 uniform float y_ScreenShift;
+uniform float pointSize;
 
 varying vec4 v_Color;
 varying float v_ElapsedTime;
@@ -28,14 +29,18 @@ void main()
 	
 	v_RotationSpeed = u_Time * a_RotationSpeed;
 	
-	gl_PointSize = 16.0;
+	gl_PointSize = pointSize;
+	
 	gl_Position = vec4( a_Position, 0.0, 1.0);
 	
-	if(ratio <= 1.0){
+	if(ratio <= 1.0)
+	{
 		v_Color.a = (1.0 * a_Color.a) - (ratio * a_Color.a);
 		gl_Position.x = ((a_Position.x + distance * cos(a_Angle) - x_ScreenShift) * x_Scale);
 		gl_Position.y = ((a_Position.y + distance * sin(a_Angle) - y_ScreenShift) * y_Scale);
-	}else{
+	}
+	else
+	{
 		v_Color.a = 0.0;
 		gl_Position.x = 0.0;
 		gl_Position.y = 0.0;

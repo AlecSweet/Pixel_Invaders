@@ -32,7 +32,7 @@ public class Carrier extends Enemy
             gun1Pixels[i / 2] = enemyBody.getpMap()[gunPixelCoordinates[i + 1]][gunPixelCoordinates[i]];
 
         thrusters = new ThrustComponent[1];
-        thrusters[0] = new ThrustComponent(thrusterPixels, 0, 0, 0, 0, 0, 2, ps);
+        thrusters[0] = new ThrustComponent(thrusterPixels, 0, 0, 0, 0, 2, ps);
         //enemyBody.angle = 3.14;
         enemyBody.rotate(enemyBody.angle);
         baseSpeed = .002f;

@@ -26,24 +26,20 @@ public abstract class Gun
                 x,
                 y;
 
-    protected int shaderLocation;
-
     protected ParticleSystem masterParticleSystem;
 
-    public Gun(float sD, PixelGroup pG, ParticleSystem ps, float spd)
+    public Gun(double sD, PixelGroup pG, ParticleSystem ps, float spd)
     {
         pixelGroupTemplate = pG;
         bulletPool = new Stack<>();
         shootDelay = sD;
-        //textureID = tID;
-        //shaderLocation = sL;
         speed = spd;
         int num = (int)Math.ceil((3.4/(speed * 60)) * (1000/sD))+1;
         bullets = new Bullet[num];
         for(int i = 0; i < num; i++)
         {
             bullets[i] = new Bullet(0, 0, 0,
-                    speed, 3.4f, shaderLocation, pixelGroupTemplate.clone());
+                    speed, 3.4f, pixelGroupTemplate.clone());
             bulletPool.push(bullets[i]);
         }
         lastShotTime = System.currentTimeMillis();
@@ -86,5 +82,20 @@ public abstract class Gun
     @Override
     public Gun clone(){
         return null;
+    }
+
+    public PixelGroup getTemplate()
+    {
+        return pixelGroupTemplate;
+    }
+
+    public double getShotDelay()
+    {
+        return shootDelay;
+    }
+
+    public void freeMemory()
+    {
+        pixelGroupTemplate.freeMemory();
     }
 }

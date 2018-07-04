@@ -46,7 +46,7 @@ public class AIThread implements Runnable
             screenShakeX = 0,
             screenShakeY = 0;
 
-    public float
+    public volatile float
             movementOnDownX = 0f,
             movementOnMoveX = 0f,
             shootingOnDownX = 0f,
@@ -56,7 +56,7 @@ public class AIThread implements Runnable
             shootingOnDownY = 0f,
             shootingOnMoveY = 0f;
 
-    public boolean
+    public volatile boolean
             movementDown = false,
             shootingDown = false;
 
@@ -205,7 +205,7 @@ public class AIThread implements Runnable
         float panDiffY = panToward.y - cameraPanY;
         float panMag = VectorFunctions.getMagnitude(panDiffX, panDiffY);
 
-        if (panMag > .01)
+        if(panMag > .01)
         {
             panAngle = (float) Math.atan2(panToward.y - cameraPanY, panToward.x - cameraPanX);
             cameraPanX += cameraSpeed * Math.cos(panAngle);
@@ -217,13 +217,24 @@ public class AIThread implements Runnable
             cameraPanY = panToward.y;
         }
 
-        if (player1.getPixelGroup().getCenterX() + cameraPanX < xbound && player1.getPixelGroup().getCenterX() + cameraPanX > -xbound)
+        if(player1.getPixelGroup().getCenterX() + cameraPanX < xbound &&
+                player1.getPixelGroup().getCenterX() + cameraPanX > -xbound)
         {
             xScreenShift = player1.getPixelGroup().getCenterX() + cameraPanX;
         }
-        if (player1.getPixelGroup().getCenterY() - cameraPanY < ybound && player1.getPixelGroup().getCenterY() - cameraPanY > -ybound)
+        else
+        {
+            xScreenShift -= screenShakeX;
+        }
+
+        if (player1.getPixelGroup().getCenterY() - cameraPanY < ybound &&
+                player1.getPixelGroup().getCenterY() - cameraPanY > -ybound)
         {
             yScreenShift = player1.getPixelGroup().getCenterY() - cameraPanY;
+        }
+        else
+        {
+            yScreenShift -= screenShakeY;
         }
 
         handleScreenShake();
@@ -231,6 +242,9 @@ public class AIThread implements Runnable
 
     public void handleScreenShake()
     {
+        screenShakeX = 0;
+        screenShakeY = 0;
+
         Iterator<ScreenShake> itrX = player1.screenShakeEventsX.iterator();
         while(itrX.hasNext())
         {
@@ -259,9 +273,7 @@ public class AIThread implements Runnable
             }
         }
         xScreenShift += screenShakeX;
-        yScreenShift -= screenShakeY;
-        screenShakeX = 0;
-        screenShakeY = 0;
+        yScreenShift += screenShakeY;
     }
     /*public synchronized void setEntities(ArrayList<Enemy> e)
     {

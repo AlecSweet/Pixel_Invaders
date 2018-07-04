@@ -46,7 +46,9 @@ public class PixelGroup extends Collidable
             uSquareLengthLocation,
             xDispLoc,
             yDispLoc,
-            uTiltAngleLocation;
+            uTiltAngleLocation,
+            uMagLoc,
+            pointSizeLoc;
 
     private float[] colorVA;
 
@@ -63,6 +65,9 @@ public class PixelGroup extends Collidable
     private boolean glInit = false;
 
     public boolean onScreen = false;
+
+    private float r, g, b;
+    private boolean whiteToColor = false;
 
     public PixelGroup(Pixel[] p, float halfSquareLength, Zone[] z, int sL, int vB)
     {
@@ -112,11 +117,52 @@ public class PixelGroup extends Collidable
             initGlCalls();
         }
 
+        if(whiteToColor)
+        {
+            setWhiteToColor();
+            whiteToColor = false;
+        }
+
         glUniform1f(xDispLoc, x);
         glUniform1f(yDispLoc, y);
         glUniform1f(uAngleLocation, ang);
         glUniform1f(uSquareLengthLocation, halfSquareLength);
         glUniform1f(uTiltAngleLocation, tiltAng);
+
+        glBindBuffer(GL_ARRAY_BUFFER, vBuffer[0]);
+        glEnableVertexAttribArray(aPositionLocation);
+        glVertexAttribPointer(aPositionLocation, POSITION_COMPONENT_COUNT, GL_FLOAT, false, 0, 0);
+
+        glBindBuffer(GL_ARRAY_BUFFER, cBuffer[0]);
+        glEnableVertexAttribArray(aColorLocation);
+        glVertexAttribPointer(aColorLocation, COLOR_COMPONENT_COUNT, GL_FLOAT, false, 0, 0);
+
+        glDrawArrays(GL_POINTS, 0, pixels.length);
+
+        glUniform1f(uTiltAngleLocation, 0);
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
+    }
+
+    public void softDraw(float x, float y, float ang, float tiltAng, float mag, float pointSize)
+    {
+        if(!glInit)
+        {
+            initGlCalls();
+        }
+
+        if(whiteToColor)
+        {
+            setWhiteToColor();
+            whiteToColor = false;
+        }
+
+        glUniform1f(xDispLoc, x);
+        glUniform1f(yDispLoc, y);
+        glUniform1f(uAngleLocation, ang);
+        glUniform1f(uSquareLengthLocation, halfSquareLength*mag);
+        glUniform1f(uTiltAngleLocation, tiltAng);
+        glUniform1f(uMagLoc, mag);
+        glUniform1f(pointSizeLoc, pointSize);
 
         glBindBuffer(GL_ARRAY_BUFFER, vBuffer[0]);
         glEnableVertexAttribArray(aPositionLocation);
@@ -154,7 +200,6 @@ public class PixelGroup extends Collidable
                 .put(colorVA);
         cbuf.position(0);
 
-
         glGenBuffers(1, cBuffer, 0);
 
         glBindBuffer(GL_ARRAY_BUFFER, cBuffer[0]);
@@ -179,11 +224,37 @@ public class PixelGroup extends Collidable
             }
             else
                 cbuf.put((i + 1) * 4 - 1,0f);
+
             if(pixels[i].outside)
             {
                 cbuf.put((i + 1) * 4 - 4, 1);
                 cbuf.put((i + 1) * 4 - 3, 1);
                 cbuf.put((i + 1) * 4 - 2, 1);
+            }
+        }
+
+        glBindBuffer(GL_ARRAY_BUFFER, cBuffer[0]);
+        glBufferSubData(GL_ARRAY_BUFFER,0,cbuf.capacity()*Constants.BYTES_PER_FLOAT,cbuf);
+    }
+
+    public void setWhiteToColor(float r, float g, float b)
+    {
+        this.r = r;
+        this.g = g;
+        this.b = b;
+        whiteToColor = true;
+    }
+
+    public void setWhiteToColor()
+    {
+        int tSize = pixels.length;
+        for(int i = 0; i < tSize; i++)
+        {
+            if( pixels[i].r == 1 && pixels[i].g == 1 && pixels[i].b == 1)
+            {
+                cbuf.put((i + 1) * 4 - 4, r);
+                cbuf.put((i + 1) * 4 - 3, g);
+                cbuf.put((i + 1) * 4 - 2, b);
             }
         }
 
@@ -200,6 +271,8 @@ public class PixelGroup extends Collidable
         xDispLoc = glGetUniformLocation(shaderLocation,"x_displacement");
         yDispLoc = glGetUniformLocation(shaderLocation,"y_displacement");
         uTiltAngleLocation = glGetUniformLocation(shaderLocation,"tilt");
+        uMagLoc = glGetUniformLocation(shaderLocation,"mag");
+        pointSizeLoc = glGetUniformLocation(shaderLocation,"pointSize");
 
         initBuffers();
         glInit = true;

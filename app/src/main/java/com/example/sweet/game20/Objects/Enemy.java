@@ -135,6 +135,7 @@ public class Enemy extends Drawable
     @Override
     public Enemy clone()
     {
+        System.out.println("SHOULDNT BE IN HERE _____________________________________________________________");
         Enemy e = new Enemy(enemyBody.clone(), particleSystem, dropFactory);
         e.setLoc(x, y);
         return e;

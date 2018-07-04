@@ -30,7 +30,7 @@ class GamePlayer
     private long pauseCoolDownStart = 0;
     private static final long doubleTapLength = 500;
 
-    public GamePlayer(Context context, Point size, GLSurfaceView glSV)
+    public GamePlayer(Context context, Point size, GLSurfaceView glSV, View d)
     {
         glSurfaceView = glSV;
         gameRender = new GameRenderer(context);
@@ -122,8 +122,8 @@ class GamePlayer
                                     gameRender.ui.menuPointerDown = false;
                                     if (System.currentTimeMillis() - pauseCoolDownStart > pauseCoolDownLength)
                                     {
-                                        pause = gameRender.ui.checkPause(normX, normY);
-                                        if (!pause)
+                                        pause = gameRender.ui.checkPause();
+                                        if(!pause)
                                         {
                                             gameRender.inGameUnpause();
                                             pauseCoolDownStart = System.currentTimeMillis();
@@ -259,130 +259,5 @@ class GamePlayer
                     return true;
                 }
             });
-
-        // Start the game
-        //newGame();
     }
-
-    /*public void newGame()
-    {
-        ui = new UI();
-        collisionParticles = new ParticleSystem(4000, globalStartTime,context);
-        collisionHandler = new CollisionHandler(collisionParticles);
-        gameRender.collisionParticles = collisionParticles;
-        player1 = new Player(context, .004f,.1f,0f,0f, globalStartTime);
-
-        for(float i = -1.4f; i < 1.4; i+=.40)
-        {
-            Enemy t;
-            if(i <  0)
-                t = new Enemy(1, context);
-            else
-                t = new Enemy(0, context);
-            t.setLoc(-.7f,i);
-            gameRender.addDrawable(t);
-            entities.add(t);
-        }
-
-        for(float w = -1f; w <= 1f; w+= .1){
-            for(float i = -1.4f; i < 1.4; i+=.10)
-            {
-                Enemy t;
-                if(i <  0)
-                    t = new Enemy(1, collisionParticles);
-                else
-                    t = new Enemy(0, collisionParticles);
-                t.setLoc(w,i);
-                gameRender.addDrawable(t);
-                entities.add(t);
-            }
-        }
-        gameRender.addDrawable(ui);
-        gameRender.addDrawable(player1);
-
-
-        gLoopThread = new Thread(this);
-        //gLoopThread = new Thread(new ThreadGroup("Game"), this, "GameLoop", 2097152);
-        gLoopThread.start();
-    }
-
-    public void update()
-    {
-        if(mainTouchDown)
-        {
-            if(yOnDown < -.9 && xOnDown < -.9)
-                player1.getPlayerBody().setAllToLive();
-            player1.move(xOnMovement - xOnDown,yOnDown - yOnMovement);
-        }
-
-        player1.getGun().move();
-
-        for(Enemy e: entities)
-        {
-            collisionHandler.checkCollisions(player1.getPlayerBody(), e.getPixelGroup());
-
-            //synchronized (player1.getGun().getBullets())
-            //{
-                for (Bullet b : player1.getGun().getBullets()) {
-                    collisionHandler.checkCollisions(b.pixelGroup, e.getPixelGroup());
-                }
-            //}
-        }
-
-    }*/
-
-    /*@Override
-    public void run()
-    {
-        // Define variables to hold past time and render lag
-        double pastTime = System.currentTimeMillis()-globalStartTime;
-        double lag = 0.0;
-
-        // Main Game Loop: Fixed update loop with interpolated rendering when possible.
-        while (isPlaying)
-        {
-            // Calculate elapsed time and determine effective render lag.
-            double currentTime = System.currentTimeMillis()-globalStartTime;
-            double elapsedTime = currentTime - pastTime;
-            pastTime = currentTime;
-            lag += elapsedTime;
-
-            // Inner loop for updating game state on a fixed time-step.
-            while( lag >= mSPU)
-            {
-                update();
-               // gameRender.setInterpolation((((long)lag >> 6)<<6)/mSPU);
-                //gameRender.setInterpolation(lag/mSPU);
-                //glSurfaceView.requestRender();
-                lag -= mSPU;
-            }
-
-            gameRender.setInterpolation((((long)lag >> 5)<<5)/mSPU);
-            glSurfaceView.requestRender();
-        }
-    }*/
-
-    //Unsure of workability*
-    /*public void pauseGame()
-    {
-        isPlaying = false;
-        try
-        {
-            gLoopThread.join();
-        }
-        catch (InterruptedException e)
-        {
-            // Error
-        }
-    }
-
-    public void resumeGame()
-    {
-        isPlaying = true;
-        gLoopThread = new Thread(this);
-        gLoopThread.start();
-    }*/
-
-
-
 }

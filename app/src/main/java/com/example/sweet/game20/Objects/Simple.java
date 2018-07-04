@@ -27,6 +27,7 @@ public class Simple extends Enemy
     private float retreatDistance = .5f;
     private boolean track = false;
     private boolean retreat = false;
+    private boolean dropAdded = false;
 
     public Simple(PixelGroup p, Gun g, ParticleSystem ps, DropFactory dF)
     {
@@ -40,8 +41,8 @@ public class Simple extends Enemy
 
         guns = new GunComponent[1];
         thrusters = new ThrustComponent[1];
-        thrusters[0] = new ThrustComponent(thrusterPixels, 0, 0, 0, 0, 0, 2, ps);
-        guns[0] = new GunComponent(gun1Pixels, 1, 0, 0, 0, g, ps);
+        thrusters[0] = new ThrustComponent(thrusterPixels, 0, 0, 0,0, 2, ps);
+        guns[0] = new GunComponent(gun1Pixels, 0, 0, 0, g, ps);
         enemyBody.angle = 3.14;
         enemyBody.rotate(enemyBody.angle);
         baseSpeed = .005f;
@@ -66,7 +67,7 @@ public class Simple extends Enemy
         }
 
         if(track)
-            angleMoving = -(float)(Math.atan2(pY - enemyBody.centerY,pX - enemyBody.centerX));
+            angleMoving = -(float)(Math.atan2(pY - enemyBody.centerY, pX - enemyBody.centerX));
 
         if(retreat)
             angleMoving = -(float)(Math.atan2(enemyBody.centerY - pY, enemyBody.centerX - pX));
@@ -82,14 +83,38 @@ public class Simple extends Enemy
             tempDistX *= .6;
             tempDistY *= .6;
             ratio = 0f;
-            guns[0].gun.shoot(guns[0].x + enemyBody.centerX, guns[0].y+ enemyBody.centerY, (float)enemyBody.angle + (float)Math.PI);
+            if(guns[0] != null)
+            {
+                boolean t = guns[0].gun.shoot(guns[0].x + enemyBody.centerX, guns[0].y + enemyBody.centerY, (float) enemyBody.angle + (float) Math.PI);
+            }
         }
 
-        x+=tempDistX;
-        y+=tempDistY;
+        x += -tempDistX;
+        y += -tempDistY;
         enemyBody.move(-tempDistX, -tempDistY);
-        guns[0].gun.move();
+        if(guns[0] != null)
+        {
+            guns[0].gun.move();
+        }
         addThrustParticles(thrusterPixels, ratio, .03f);
+
+        if(!dropAdded && enemyBody.numLivePixels <= .75 * enemyBody.totalPixels)
+        {
+            for(int i = 0; i < 10; i++)
+            {
+                dropsToAdd.add(
+                        dropFactory.getNewDrop(
+                                Constants.DropType.GUN,
+                                x,
+                                y,
+                                guns[0]
+                        )
+                );
+            }
+            guns[0] = null;
+            dropAdded = true;
+        }
+        // public Drop(PixelGroup p, float x, float y, int t, double lT, Component c)
     }
 
     public void rotate(float angleMoving, float rotateSpeed)
@@ -136,13 +161,19 @@ public class Simple extends Enemy
 
     public void applyPauseLength(double p)
     {
-        guns[0].gun.applyPauseLength(p);
+        if(guns[0] != null)
+        {
+            guns[0].gun.applyPauseLength(p);
+        }
     }
 
     @Override
     public void draw(double interpolation)
     {
-        guns[0].gun.draw(0);
+        if(guns[0] != null)
+        {
+            guns[0].gun.draw(0);
+        }
         enemyBody.draw();
     }
 
