@@ -8,7 +8,9 @@ import com.example.sweet.game20.Objects.Button;
 import com.example.sweet.game20.Objects.Component;
 import com.example.sweet.game20.Objects.Drawable;
 import com.example.sweet.game20.Objects.Drop;
+import com.example.sweet.game20.Objects.GunComponent;
 import com.example.sweet.game20.Objects.ImageContainer;
+import com.example.sweet.game20.Objects.ModComponent;
 import com.example.sweet.game20.Objects.Player;
 import com.example.sweet.game20.util.Constants;
 import com.example.sweet.game20.util.TextPresenter;
@@ -489,11 +491,37 @@ public class UI extends Drawable
 
             for(int g = 0; g < player.getMaxGuns(); g++)
             {
-                if(playerGuns[g].drop != null)
+                if(playerGuns[g].drop != null && playerGuns[g] != heldDropButton)
                 {
                     playerGuns[g].drop.menuDraw(
                             playerGuns[g].regular.x,
                             playerGuns[g].regular.y,
+                            1f,
+                            pointSize
+                    );
+                }
+            }
+
+            for(int m = 0; m < player.getMaxMods(); m++)
+            {
+                if(playerMods[m].drop != null && playerMods[m] != heldDropButton)
+                {
+                    playerMods[m].drop.menuDraw(
+                            playerMods[m].regular.x,
+                            playerMods[m].regular.y,
+                            1f,
+                            pointSize
+                    );
+                }
+            }
+
+            for(int t = 0; t < player.thrusters.length; t++)
+            {
+                if(playerThrusters[t].drop != null && playerThrusters[t] != heldDropButton)
+                {
+                    playerThrusters[t].drop.menuDraw(
+                            playerThrusters[t].regular.x,
+                            playerThrusters[t].regular.y,
                             1f,
                             pointSize
                     );
@@ -522,7 +550,7 @@ public class UI extends Drawable
                 {
                     if(selectedButton.drop.component.type == DropType.GUN)
                     {
-                        selectedButton.drop.component.gun.getTemplate().softDraw(
+                        ((GunComponent)selectedButton.drop.component).gun.getTemplate().softDraw(
                                 Constants.gpBulletX,
                                 Constants.gpBulletY,
                                 0,0
@@ -549,16 +577,16 @@ public class UI extends Drawable
                             break;
                     case GUN: gunPanel.draw();
                             textPresenter.drawInt(
-                                    (int)selectedButton.drop.component.gun.getShotDelay(),
+                                    (int)((GunComponent)selectedButton.drop.component).gun.getShotDelay(),
                                     Constants.iPnum1X, Constants.infoPanelY
                             );
                             textPresenter.drawInt(
-                                    selectedButton.drop.component.gun.getTemplate().totalPixels,
+                                    ((GunComponent)selectedButton.drop.component).gun.getTemplate().totalPixels,
                                     Constants.iPnum2X, Constants.infoPanelY
                             );
                             textPresenter.drawInt(
-                                    (int)(selectedButton.drop.component.gun.getTemplate().totalPixels *
-                                            (1000 / selectedButton.drop.component.gun.getShotDelay())),
+                                    (int)(((GunComponent)selectedButton.drop.component).gun.getTemplate().totalPixels *
+                                            (1000 / ((GunComponent)selectedButton.drop.component).gun.getShotDelay())),
                                     Constants.iPnum3X, Constants.infoPanelY
                             );
                             break;
@@ -584,16 +612,9 @@ public class UI extends Drawable
                 b.draw(menuOnMove.x, menuOnMove.y);
             }
 
-            for(int m = 0; m < playerMods.length; m++)
+            for(int m = 0; m < player.getMaxMods(); m++)
             {
-                if (m >= player.getMaxMods())
-                {
-                    break;
-                }
-                else
-                {
-                    playerMods[m].draw(menuOnMove.x, menuOnMove.y);
-                }
+                playerMods[m].draw(menuOnMove.x, menuOnMove.y);
             }
 
             textPresenter.drawInt(score, -.86f, -.07f);
@@ -680,10 +701,30 @@ public class UI extends Drawable
     {
         if (resumeButton.cursorOnButton)
         {
+
             for(int g = 0; g < player.gunDrops.length; g++)
             {
                 player.gunDrops[g] = playerGuns[g].drop;
             }
+
+            for(int m = 0; m < player.getMaxMods(); m++)
+            {
+                player.mods[m] = playerMods[m].drop;
+                if(player.mods[m] != null && player.mods[m].component != null)
+                {
+                    for(int g = 0; g < player.gunDrops.length; g++)
+                    {
+                        player.gunDrops[g] = ((ModComponent)player.mods[m].component).modifyGun(player.gunDrops[g]);
+                    }
+                }
+            }
+            //player.modUpdate = true;
+
+            for(int t = 0; t < player.thrusters.length; t++)
+            {
+                player.thrusters[t] = playerThrusters[t].drop;
+            }
+
             for(Button[] row: componentPanel)
             {
                 for(Button b: row)
@@ -744,6 +785,16 @@ public class UI extends Drawable
         for(int g = 0; g < player.gunDrops.length; g++)
         {
             playerGuns[g].drop = player.gunDrops[g];
+        }
+
+        for(int m = 0; m < player.getMaxMods(); m++)
+        {
+            playerMods[m].drop = player.mods[m];
+        }
+
+        for(int t = 0; t < player.thrusters.length; t++)
+        {
+            playerThrusters[t].drop = player.thrusters[t];
         }
     }
 }

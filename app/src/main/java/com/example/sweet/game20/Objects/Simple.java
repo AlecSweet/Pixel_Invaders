@@ -98,22 +98,37 @@ public class Simple extends Enemy
         }
         addThrustParticles(thrusterPixels, ratio, .03f);
 
-        if(!dropAdded && enemyBody.numLivePixels <= .75 * enemyBody.totalPixels)
+        if(!dropAdded && enemyBody.numLivePixels <= .45 * enemyBody.totalPixels)
         {
-            for(int i = 0; i < 10; i++)
-            {
-                dropsToAdd.add(
-                        dropFactory.getNewDrop(
-                                Constants.DropType.GUN,
-                                x,
-                                y,
-                                guns[0]
-                        )
-                );
-            }
+            dropsToAdd.add(
+                    dropFactory.getNewDrop(
+                            Constants.DropType.GUN,
+                            x,
+                            y,
+                            guns[0]
+                    )
+            );
+            dropsToAdd.add(
+                    dropFactory.getNewDrop(
+                            Constants.DropType.MOD,
+                            x,
+                            y,
+                            new ModComponent(null,x,y,0, Constants.ModType.EXTRASHOTS, 3, null)
+                    )
+            );
+            /*dropsToAdd.add(
+                    dropFactory.getNewDrop(
+                            Constants.DropType.MOD,
+                            x,
+                            y,
+                            new ModComponent(null,x,y,0, Constants.ModType.FIRERATE, 3, null)
+                    )
+            );*/
+            //dropsToAdd.add(dropFactory.getNewDrop(Constants.DropType.EXTRA_GUN, x, y));
             guns[0] = null;
             dropAdded = true;
         }
+
         // public Drop(PixelGroup p, float x, float y, int t, double lT, Component c)
     }
 

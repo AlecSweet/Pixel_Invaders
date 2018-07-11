@@ -142,7 +142,7 @@ public class GameRenderer implements Renderer
             saveTime = false,
             scaleSet = false;
 
-    private Player player1;
+    public Player player1;
 
     public UI ui;
 
@@ -341,8 +341,8 @@ public class GameRenderer implements Renderer
 
         glUseProgram(particleShaderProgram);
         glUniform1f(timeLocation, (float) ((System.currentTimeMillis() - globalStartTime) / 1000));
-        glUniform1f(xScreenShiftLocationParticle, aiRunnable.xScreenShift);
-        glUniform1f(yScreenShiftLocationParticle, aiRunnable.yScreenShift);
+        glUniform1f(xScreenShiftLocationParticle, player1.xScreenShift);
+        glUniform1f(yScreenShiftLocationParticle, player1.yScreenShift);
         glUniform1f(particlePointSizeLocation, particlePointSize);
 
         glActiveTexture(GL_TEXTURE0);
@@ -353,8 +353,8 @@ public class GameRenderer implements Renderer
         playerParticles.draw();
 
         glUseProgram(shaderProgram);
-        glUniform1f(xScreenShiftLocation, aiRunnable.xScreenShift);
-        glUniform1f(yScreenShiftLocation, aiRunnable.yScreenShift);
+        glUniform1f(xScreenShiftLocation, player1.xScreenShift);
+        glUniform1f(yScreenShiftLocation, player1.yScreenShift);
         glUniform1f(pointSizeLocation, pointSize);
         glUniform1f(uMagLoc, 1);
 
@@ -409,8 +409,8 @@ public class GameRenderer implements Renderer
         glUseProgram(particleShaderProgram);
 
         glUniform1f(timeLocation, (float) ((System.currentTimeMillis() - globalStartTime) / 1000));
-        glUniform1f(xScreenShiftLocationParticle, aiRunnable.xScreenShift);
-        glUniform1f(yScreenShiftLocationParticle, aiRunnable.yScreenShift);
+        glUniform1f(xScreenShiftLocationParticle, player1.xScreenShift);
+        glUniform1f(yScreenShiftLocationParticle, player1.yScreenShift);
         glUniform1f(particlePointSizeLocation, particlePointSize);
 
         glActiveTexture(GL_TEXTURE0);
@@ -493,8 +493,8 @@ public class GameRenderer implements Renderer
 
             xbound = 1.5f;
             ybound = 1.5f;
-            aiRunnable.xbound = 1.5f;
-            aiRunnable.ybound = 1.5f;
+            player1.xbound = 1.5f;
+            player1.ybound = 1.5f;
             ui.setScale(xScale, yScale);
             enemyFactory.setBounds(2.5f, 3f);
             scaleSet = true;
@@ -571,9 +571,9 @@ public class GameRenderer implements Renderer
 
                 if (entities[i].getPixelGroup().getCollidableLive())
                 {
-                    if (Math.abs(entities[i].getX() - aiRunnable.xScreenShift) * xScale <=
+                    if (Math.abs(entities[i].getX() - player1.xScreenShift) * xScale <=
                         1.05 + entities[i].getPixelGroup().getHalfSquareLength() &&
-                        Math.abs(entities[i].getY() - aiRunnable.yScreenShift) * yScale <=
+                        Math.abs(entities[i].getY() - player1.yScreenShift) * yScale <=
                         1.05 + entities[i].getPixelGroup().getHalfSquareLength())
                     {
                         entities[i].onScreen = true;
@@ -621,7 +621,8 @@ public class GameRenderer implements Renderer
                 enemyOverflow.add(e);
             }
         }
-
+        player1.movePlayer();
+        player1.moveCamera();
         //.frameRequest++;
     }
 
@@ -631,8 +632,8 @@ public class GameRenderer implements Renderer
         glBindTexture(GL_TEXTURE_2D, backgroundTexture);
         glUniform1i(uTextureLocation, 0);
 
-        glUniform1f(xDispLocation, -aiRunnable.xScreenShift);
-        glUniform1f(yDispLocation, -aiRunnable.yScreenShift);
+        glUniform1f(xDispLocation, -player1.xScreenShift);
+        glUniform1f(yDispLocation, -player1.yScreenShift);
 
         glBindBuffer(GL_ARRAY_BUFFER, backgroundVBO[0]);
         glEnableVertexAttribArray(aPositionLocation);
@@ -780,6 +781,10 @@ public class GameRenderer implements Renderer
         DropFactory d = new DropFactory();
 
         d.addDropToCatalog(HEALTH, ImageParser.parseImage(context, R.drawable.health, R.drawable.health_light, shaderProgram));
+
+        d.addDropToCatalog(EXTRA_GUN, ImageParser.parseImage(context, R.drawable.extragun, R.drawable.extragun_light, shaderProgram));
+
+        d.addDropToCatalog(EXTRA_MOD, ImageParser.parseImage(context, R.drawable.extramod, R.drawable.extragun_light, shaderProgram));
 
         d.addDropToCatalog(GUN, ImageParser.parseImage(context, R.drawable.guncomponent, R.drawable.guncomponent, shaderProgram));
 

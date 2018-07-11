@@ -26,11 +26,11 @@ public class DropFactory
 
     public Drop getNewDrop(Constants.DropType dT, float x, float y)
     {
-        return new Drop(dropCatalog.get(dT), x, y,0, Constants.TYPE_0_DROP_LIVETIME);
+        return new Drop(dropCatalog.get(dT), x, y, Constants.TYPE_0_DROP_LIVETIME, dT);
     }
 
     public Drop getNewDrop(Constants.DropType dT, float x, float y, Component c)
     {
-        return new Drop(dropCatalog.get(dT).clone(), x, y, 1, Constants.TYPE_1_DROP_LIVETIME, c);
+        return new Drop(dropCatalog.get(dT).clone(), x, y, Constants.TYPE_1_DROP_LIVETIME, c, dT);
     }
 }

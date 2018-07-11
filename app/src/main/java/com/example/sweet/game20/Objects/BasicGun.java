@@ -14,7 +14,7 @@ public class BasicGun extends Gun
 {
     public BasicGun(PixelGroup pG, ParticleSystem ps, double delay)
     {
-        super(delay, pG, ps, .028f);
+        super(delay, pG, ps, .038f);
         spread = .04f;
     }
 
@@ -28,11 +28,18 @@ public class BasicGun extends Gun
     @Override
     public boolean shoot(float x, float y, float angle)
     {
-        if (System.currentTimeMillis() > lastShotTime + shootDelay)
+        if (System.currentTimeMillis() > lastShotTime + shootDelay * fireRateMod)
         {
-            lastShotTime = System.currentTimeMillis();
-            bulletPool.pop().resetBullet(x, y,angle + (float) (Math.random() * spread - spread / 2));
-            addShotParticles(angle, x, y);
+            float arc = (numShots - 1) * .1f;
+
+            for(int i = 0; i < numShots; i++)
+            {
+                float angDisp = (((float)(i + 1) / numShots) * arc) - (arc / 2);
+                angDisp += (float)(Math.random() * spread - spread / 2);
+                lastShotTime = System.currentTimeMillis();
+                bulletPool.pop().resetBullet(x, y, angle + angDisp);
+                addShotParticles(angle, x, y);
+            }
             return true;
         }
         else

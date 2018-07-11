@@ -1,7 +1,7 @@
 package com.example.sweet.game20.Objects;
 
 import android.content.Context;
-import android.os.Vibrator;
+import android.graphics.PointF;
 
 import static android.opengl.GLES20.glGetUniformLocation;
 import static android.opengl.GLES20.glUniform1f;
@@ -16,7 +16,6 @@ import com.example.sweet.game20.util.VectorFunctions;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.Stack;
 
 public class Player extends Drawable
 {
@@ -33,6 +32,35 @@ public class Player extends Drawable
             driftY,
             xBound,
             yBound;
+
+    private PointF panToward = new PointF(0,0);
+
+    public float
+            xbound = 0,
+            ybound = 0,
+            xScreenShift = 0,
+            yScreenShift = 0,
+            cameraSpeed = .014f,
+            cameraPanX = 0f,
+            cameraPanY = 0f,
+            cameraClamp = .16f,
+            screenShakeX = 0,
+            screenShakeY = 0;
+
+    public volatile float
+            movementOnDownX = 0f,
+            movementOnMoveX = 0f,
+            shootingOnDownX = 0f,
+            shootingOnMoveX = 0f,
+            movementOnDownY = 0f,
+            movementOnMoveY = 0f,
+            shootingOnDownY = 0f,
+            shootingOnMoveY = 0f;
+
+    public volatile boolean
+            movementDown = false,
+            shootingDown = false,
+            modUpdate = false;
 
     private int[] gravParticles = new int[]{
              6,  3,  7,  2,  8,  2,  9,  1, 10,  1, 11,  1, 12,  0, 13,  0, 14,  0, 15,  0, 16,  0, 17,
@@ -88,15 +116,19 @@ public class Player extends Drawable
         1: Left Thrust
         2: Right Thrust
      */
-    private ThrustComponent[] thrusters = new ThrustComponent[3];
+    public Drop[] thrusters = new Drop[3];
 
     //public GunComponent[] guns = new GunComponent[3];
     public Drop[] gunDrops = new Drop[3];
+    public PointF[] gunOffsets = new PointF[]{
+            new PointF(0, -.008f),
+            new PointF(.056f, -.088f),
+            new PointF(.056f, .072f)
+    };
     //Number of guns 1-5
     private int maxGuns = 1;
 
-    private ArrayList<ModComponent> mods = new ArrayList<>();
-    //Can Be any Number
+    public Drop[] mods = new Drop[5];
     private int maxMods = 1;
 
     private String TILT = "tilt";
@@ -144,11 +176,33 @@ public class Player extends Drawable
         );
         gunDrops[0].held = true;
         componentDrops.add(gunDrops[0]);
-        //guns[1] = null;
-        //guns[2] = null;
-        thrusters[0] = new ThrustComponent(mainBoostPixels, 0, 0, 0, 0, 3, ps);
-        thrusters[1] = new ThrustComponent(leftBoostPixels, 0, 0, 0, 1, 2, ps);
-        thrusters[2] = new ThrustComponent(rightBoostPixels, 0, 0, 0, 2, 2, ps);
+
+        thrusters[1] = dF.getNewDrop(Constants.DropType.THRUSTER,
+                0,
+                0,
+                new ThrustComponent(mainBoostPixels, 0, 0, 0, 0, 3, particleSystem)
+        );
+        thrusters[1].held = true;
+        componentDrops.add(thrusters[1]);
+
+        thrusters[0] = dF.getNewDrop(Constants.DropType.THRUSTER,
+                0,
+                0,
+                new ThrustComponent(leftBoostPixels, 0, 0, 0, 0, 2, particleSystem)
+        );
+        thrusters[0].held = true;
+        componentDrops.add(thrusters[0]);
+
+        thrusters[2] = dF.getNewDrop(Constants.DropType.THRUSTER,
+                0,
+                0,
+                new ThrustComponent(rightBoostPixels, 0, 0, 0, 0, 2, particleSystem)
+        );
+        thrusters[2].held = true;
+        componentDrops.add(thrusters[2]);
+        //thrusters[0] = new ThrustComponent(mainBoostPixels, 0, 0, 0, 0, 3, ps);
+        //thrusters[1] = new ThrustComponent(leftBoostPixels, 0, 0, 0, 1, 2, ps);
+        //thrusters[2] = new ThrustComponent(rightBoostPixels, 0, 0, 0, 2, 2, ps);
 
         tiltLoc = glGetUniformLocation(sL, TILT);
     }
@@ -157,8 +211,13 @@ public class Player extends Drawable
     {
         float tempMagnitude = VectorFunctions.getMagnitude(mX, mY);
         float angleMoving = (float)(Math.atan2(mY, mX));
-        float tempDistX = -(float)(baseSpeed * thrusters[0].thrustPower * -Math.cos(angleMoving));
-        float tempDistY = -(float)(baseSpeed * thrusters[0].thrustPower * Math.sin(angleMoving));
+        float pow = 1;
+        if(thrusters[1] != null)
+        {
+            pow = ((ThrustComponent) thrusters[1].component).thrustPower;
+        }
+        float tempDistX = -(float)(baseSpeed * pow * -Math.cos(angleMoving));
+        float tempDistY = -(float)(baseSpeed * pow * Math.sin(angleMoving));
 
         if(tempMagnitude>.15)
         {
@@ -191,15 +250,33 @@ public class Player extends Drawable
     {
         float delta = (float)playerBody.angle - angleMoving;
 
-        if (delta > rotateSpeed * thrusters[1].thrustPower || delta < -rotateSpeed * thrusters[2].thrustPower)
+        float sideSpd, sideSpd2;
+        if(thrusters[0] != null)
         {
+            sideSpd = rotateSpeed * ((ThrustComponent) thrusters[0].component).thrustPower;
+        }
+        else
+        {
+            sideSpd = rotateSpeed;
+        }
+        if(thrusters[2] != null)
+        {
+            sideSpd2 = -rotateSpeed * ((ThrustComponent)thrusters[2].component).thrustPower;
+        }
+        else
+        {
+            sideSpd2 = -rotateSpeed;
+        }
+
+        if (delta > sideSpd || delta < sideSpd2)
+            {
             if (delta < -Math.PI || (delta > 0 && delta < Math.PI))
             {
-                playerBody.angle -= rotateSpeed * thrusters[2].thrustPower;
+                playerBody.angle += sideSpd2;
             }
             else
             {
-                playerBody.angle += rotateSpeed * thrusters[1].thrustPower;
+                playerBody.angle += sideSpd;
             }
         }
         else
@@ -227,16 +304,25 @@ public class Player extends Drawable
 
     public void addThrustParticles(Pixel[] pixels, float ratio, float dist)
     {
+        float pow = 1;
+        if(thrusters[1] != null)
+        {
+            pow = ((ThrustComponent) thrusters[1].component).thrustPower;
+        }
         for(Pixel p: pixels)
         {
             if(p.live)
             {
                 for (int t = 0; t < 4; t++)
                 {
-                    particleSystem.addParticle(p.xDisp + playerBody.centerX, p.yDisp+ playerBody.centerY,
+                    particleSystem.addParticle(p.xDisp + playerBody.centerX,
+                            p.yDisp+ playerBody.centerY,
                             (float)(-playerBody.angle+Math.PI),
-                            (float) (Math.random() * .2 + .8), (float) (Math.random()), 0, .7f,
-                            (baseSpeed * thrusters[0].thrustPower * (float)(Math.random()*70+20)) * ratio,
+                            (float) (Math.random() * .2 + .8),
+                            (float) (Math.random()),
+                            0,
+                            .7f,
+                            (baseSpeed * pow * (float)(Math.random()*70+20)) * ratio,
                             dist * ratio * (float)Math.random()*2,
                             (float)(Math.random()*20)
                     );
@@ -270,7 +356,7 @@ public class Player extends Drawable
             {
                 if (d != null && d.component != null)
                 {
-                    d.component.gun.move();
+                    ((GunComponent)d.component).gun.move();
                 }
             }
         }
@@ -278,13 +364,14 @@ public class Player extends Drawable
 
     public void addDrop(Drop d)
     {
-        switch(d.type)
+        if(d.consumable)
         {
-            case 0: consumableDrops[consumableDropIndex] = d;
-                    consumableDropIndex++;
-                    break;
-            case 1: componentDrops.add(d);
-                    break;
+            consumableDrops[consumableDropIndex] = d;
+            consumableDropIndex++;
+        }
+        else
+        {
+            componentDrops.add(d);
         }
     }
 
@@ -302,8 +389,34 @@ public class Player extends Drawable
                 {
                     if (distSquared < .0025f)
                     {
-                        d.live = false;
-                        revivePixels();
+                        switch (d.type)
+                        {
+                            case HEALTH:
+                                d.live = false;
+                                revivePixels();
+                                break;
+                            case EXTRA_GUN:
+                                d.live = false;
+                                if(maxGuns < 3)
+                                {
+                                    maxGuns++;
+                                }
+                                else
+                                {
+                                }
+                                break;
+                            case EXTRA_MOD:
+                                d.live = false;
+                                if(maxMods < 5)
+                                {
+                                    maxMods++;
+                                }
+                                else
+                                {
+                                }
+                                break;
+                        }
+
                     }
                     else
                     {
@@ -417,16 +530,34 @@ public class Player extends Drawable
             {
                 d.x = playerBody.centerX;
                 d.y = playerBody.centerY;
+                if(d.component != null)
+                {
+                    for(Drop m: mods)
+                    {
+                        if(m != null && m.component != null)
+                        {
+                            d = ((ModComponent)m.component).unmodifyGun(d);
+                        }
+                    }
+                }
             }
-        }
-        /*for(Drop d: thrusters)
-        {
-
         }
         for(Drop d: mods)
         {
-
-        }*/
+            if(d != null)
+            {
+                d.x = playerBody.centerX;
+                d.y = playerBody.centerY;
+            }
+        }
+        for(Drop d: thrusters)
+        {
+            if(d != null)
+            {
+                d.x = playerBody.centerX;
+                d.y = playerBody.centerY;
+            }
+        }
     }
 
     public void revivePixels()
@@ -501,16 +632,21 @@ public class Player extends Drawable
     public void shoot(float sX, float sY)
     {
         float shootAngle = (float) (Math.atan2(sY, sX));
+        int i = 0;
         for(Drop d: gunDrops)
         {
             if (d != null && d.component != null)
             {
-                if(d.component.gun.shoot(playerBody.centerX, playerBody.centerY, shootAngle + (float) Math.PI))
+                if(((GunComponent)d.component).gun.shoot(
+                        playerBody.centerX + gunOffsets[i].x,
+                        playerBody.centerY + gunOffsets[i].y,
+                        shootAngle + (float) Math.PI))
                 {
-                    screenShakeEventsX.add(new ScreenShake(.02f, 30, d.component.gun.shootDelay/2));
-                    screenShakeEventsY.add(new ScreenShake(.02f, 30, d.component.gun.shootDelay/2));
+                    screenShakeEventsX.add(new ScreenShake(.02f, 30, ((GunComponent)d.component).gun.shootDelay/2));
+                    screenShakeEventsY.add(new ScreenShake(.02f, 30, ((GunComponent)d.component).gun.shootDelay/2));
                 }
             }
+            i++;
         }
     }
 
@@ -522,7 +658,7 @@ public class Player extends Drawable
 
         for(Drop d: consumableDrops)
         {
-            if(d != null)
+            if(d != null && d.live)
             {
                 d.draw();
             }
@@ -540,7 +676,7 @@ public class Player extends Drawable
             if(d != null && !d.live)
             {
                 d.freeMemory();
-                componentDrops.remove(d);
+                dItr.remove();
             }
         }
 
@@ -551,9 +687,9 @@ public class Player extends Drawable
         glUniform1f(tiltLoc, 0);
         for(Drop d: gunDrops)
         {
-            if (d != null && d.component.gun != null)
+            if (d != null && ((GunComponent)d.component).gun != null)
             {
-                d.component.gun.draw(interpolation);
+                ((GunComponent)d.component).gun.draw(interpolation);
             }
         }
     }
@@ -644,5 +780,129 @@ public class Player extends Drawable
     public int getMaxGuns()
     {
         return maxGuns;
+    }
+
+    public void movePlayer()
+    {
+        if(movementOnDownX > .8f)
+        {
+            getPixelGroup().resetPixels();
+        }
+
+        if(movementDown)
+        {
+            move(movementOnMoveX - movementOnDownX, movementOnMoveY - movementOnDownY);
+        }
+
+        if(shootingDown)
+        {
+            float diffX = shootingOnMoveX - shootingOnDownX;
+            float diffY = shootingOnMoveY - shootingOnDownY;
+            float tempMagnitude = VectorFunctions.getMagnitude(diffX, diffY);
+
+            if (tempMagnitude > .1)
+            {
+                shoot(diffX, diffY);
+            }
+        }
+
+        moveGuns();
+    }
+
+    public void moveCamera()
+    {
+        if (shootingDown)
+        {
+            float diffX = shootingOnMoveX - shootingOnDownX;
+            float diffY = shootingOnMoveY - shootingOnDownY;
+            float tempMagnitude = VectorFunctions.getMagnitude(diffX, diffY);
+            if (tempMagnitude > .1)
+            {
+                panToward.set(cameraClamp * diffX / tempMagnitude, cameraClamp * diffY / tempMagnitude);
+            }
+            else
+            {
+                panToward.set(0, 0);
+            }
+        }
+        else
+        {
+            panToward.set(0, 0);
+        }
+
+        float panAngle;
+        float panDiffX = panToward.x - cameraPanX;
+        float panDiffY = panToward.y - cameraPanY;
+        float panMag = VectorFunctions.getMagnitude(panDiffX, panDiffY);
+
+        if(panMag > .01)
+        {
+            panAngle = (float) Math.atan2(panToward.y - cameraPanY, panToward.x - cameraPanX);
+            cameraPanX += cameraSpeed * Math.cos(panAngle);
+            cameraPanY += cameraSpeed * Math.sin(panAngle);
+        }
+        else
+        {
+            cameraPanX = panToward.x;
+            cameraPanY = panToward.y;
+        }
+
+        if(getPixelGroup().getCenterX() + cameraPanX < xbound &&
+                getPixelGroup().getCenterX() + cameraPanX > -xbound)
+        {
+            xScreenShift = getPixelGroup().getCenterX() + cameraPanX;
+        }
+        else
+        {
+            xScreenShift -= screenShakeX;
+        }
+
+        if (getPixelGroup().getCenterY() - cameraPanY < ybound &&
+                getPixelGroup().getCenterY() - cameraPanY > -ybound)
+        {
+            yScreenShift = getPixelGroup().getCenterY() - cameraPanY;
+        }
+        else
+        {
+            yScreenShift -= screenShakeY;
+        }
+
+        handleScreenShake();
+    }
+
+    public void handleScreenShake()
+    {
+        screenShakeX = 0;
+        screenShakeY = 0;
+
+        Iterator<ScreenShake> itrX = screenShakeEventsX.iterator();
+        while(itrX.hasNext())
+        {
+            ScreenShake s = itrX.next();
+            if(!s.live)
+            {
+                itrX.remove();
+            }
+            else
+            {
+                screenShakeX += s.getShake();
+            }
+        }
+
+        Iterator<ScreenShake> itrY = screenShakeEventsY.iterator();
+        while(itrY.hasNext())
+        {
+            ScreenShake s = itrY.next();
+            if(!s.live)
+            {
+                itrY.remove();
+            }
+            else
+            {
+                screenShakeY += s.getShake();
+            }
+        }
+        xScreenShift += screenShakeX;
+        yScreenShift += screenShakeY;
     }
 }

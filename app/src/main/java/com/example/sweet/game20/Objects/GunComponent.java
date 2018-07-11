@@ -14,7 +14,6 @@ public class GunComponent extends Component
     {
         super(p, x, y, a, ps, Constants.DropType.GUN);
         gun = g;
-        super.gun = g;
         setColor();
     }
 

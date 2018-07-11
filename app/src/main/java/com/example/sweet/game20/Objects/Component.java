@@ -28,7 +28,7 @@ public class Component
             g,
             b;
 
-    public Gun gun = null;
+   // public Gun gun = null;
 
     protected ParticleSystem masterParticleSystem;
 
@@ -50,5 +50,10 @@ public class Component
     public void draw()
     {
 
+    }
+
+    public float getVal()
+    {
+        return 1;
     }
 }

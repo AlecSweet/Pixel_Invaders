@@ -27,6 +27,9 @@ public class ThrustComponent extends Component
     public void setColor()
     {
         float halfMaxPower = Constants.MAX_THRUST_MULT / 2;
+        r = 1;
+        g = 1;
+        b = 1;
         if(thrustPower < halfMaxPower)
         {
             r -= thrustPower / halfMaxPower;
@@ -41,5 +44,11 @@ public class ThrustComponent extends Component
             r = 0;
             g = 0;
         }
+    }
+
+    @Override
+    public float getVal()
+    {
+        return thrustPower;
     }
 }

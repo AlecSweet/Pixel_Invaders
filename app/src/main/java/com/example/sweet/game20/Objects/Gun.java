@@ -26,6 +26,10 @@ public abstract class Gun
                 x,
                 y;
 
+    protected int numShots = 1;
+
+    protected float fireRateMod = 1;
+
     protected ParticleSystem masterParticleSystem;
 
     public Gun(double sD, PixelGroup pG, ParticleSystem ps, float spd)
@@ -34,12 +38,12 @@ public abstract class Gun
         bulletPool = new Stack<>();
         shootDelay = sD;
         speed = spd;
-        int num = (int)Math.ceil((3.4/(speed * 60)) * (1000/sD))+1;
+        int num = ((int)Math.ceil((4/(speed * 60)) * (1000/shootDelay))+1)*numShots;
         bullets = new Bullet[num];
         for(int i = 0; i < num; i++)
         {
             bullets[i] = new Bullet(0, 0, 0,
-                    speed, 3.4f, pixelGroupTemplate.clone());
+                    speed, 4f, pixelGroupTemplate.clone());
             bulletPool.push(bullets[i]);
         }
         lastShotTime = System.currentTimeMillis();
@@ -62,6 +66,29 @@ public abstract class Gun
         for(Bullet b: bullets)
         {
             b.move();
+        }
+    }
+
+    public void updateBulletPool()
+    {
+        int num = ((int)Math.ceil((4/(speed * 60)) * (1000/shootDelay))+1)*numShots;
+        if(num > bullets.length)
+        {
+            Bullet[] newBullets = new Bullet[num];
+            for (int i = 0; i < num; i++)
+            {
+                if(i < bullets.length)
+                {
+                    newBullets[i] = bullets[i];
+                }
+                else
+                {
+                    newBullets[i] = new Bullet(0, 0, 0,
+                            speed, 4f, pixelGroupTemplate.clone());
+                    bulletPool.push(newBullets[i]);
+                }
+            }
+            bullets = newBullets;
         }
     }
 

@@ -3,6 +3,7 @@ package com.example.sweet.game20;
 import com.example.sweet.game20.Objects.Asteroid;
 import com.example.sweet.game20.Objects.BasicGun;
 import com.example.sweet.game20.Objects.Enemy;
+import com.example.sweet.game20.Objects.ModComponent;
 import com.example.sweet.game20.Objects.Player;
 import com.example.sweet.game20.Objects.Simple;
 import com.example.sweet.game20.util.CollisionThread;
@@ -41,7 +42,7 @@ public class LevelControllerThread implements Runnable
 
     private double
             lastSpawn,
-            spawnDelay = 3000,
+            spawnDelay = 1000,
             pauseTime = 0;
 
     public LevelControllerThread(EnemyFactory eF)
@@ -100,7 +101,7 @@ public class LevelControllerThread implements Runnable
             }
         }*/
 
-        if(System.currentTimeMillis() - spawnDelay > lastSpawn && !spawnonce)
+        if(System.currentTimeMillis() - spawnDelay > lastSpawn)
         {
             lastSpawn = System.currentTimeMillis();
             System.out.println("Spawned");
@@ -126,6 +127,20 @@ public class LevelControllerThread implements Runnable
             //uiEntities[index] = a;
             spawnonce = true;
         }
+        /*if(player1.modUpdate)
+        {
+            for(int m = 0; m < player1.getMaxMods(); m++)
+            {
+                if(player1.mods[m] != null && player1.mods[m].component != null)
+                {
+                    for(int g = 0; g < player1.gunDrops.length; g++)
+                    {
+                        player1.gunDrops[g] = ((ModComponent)player1.mods[m].component).modifyGun(player1.gunDrops[g]);
+                    }
+                }
+            }
+            player1.modUpdate = false;
+        }*/
     }
 
     /*public void distributeEnemy(Enemy e)

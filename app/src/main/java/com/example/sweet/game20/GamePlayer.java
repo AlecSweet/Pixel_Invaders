@@ -32,7 +32,7 @@ class GamePlayer
 
     public GamePlayer(Context context, Point size, GLSurfaceView glSV, View d)
     {
-        glSurfaceView = glSV;
+        /*glSurfaceView = glSV;
         gameRender = new GameRenderer(context);
         glSurfaceView.setEGLConfigChooser(8,8,8,8,16,0);
         glSurfaceView.setRenderer(gameRender);
@@ -258,6 +258,6 @@ class GamePlayer
 
                     return true;
                 }
-            });
+            });*/
     }
 }

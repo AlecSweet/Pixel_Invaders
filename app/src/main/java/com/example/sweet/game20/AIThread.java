@@ -4,14 +4,12 @@ package com.example.sweet.game20;
 import android.graphics.PointF;
 
 import com.example.sweet.game20.Objects.Enemy;
-import com.example.sweet.game20.Objects.GunComponent;
 import com.example.sweet.game20.Objects.Player;
 import com.example.sweet.game20.util.CollisionHandler;
 import com.example.sweet.game20.util.Constants;
 import com.example.sweet.game20.util.ScreenShake;
 import com.example.sweet.game20.util.VectorFunctions;
 
-import java.util.ArrayList;
 import java.util.Iterator;
 
 
@@ -32,7 +30,7 @@ public class AIThread implements Runnable
     public volatile long frameRequest = 0;
     private long currentFrame = 0;
 
-    private PointF panToward = new PointF(0,0);
+    /*private PointF panToward = new PointF(0,0);
 
     public float
             xbound = 0,
@@ -58,7 +56,7 @@ public class AIThread implements Runnable
 
     public volatile boolean
             movementDown = false,
-            shootingDown = false;
+            shootingDown = false;*/
 
     public AIThread(Enemy[] e)
     {
@@ -118,8 +116,6 @@ public class AIThread implements Runnable
     public void update()
     {
         enemyActions();
-        movePlayer();
-        moveCamera();
     }
     
     public void enemyActions()
@@ -152,140 +148,6 @@ public class AIThread implements Runnable
         }
     }
 
-    public void movePlayer()
-    {
-        if(movementOnDownX > .8f)
-        {
-            player1.getPixelGroup().resetPixels();
-        }
-
-        if(movementDown)
-        {
-            player1.move(movementOnMoveX - movementOnDownX, movementOnMoveY - movementOnDownY);
-        }
-
-        if(shootingDown)
-        {
-            float diffX = shootingOnMoveX - shootingOnDownX;
-            float diffY = shootingOnMoveY - shootingOnDownY;
-            float tempMagnitude = VectorFunctions.getMagnitude(diffX, diffY);
-
-            if (tempMagnitude > .1)
-            {
-                player1.shoot(diffX, diffY);
-            }
-        }
-
-        player1.moveGuns();
-    }
-
-    public void moveCamera()
-    {
-        if (shootingDown)
-        {
-            float diffX = shootingOnMoveX - shootingOnDownX;
-            float diffY = shootingOnMoveY - shootingOnDownY;
-            float tempMagnitude = VectorFunctions.getMagnitude(diffX, diffY);
-            if (tempMagnitude > .1)
-            {
-                panToward.set(cameraClamp * diffX / tempMagnitude, cameraClamp * diffY / tempMagnitude);
-            }
-            else
-            {
-                panToward.set(0, 0);
-            }
-        }
-        else
-        {
-            panToward.set(0, 0);
-        }
-
-        float panAngle;
-        float panDiffX = panToward.x - cameraPanX;
-        float panDiffY = panToward.y - cameraPanY;
-        float panMag = VectorFunctions.getMagnitude(panDiffX, panDiffY);
-
-        if(panMag > .01)
-        {
-            panAngle = (float) Math.atan2(panToward.y - cameraPanY, panToward.x - cameraPanX);
-            cameraPanX += cameraSpeed * Math.cos(panAngle);
-            cameraPanY += cameraSpeed * Math.sin(panAngle);
-        }
-        else
-        {
-            cameraPanX = panToward.x;
-            cameraPanY = panToward.y;
-        }
-
-        if(player1.getPixelGroup().getCenterX() + cameraPanX < xbound &&
-                player1.getPixelGroup().getCenterX() + cameraPanX > -xbound)
-        {
-            xScreenShift = player1.getPixelGroup().getCenterX() + cameraPanX;
-        }
-        else
-        {
-            xScreenShift -= screenShakeX;
-        }
-
-        if (player1.getPixelGroup().getCenterY() - cameraPanY < ybound &&
-                player1.getPixelGroup().getCenterY() - cameraPanY > -ybound)
-        {
-            yScreenShift = player1.getPixelGroup().getCenterY() - cameraPanY;
-        }
-        else
-        {
-            yScreenShift -= screenShakeY;
-        }
-
-        handleScreenShake();
-    }
-
-    public void handleScreenShake()
-    {
-        screenShakeX = 0;
-        screenShakeY = 0;
-
-        Iterator<ScreenShake> itrX = player1.screenShakeEventsX.iterator();
-        while(itrX.hasNext())
-        {
-            ScreenShake s = itrX.next();
-            if(!s.live)
-            {
-                itrX.remove();
-            }
-            else
-            {
-                screenShakeX += s.getShake();
-            }
-        }
-
-        Iterator<ScreenShake> itrY = player1.screenShakeEventsY.iterator();
-        while(itrY.hasNext())
-        {
-            ScreenShake s = itrY.next();
-            if(!s.live)
-            {
-                itrY.remove();
-            }
-            else
-            {
-                screenShakeY += s.getShake();
-            }
-        }
-        xScreenShift += screenShakeX;
-        yScreenShift += screenShakeY;
-    }
-    /*public synchronized void setEntities(ArrayList<Enemy> e)
-    {
-        //entities = e;
-        aImove = true;
-    }
-
-    public void addEntity(Enemy e)
-    {
-        entities.add(e);
-    }
-       */
     public synchronized void setPlayer(Player p)
     {
         player1 = p;

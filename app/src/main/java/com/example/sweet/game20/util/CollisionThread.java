@@ -96,7 +96,7 @@ public class CollisionThread implements Runnable
                     {
                         if (d != null && d.component != null)
                         {
-                            for (Bullet b : d.component.gun.getBullets())
+                            for (Bullet b : ((GunComponent)d.component).gun.getBullets())
                             {
                                 if (b.live)
                                 {

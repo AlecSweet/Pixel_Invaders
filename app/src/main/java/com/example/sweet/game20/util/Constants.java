@@ -58,13 +58,19 @@ public class Constants
     public enum DropType
     {
         HEALTH,
+        EXTRA_MOD,
+        EXTRA_GUN,
         GUN,
         THRUSTER,
         MOD,
-        MOD_FIRERATE,
-        MOD_EXTRAMODS,
-        MOD_EXTRASHOTS,
         ANY
+    }
+
+    public enum ModType
+    {
+        FIRERATE,
+        EXTRASHOTS,
+        PRECISION
     }
 
     public enum GameState

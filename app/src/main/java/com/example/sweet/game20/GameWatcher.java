@@ -140,14 +140,14 @@ public class GameWatcher extends Activity
                             movementDown = true;
 
                             gameRender.ui.setMovementDown(true);
-                            gameRender.aiRunnable.movementDown = true;
+                            gameRender.player1.movementDown = true;
 
                             gameRender.ui.movementOnDown.set(normX, normY);
                             gameRender.ui.movementOnMove.set(normX, normY);
-                            gameRender.aiRunnable.movementOnDownX = normX;
-                            gameRender.aiRunnable.movementOnDownY = normY;
-                            gameRender.aiRunnable.movementOnMoveX = normX;
-                            gameRender.aiRunnable.movementOnMoveY = normY;
+                            gameRender.player1.movementOnDownX = normX;
+                            gameRender.player1.movementOnDownY = normY;
+                            gameRender.player1.movementOnMoveX = normX;
+                            gameRender.player1.movementOnMoveY = normY;
                         }
                         else
                         {
@@ -168,14 +168,14 @@ public class GameWatcher extends Activity
                                 movementPointerId = event.INVALID_POINTER_ID;
                                 movementDown = false;
                                 gameRender.ui.setMovementDown(false);
-                                gameRender.aiRunnable.movementDown = false;
+                                gameRender.player1.movementDown = false;
                             }
                             if(shootingDown)
                             {
                                 shootingPointerId = event.INVALID_POINTER_ID;
                                 shootingDown = false;
                                 gameRender.ui.setShootingDown(false);
-                                gameRender.aiRunnable.shootingDown = false;
+                                gameRender.player1.shootingDown = false;
                             }
                         }
                         else
@@ -223,17 +223,17 @@ public class GameWatcher extends Activity
                                 shootingDown = true;
 
                                 gameRender.ui.setShootingDown(true);
-                                gameRender.aiRunnable.shootingDown = true;
+                                gameRender.player1.shootingDown = true;
 
                                 final float normX = ((event.getX(event.findPointerIndex(shootingPointerId)) / v.getWidth()) * 2 - 1) / gameRender.xScale;
                                 final float normY = ((event.getY(event.findPointerIndex(shootingPointerId)) / v.getHeight()) * 2 - 1) / gameRender.yScale;
 
                                 gameRender.ui.shootingOnDown.set(normX, normY);
                                 gameRender.ui.shootingOnMove.set(normX, normY);
-                                gameRender.aiRunnable.shootingOnDownX = normX;
-                                gameRender.aiRunnable.shootingOnDownY = normY;
-                                gameRender.aiRunnable.shootingOnMoveX = normX;
-                                gameRender.aiRunnable.shootingOnMoveY = normY;
+                                gameRender.player1.shootingOnDownX = normX;
+                                gameRender.player1.shootingOnDownY = normY;
+                                gameRender.player1.shootingOnMoveX = normX;
+                                gameRender.player1.shootingOnMoveY = normY;
                             }
                             else if (shootingDown && !movementDown)
                             {
@@ -255,17 +255,17 @@ public class GameWatcher extends Activity
                                 movementDown = true;
 
                                 gameRender.ui.setMovementDown(true);
-                                gameRender.aiRunnable.movementDown = true;
+                                gameRender.player1.movementDown = true;
 
                                 final float normX = ((event.getX(event.findPointerIndex(movementPointerId)) / v.getWidth()) * 2 - 1) / gameRender.xScale;
                                 final float normY = ((event.getY(event.findPointerIndex(movementPointerId)) / v.getHeight()) * 2 - 1) / gameRender.yScale;
 
                                 gameRender.ui.movementOnDown.set(normX, normY);
                                 gameRender.ui.movementOnMove.set(normX, normY);
-                                gameRender.aiRunnable.movementOnDownX = normX;
-                                gameRender.aiRunnable.movementOnDownY = normY;
-                                gameRender.aiRunnable.movementOnMoveX = normX;
-                                gameRender.aiRunnable.movementOnMoveY = normY;
+                                gameRender.player1.movementOnDownX = normX;
+                                gameRender.player1.movementOnDownY = normY;
+                                gameRender.player1.movementOnMoveX = normX;
+                                gameRender.player1.movementOnMoveY = normY;
                             }
                         }
                         break;
@@ -277,7 +277,7 @@ public class GameWatcher extends Activity
                             shootingPointerId = event.INVALID_POINTER_ID;
                             shootingDown = false;
                             gameRender.ui.setShootingDown(false);
-                            gameRender.aiRunnable.shootingDown = false;
+                            gameRender.player1.shootingDown = false;
                         }
                         else if (pointerId == movementPointerId && movementDown)
                         {
@@ -285,7 +285,7 @@ public class GameWatcher extends Activity
                             movementDown = false;
                             //gameRender.movementDown = false;
                             gameRender.ui.setMovementDown(false);
-                            gameRender.aiRunnable.movementDown = false;
+                            gameRender.player1.movementDown = false;
                         }
                         break;
                     }
@@ -300,16 +300,16 @@ public class GameWatcher extends Activity
                                 final float normX = ((event.getX(event.findPointerIndex(shootingPointerId)) / v.getWidth()) * 2 - 1) / gameRender.xScale;
                                 final float normY = ((event.getY(event.findPointerIndex(shootingPointerId)) / v.getHeight()) * 2 - 1) / gameRender.yScale;
                                 gameRender.ui.shootingOnMove.set(normX, normY);
-                                gameRender.aiRunnable.shootingOnMoveX = normX;
-                                gameRender.aiRunnable.shootingOnMoveY = normY;
+                                gameRender.player1.shootingOnMoveX = normX;
+                                gameRender.player1.shootingOnMoveY = normY;
                             }
                             if (movementDown)
                             {
                                 final float normX = ((event.getX(event.findPointerIndex(movementPointerId)) / v.getWidth()) * 2 - 1) / gameRender.xScale;
                                 final float normY = ((event.getY(event.findPointerIndex(movementPointerId)) / v.getHeight()) * 2 - 1) / gameRender.yScale;
                                 gameRender.ui.movementOnMove.set(normX, normY);
-                                gameRender.aiRunnable.movementOnMoveX = normX;
-                                gameRender.aiRunnable.movementOnMoveY = normY;
+                                gameRender.player1.movementOnMoveX = normX;
+                                gameRender.player1.movementOnMoveY = normY;
                             }
                         }
                         else

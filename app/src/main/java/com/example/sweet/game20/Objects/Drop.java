@@ -24,45 +24,57 @@ public class Drop
 
     public boolean held = false;
 
+    public boolean consumable;
+
     /*
     0: Health Drop
     1: Component Drop
      */
-    public int type;
+    public Constants.DropType type;
 
     public Component component = null;
 
-    public Drop(PixelGroup p, float x, float y, int t, double lT)
+    public Drop(PixelGroup p, float x, float y, double lT, Constants.DropType dT)
     {
          pixelGroup = p;
          this.x = x;
          this.y = y;
-         type = t;
+         type = dT;
          liveTime = lT;
          creationTime = System.currentTimeMillis();
+         consumable = true;
     }
 
-    public Drop(PixelGroup p, float x, float y, int t, double lT, Component c)
+    public Drop(PixelGroup p, float x, float y, double lT, Component c, Constants.DropType dT)
     {
         pixelGroup = p;
         this.x = x;
         this.y = y;
-        type = t;
+        type = dT;
         component = c;
         liveTime = lT;
         creationTime = System.currentTimeMillis();
         pixelGroup.setWhiteToColor(component.r, component.g, component.b);
+        consumable = false;
     }
 
     public void draw()
     {
         tiltAngle += .01;
+        if(tiltAngle >= Math.PI)
+        {
+            tiltAngle -= Constants.twoPI;
+        }
         pixelGroup.softDraw(x, y, angle, tiltAngle);
     }
 
     public void menuDraw(float mx, float my, float mag, float pS)
     {
         tiltAngle += .01;
+        if(tiltAngle >= Math.PI)
+        {
+            tiltAngle -= Constants.twoPI;
+        }
         pixelGroup.softDraw(mx, my, angle, tiltAngle, mag, pS);
     }
 
@@ -82,9 +94,9 @@ public class Drop
 
     public void freeMemory()
     {
-        if (component.type == Constants.DropType.GUN && component.gun != null)
+        if (component.type == Constants.DropType.GUN && ((GunComponent)component).gun != null)
         {
-            component.gun.freeMemory();
+            ((GunComponent)component).gun.freeMemory();
         }
     }
 }
