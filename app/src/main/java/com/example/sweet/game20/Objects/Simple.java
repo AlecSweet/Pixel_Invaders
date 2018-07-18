@@ -1,5 +1,6 @@
 package com.example.sweet.game20.Objects;
 
+import com.example.sweet.game20.GlobalInfo;
 import com.example.sweet.game20.util.Constants;
 import com.example.sweet.game20.util.DropFactory;
 import com.example.sweet.game20.util.VectorFunctions;
@@ -50,7 +51,7 @@ public class Simple extends Enemy
         hasGun = true;
     }
 
-    public void move(float pX, float pY)
+    public void move(float pX, float pY, long curFrame, float slow)
     {
         float distanceToPlayer = VectorFunctions.getMagnitude(pX - enemyBody.centerX, pY - enemyBody.centerY);
         float angleMoving = 0f;
@@ -73,10 +74,91 @@ public class Simple extends Enemy
             angleMoving = -(float)(Math.atan2(enemyBody.centerY - pY, enemyBody.centerX - pX));
 
 
-        rotate(angleMoving , .06f);
+        rotate(angleMoving , .06f, slow);
+        float distance = baseSpeed * thrusters[0].thrustPower * slow;
+        float tempDistX = -(float)(distance * Math.cos(enemyBody.angle));
+        float tempDistY = (float)(distance * Math.sin(enemyBody.angle));
 
-        float tempDistX = -(float)(baseSpeed * thrusters[0].thrustPower * Math.cos(enemyBody.angle));
-        float tempDistY = (float)(baseSpeed * thrusters[0].thrustPower * Math.sin(enemyBody.angle));
+        if(distanceToPlayer < engageDistance && distanceToPlayer > retreatDistance && track)
+        {
+            tempDistX *= .6;
+            tempDistY *= .6;
+            ratio = 0f;
+            if(guns[0] != null)
+            {
+                boolean t = guns[0].gun.shoot(guns[0].x + enemyBody.centerX,
+                        guns[0].y + enemyBody.centerY,
+                        (float) enemyBody.angle + (float) Math.PI,
+                        curFrame,
+                        slow);
+            }
+        }
+
+        x += -tempDistX;
+        y += -tempDistY;
+        enemyBody.move(-tempDistX, -tempDistY);
+        if(guns[0] != null)
+        {
+            guns[0].gun.move(slow);
+        }
+        addThrustParticles(thrusterPixels, ratio, .03f);
+
+        if(!dropAdded && enemyBody.numLivePixels <= .5 * enemyBody.totalPixels)
+        {
+            dropsToAdd.add(
+                    dropFactory.getNewDrop(
+                            Constants.DropType.GUN,
+                            x,
+                            y,
+                            guns[0]
+                    )
+            );
+            dropsToAdd.add(
+                    dropFactory.getNewDrop(
+                            Constants.DropType.MOD,
+                            x,
+                            y,
+                            new ModComponent(null,x,y,0, Constants.ModType.EXTRASHOTS, 3, null)
+                    )
+            );
+            //dropsToAdd.add(dropFactory.getNewDrop(Constants.DropType.EXTRA_GUN, x, y));
+            guns[0] = null;
+            dropAdded = true;
+        }
+
+        // public Drop(PixelGroup p, float x, float y, int t, double lT, Component c)
+    }
+
+    /*public void move(float pX, float pY)
+    {
+        float framesPast = (System.currentTimeMillis() - lastMoveTime) / Constants.msPerFrame;
+        lastMoveTime = System.currentTimeMillis();
+        float distanceToPlayer = VectorFunctions.getMagnitude(pX - enemyBody.centerX, pY - enemyBody.centerY);
+        float angleMoving = 0f;
+        float ratio = 1;
+        if(distanceToPlayer > trackDistance)
+        {
+            track = true;
+            retreat = false;
+        }
+        else if(distanceToPlayer < retreatDistance)
+        {
+            retreat = true;
+            track = false;
+        }
+
+        if(track)
+            angleMoving = -(float)(Math.atan2(pY - enemyBody.centerY, pX - enemyBody.centerX));
+
+        if(retreat)
+            angleMoving = -(float)(Math.atan2(enemyBody.centerY - pY, enemyBody.centerX - pX));
+
+
+        rotate(angleMoving , .06f, framesPast);
+
+        float distance = baseSpeed * thrusters[0].thrustPower * framesPast;
+        float tempDistX = -(float)(distance * Math.cos(enemyBody.angle));
+        float tempDistY = (float)(distance * Math.sin(enemyBody.angle));
 
         if(distanceToPlayer < engageDistance && distanceToPlayer > retreatDistance && track)
         {
@@ -116,14 +198,6 @@ public class Simple extends Enemy
                             new ModComponent(null,x,y,0, Constants.ModType.EXTRASHOTS, 3, null)
                     )
             );
-            /*dropsToAdd.add(
-                    dropFactory.getNewDrop(
-                            Constants.DropType.MOD,
-                            x,
-                            y,
-                            new ModComponent(null,x,y,0, Constants.ModType.FIRERATE, 3, null)
-                    )
-            );*/
             //dropsToAdd.add(dropFactory.getNewDrop(Constants.DropType.EXTRA_GUN, x, y));
             guns[0] = null;
             dropAdded = true;
@@ -132,15 +206,36 @@ public class Simple extends Enemy
         // public Drop(PixelGroup p, float x, float y, int t, double lT, Component c)
     }
 
-    public void rotate(float angleMoving, float rotateSpeed)
+    public void rotate(float angleMoving, float rotateSpeed, float framesPast)
     {
         float delta = (float)enemyBody.angle - angleMoving;
         if (delta > rotateSpeed || delta < -rotateSpeed)
         {
             if (delta < -Math.PI || (delta > 0 && delta < Math.PI))
-                enemyBody.angle -= rotateSpeed;
+                enemyBody.angle -= rotateSpeed * framesPast;
             else
-                enemyBody.angle += rotateSpeed;
+                enemyBody.angle += rotateSpeed * framesPast;
+        }
+        else
+            enemyBody.angle =  angleMoving;
+
+        enemyBody.rotate(enemyBody.angle);
+
+        if (enemyBody.angle > Math.PI)
+            enemyBody.angle -= Constants.twoPI;
+        else if (enemyBody.angle < -Math.PI)
+            enemyBody.angle += Constants.twoPI;
+    }*/
+
+    public void rotate(float angleMoving, float rotateSpeed, float slow)
+    {
+        float delta = (float)enemyBody.angle - angleMoving;
+        if (delta > rotateSpeed || delta < -rotateSpeed)
+        {
+            if (delta < -Math.PI || (delta > 0 && delta < Math.PI))
+                enemyBody.angle -= rotateSpeed * slow;
+            else
+                enemyBody.angle += rotateSpeed * slow;
         }
         else
             enemyBody.angle =  angleMoving;

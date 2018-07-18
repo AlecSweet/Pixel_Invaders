@@ -5,9 +5,10 @@ package com.example.sweet.game20.Objects;
  * Created by Sweet on 1/29/2018.
  */
 
-public class Pixel {
+public class Pixel
+{
 
-    public volatile float
+    public float
             xDisp = 0f,
             yDisp = 0f;
 
@@ -20,7 +21,7 @@ public class Pixel {
             b,
             a;
 
-    public int groupFlag = -1;
+    public volatile int groupFlag = -1;
 
     public boolean live = true;
 

@@ -1,5 +1,6 @@
 package com.example.sweet.game20.Objects;
 
+import com.example.sweet.game20.GlobalInfo;
 import com.example.sweet.game20.util.Constants;
 
 import java.nio.ByteBuffer;
@@ -79,6 +80,8 @@ public class ParticleSystem
 
     private double globalStartTime;
 
+    private GlobalInfo globalInfo;
+
     private final int maxParticleCount;
 
     private int
@@ -89,15 +92,18 @@ public class ParticleSystem
 
     private boolean needsUpdate = false;
 
-    public ParticleSystem(int maxParticleCount, int sL, int tID, double gst)
+    public ParticleSystem(int maxParticleCount, int sL, int tID, double gst, GlobalInfo gI)
     {
         globalStartTime = gst;
         this.maxParticleCount = maxParticleCount;
         shaderLocation = sL;
         particles = new float[maxParticleCount * TOTAL_COMPONENT_COUNT];
+        globalInfo = gI;
 
         for(int i = 0; i < particles.length; i++)
+        {
             particles[i] = 0f;
+        }
 
         particleBuf = ByteBuffer
                 .allocateDirect(particles.length * Constants.BYTES_PER_FLOAT)
@@ -130,13 +136,13 @@ public class ParticleSystem
         int currentOffset = particleOffset;
         nextParticle++;
 
-        if (currentParticleCount < maxParticleCount) {
+        if (currentParticleCount < maxParticleCount)
+        {
             currentParticleCount++;
         }
 
-        if (nextParticle == maxParticleCount) {
-            // Start over at the beginning, but keep currentParticleCount so
-            // that all the other particles still get drawn.
+        if (nextParticle == maxParticleCount)
+        {
             nextParticle = 0;
         }
 
@@ -150,7 +156,7 @@ public class ParticleSystem
 
         particles[currentOffset++] = angle;
 
-        particles[currentOffset++] = (float)((System.currentTimeMillis() - globalStartTime) / 1000);
+        particles[currentOffset++] = globalInfo.getAugmentedTimeSeconds();
         particles[currentOffset++] = speed;
         particles[currentOffset++] = maxDistance;
         particles[currentOffset++] = rotationSpeed;
@@ -232,6 +238,6 @@ public class ParticleSystem
 
     public ParticleSystem clone()
     {
-        return new ParticleSystem(maxParticleCount, shaderLocation, textureID[0], globalStartTime);
+        return new ParticleSystem(maxParticleCount, shaderLocation, textureID[0], globalStartTime, globalInfo);
     }
 }

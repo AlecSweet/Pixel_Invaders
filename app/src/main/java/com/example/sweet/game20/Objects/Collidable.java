@@ -17,7 +17,7 @@ public class Collidable
 
     public float
             halfSquareLength,
-            livablePercentage = .3f,
+            livablePercentage = .5f,
             knockBackFactor = .006f;
 
     public double
@@ -27,8 +27,12 @@ public class Collidable
     public volatile double angle = 0;
 
     protected boolean
-            enableOrphanChunkDeletion;
+            enableOrphanChunkDeletion,
+            enableLocationChain = false;
 
+    protected LocationHistory
+            locationHead,
+            locationTail;
 
     protected boolean
             collidableLive,
@@ -48,6 +52,8 @@ public class Collidable
     {
         centerX = x;
         centerY = y;
+        locationTail = new LocationHistory(centerX, centerY);
+        locationHead = locationTail;
         halfSquareLength = hSL;
         pixels = p;
         totalPixels = pixels.length;
@@ -63,6 +69,15 @@ public class Collidable
     {
         centerX += mX;
         centerY += mY;
+        if(enableLocationChain)
+        {
+            locationHead.nextLocation = new LocationHistory(centerX, centerY);
+            locationHead.nextLocation.chainID = locationHead.chainID++;
+            LocationHistory prev = locationHead;
+            locationHead = locationHead.nextLocation;
+            prev.readyToBeConsumed = true;
+        }
+
         /*for(Pixel p: pixels)
         {
             p.xDisp += mX;
@@ -137,7 +152,13 @@ public class Collidable
     {
         centerX = mX;
         centerY = mY;
-
+        if(enableLocationChain)
+        {
+            locationHead.nextLocation = new LocationHistory(centerX, centerY);
+            LocationHistory prev = locationHead;
+            locationHead = locationHead.nextLocation;
+            prev.readyToBeConsumed = true;
+        }
         /*for(Pixel p: pixels)
         {
             p.xDisp = p.xOriginal*cosA + p.yOriginal*sinA + centerX;

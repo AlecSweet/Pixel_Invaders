@@ -1,5 +1,6 @@
 package com.example.sweet.game20.util;
 
+import com.example.sweet.game20.GlobalInfo;
 import com.example.sweet.game20.Objects.BasicGun;
 import com.example.sweet.game20.Objects.Enemy;
 import com.example.sweet.game20.Objects.ParticleSystem;

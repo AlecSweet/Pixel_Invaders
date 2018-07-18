@@ -38,11 +38,12 @@ public class Bullet
         pixelGroup.livablePercentage = .3f;
     }
 
-    public void move()
+    public void move(float slow)
     {
         //float slowRatio = (float)(1 - distance / (maxDistance));
-        pixelGroup.move((speed * -cosA), (speed * sinA));
-        distance += speed;
+        float dist = speed * slow;
+        pixelGroup.move((dist * -cosA), (dist * sinA));
+        distance += dist;
         if(maxDistance < distance)
         {
             live = false;

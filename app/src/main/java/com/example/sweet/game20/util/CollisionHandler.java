@@ -336,7 +336,7 @@ public class CollisionHandler
         float angle = (float)(Math.atan2(p.yDisp, p.xDisp) + Math.random() * .2 - .1);
         collisionParticles.addParticle(p.xDisp + c.centerX, p.yDisp + c.centerY,
                 angle,
-                p.r,p.g,p.b,1,
+                p.r,p.g,p.b,2f,
                 (float)(Math.random())+.1f,
                 (float)(Math.random()*.5)+.01f,
                 (float)(Math.random()*40)-20);

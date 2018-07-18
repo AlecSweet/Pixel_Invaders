@@ -33,7 +33,7 @@ import static android.opengl.GLES20.glVertexAttribPointer;
  * Created by Sweet on 2/14/2018.
  */
 
-public class PixelGroup extends Collidable
+public class  PixelGroup extends Collidable
 {
     private static final int
             POSITION_COMPONENT_COUNT = 3,
@@ -66,7 +66,11 @@ public class PixelGroup extends Collidable
 
     public boolean onScreen = false;
 
-    private float r, g, b;
+    private float
+            r,
+            g,
+            b;
+
     private boolean whiteToColor = false;
 
     public PixelGroup(Pixel[] p, float halfSquareLength, Zone[] z, int sL, int vB)
@@ -90,10 +94,28 @@ public class PixelGroup extends Collidable
         }
 
         if(numLivePixels < totalPixels * livablePercentage)
+        {
             collidableLive = false;
+        }
+        if(enableLocationChain)
+        {
+            if(locationTail.nextLocation != null && locationTail.nextLocation.readyToBeConsumed)
+            {
+                locationTail = locationTail.nextLocation;
+            }
+            /*while(locationTail.nextLocation != null && locationTail.nextLocation.readyToBeConsumed)
+            {
+                locationTail = locationTail.nextLocation;
+            }*/
+            glUniform1f(xDispLoc, locationTail.x);
+            glUniform1f(yDispLoc, locationTail.y);
+        }
+        else
+        {
+            glUniform1f(xDispLoc, centerX);
+            glUniform1f(yDispLoc, centerY);
+        }
 
-        glUniform1f(xDispLoc, centerX);
-        glUniform1f(yDispLoc, centerY);
         glUniform1f(uAngleLocation, (float)angle);
         glUniform1f(uSquareLengthLocation, halfSquareLength);
 
@@ -223,14 +245,16 @@ public class PixelGroup extends Collidable
                 cbuf.put((i + 1) * 4 - 1, pixels[i].a);
             }
             else
-                cbuf.put((i + 1) * 4 - 1,0f);
+            {
+                cbuf.put((i + 1) * 4 - 1, 0f);
+            }
 
-            if(pixels[i].outside)
+           /* if(pixels[i].outside)
             {
                 cbuf.put((i + 1) * 4 - 4, 1);
                 cbuf.put((i + 1) * 4 - 3, 1);
                 cbuf.put((i + 1) * 4 - 2, 1);
-            }
+            }*/
         }
 
         glBindBuffer(GL_ARRAY_BUFFER, cBuffer[0]);
@@ -321,8 +345,12 @@ public class PixelGroup extends Collidable
             p.outside = false;
             p.groupFlag = -1;
             for(Pixel n: p.neighbors)
-                if(n == null)
+            {
+                if (n == null)
+                {
                     p.outside = true;
+                }
+            }
         }
         collidableLive = true;
         needsUpdate = true;
@@ -334,98 +362,138 @@ public class PixelGroup extends Collidable
     {
         ArrayList<Pixel> p1 = new ArrayList<>();
         Pixel[][] cloneMap = new Pixel[pMap.length][pMap[0].length];
-        int numGroupsWidth = (int)((float)pMap[0].length/Constants.CELL_LENGTH) + 1;
-        int numGroupsHeight = (int)((float)pMap.length/Constants.CELL_LENGTH) + 1;
-        int numZonesWidth = (int)((float)(numGroupsWidth) / Constants.ZONE_LENGTH) + 1;
-        int numZonesHeight = (int)((float)(numGroupsHeight) / Constants.ZONE_LENGTH) + 1;
+        //int numGroupsWidth = (int)((float)pMap[0].length/Constants.CELL_LENGTH) + 1;
+        int numGroupsWidth = pMap[0].length/Constants.CELL_LENGTH + 1;
+        //int numGroupsHeight = (int)((float)pMap.length/Constants.CELL_LENGTH) + 1;
+        int numGroupsHeight = pMap.length/Constants.CELL_LENGTH + 1;
+        //int numZonesWidth = (int)((float)(numGroupsWidth) / Constants.ZONE_LENGTH) + 1;
+        int numZonesWidth = numGroupsWidth / Constants.ZONE_LENGTH + 1;
+        //int numZonesHeight = (int)((float)(numGroupsHeight) / Constants.ZONE_LENGTH) + 1;
+        int numZonesHeight = numGroupsHeight / Constants.ZONE_LENGTH + 1;
 
         CollidableGroup[] cGroups = new CollidableGroup[numGroupsWidth * numGroupsHeight];
         Zone[][] zoneMap = new Zone[numZonesHeight][numZonesWidth];
         CollidableGroup[][] groupMap = new CollidableGroup[numGroupsHeight][numGroupsWidth];
 
         for(int r = 0; r < zoneMap.length; r++)
-            for(int c = 0; c < zoneMap[0].length; c++)
+        {
+            for (int c = 0; c < zoneMap[0].length; c++)
                 zoneMap[r][c] = new Zone(c * Constants.ZONE_SIZE + Constants.ZONE_SIZE / 2 - Constants.ZONE_SIZE * numZonesWidth / 2 + Constants.PIXEL_SIZE,
                         r * Constants.ZONE_SIZE + Constants.ZONE_SIZE / 2 - Constants.ZONE_SIZE * numZonesHeight / 2 + Constants.PIXEL_SIZE,
                         Constants.ZONE_SIZE / 2);
-
+        }
         for(int r = 0; r < groupMap.length; r++)
-            for(int c = 0; c < groupMap[0].length; c++)
+        {
+            for (int c = 0; c < groupMap[0].length; c++)
             {
                 groupMap[r][c] = new CollidableGroup(c * Constants.CELL_SIZE + Constants.CELL_SIZE / 2 - Constants.CELL_SIZE * numGroupsWidth / 2 + Constants.PIXEL_SIZE,
                         r * Constants.CELL_SIZE + Constants.CELL_SIZE / 2 - Constants.CELL_SIZE * numGroupsHeight / 2 + Constants.PIXEL_SIZE,
-                        Constants.CELL_SIZE / 2);
-                zoneMap[(int)((float)r / Constants.ZONE_LENGTH)][(int)((float)c / Constants.ZONE_LENGTH)].c.add(groupMap[r][c]);
+                        Constants.CELL_SIZE / 2
+                );
+                //zoneMap[(int)((float) r / Constants.ZONE_LENGTH)][(int)((float) c / Constants.ZONE_LENGTH)].c.add(groupMap[r][c]);
+                zoneMap[r / Constants.ZONE_LENGTH][c / Constants.ZONE_LENGTH].c.add(groupMap[r][c]);
             }
-
+        }
 
         for(int r = 0; r < pMap.length; r++)
-            for(int c = 0; c < pMap[0].length; c++)
+        {
+            for (int c = 0; c < pMap[0].length; c++)
             {
-                if(pMap[r][c]!=null)
+                if (pMap[r][c] != null)
                 {
                     cloneMap[r][c] = pMap[r][c].clone();
                     p1.add(cloneMap[r][c]);
-                    groupMap[(int)((float)r / Constants.CELL_LENGTH)][(int)((float)c / Constants.CELL_LENGTH)].p.add(cloneMap[r][c]);
+                    //groupMap[(int) ((float) r / Constants.CELL_LENGTH)][(int) ((float) c / Constants.CELL_LENGTH)].p.add(cloneMap[r][c]);
+                    groupMap[r / Constants.CELL_LENGTH][c / Constants.CELL_LENGTH].p.add(cloneMap[r][c]);
                 }
             }
+        }
 
         for(int r = 0; r < cloneMap.length; r++)
+        {
             for(int c = 0; c < cloneMap[0].length; c++)
+            {
                 if(cloneMap[r][c] != null)
                 {
                     if(r - 1 >= 0)
+                    {
                         cloneMap[r][c].neighbors[0] = cloneMap[r - 1][c]; //Up
+                    }
                     if(r + 1 < cloneMap.length)
+                    {
                         cloneMap[r][c].neighbors[2] = cloneMap[r + 1][c]; //Down
+                    }
                     if(c - 1 >= 0)
+                    {
                         cloneMap[r][c].neighbors[3] = cloneMap[r][c - 1]; //Left
+                    }
                     if(c + 1 < cloneMap[0].length)
+                    {
                         cloneMap[r][c].neighbors[1] = cloneMap[r][c + 1]; //Right
+                    }
                 }
-
+            }
+        }
         Pixel[] pArr = p1.toArray(new Pixel[p1.size()]);
         for(int i = 0; i < pixels.length; i++)
         {
             for(int n = 0; n < 4; n++)
-                if(pArr[i].neighbors[n] == null)
+            {
+                if (pArr[i].neighbors[n] == null)
+                {
                     pArr[i].outside = true;
+                }
+            }
         }
 
         int halfSquareLength;
         if(pMap.length > pMap[0].length)
+        {
             halfSquareLength = pMap.length / 2;
+        }
         else
+        {
             halfSquareLength = pMap[0].length / 2;
+        }
 
         int tempItr = 0;
         for(int r = 0; r < groupMap.length; r++)
-            for(int c = 0; c < groupMap[0].length; c++)
+        {
+            for (int c = 0; c < groupMap[0].length; c++)
             {
                 cGroups[tempItr] = groupMap[r][c];
                 cGroups[tempItr].xOriginal -= Constants.PIXEL_SIZE;
                 cGroups[tempItr].yOriginal -= Constants.PIXEL_SIZE;
-                cGroups[tempItr].move(-Constants.PIXEL_SIZE,-Constants.PIXEL_SIZE);
-                cGroups[tempItr].halfSquareLength+= Constants.PIXEL_SIZE;
+                cGroups[tempItr].move(-Constants.PIXEL_SIZE, -Constants.PIXEL_SIZE);
+                cGroups[tempItr].halfSquareLength += Constants.PIXEL_SIZE;
                 cGroups[tempItr].initPixelArray();
                 tempItr++;
             }
+        }
 
         tempItr = 0;
         Zone[] tempZones = new Zone[zoneMap.length * zoneMap[0].length];
         for(int r = 0; r < zoneMap.length; r++)
-            for(int c = 0; c < zoneMap[0].length; c++)
+        {
+            for (int c = 0; c < zoneMap[0].length; c++)
             {
                 tempZones[tempItr] = zoneMap[r][c];
                 tempZones[tempItr].xOriginal -= Constants.PIXEL_SIZE;
                 tempZones[tempItr].yOriginal -= Constants.PIXEL_SIZE;
-                tempZones[tempItr].move(-Constants.PIXEL_SIZE,-Constants.PIXEL_SIZE);
-                tempZones[tempItr].halfSquareLength+= Constants.PIXEL_SIZE;
+                tempZones[tempItr].move(-Constants.PIXEL_SIZE, -Constants.PIXEL_SIZE);
+                tempZones[tempItr].halfSquareLength += Constants.PIXEL_SIZE;
                 tempZones[tempItr].initCollidableGroupArray();
                 tempItr++;
             }
+        }
 
-        PixelGroup pixelGroup = new PixelGroup(pArr,(float)halfSquareLength * Constants.PIXEL_SIZE, tempZones, shaderLocation, vBuffer[0]);
+        PixelGroup pixelGroup = new PixelGroup(
+                pArr,
+                (float)halfSquareLength * Constants.PIXEL_SIZE,
+                tempZones,
+                shaderLocation,
+                vBuffer[0]
+        );
         pixelGroup.setpMap(cloneMap);
         return pixelGroup;
     }

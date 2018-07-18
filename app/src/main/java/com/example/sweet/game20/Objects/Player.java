@@ -6,6 +6,7 @@ import android.graphics.PointF;
 import static android.opengl.GLES20.glGetUniformLocation;
 import static android.opengl.GLES20.glUniform1f;
 
+import com.example.sweet.game20.GlobalInfo;
 import com.example.sweet.game20.R;
 import com.example.sweet.game20.util.Constants;
 import com.example.sweet.game20.util.DropFactory;
@@ -33,9 +34,9 @@ public class Player extends Drawable
             xBound,
             yBound;
 
-    private PointF panToward = new PointF(0,0);
+    private volatile PointF panToward = new PointF(0,0);
 
-    public float
+    public volatile float
             xbound = 0,
             ybound = 0,
             xScreenShift = 0,
@@ -61,6 +62,8 @@ public class Player extends Drawable
             movementDown = false,
             shootingDown = false,
             modUpdate = false;
+
+    public ArrayList<TimeSlowEvent> timeSlowEvents = new ArrayList<>();
 
     private int[] gravParticles = new int[]{
              6,  3,  7,  2,  8,  2,  9,  1, 10,  1, 11,  1, 12,  0, 13,  0, 14,  0, 15,  0, 16,  0, 17,
@@ -93,6 +96,7 @@ public class Player extends Drawable
 
     private int
             tiltLoc,
+            magLoc,
             stageCounter = 0;
 
     private PixelGroup playerBody;
@@ -139,8 +143,6 @@ public class Player extends Drawable
 
     public ArrayList<Drop> componentDrops = new ArrayList<>();
 
-    public ArrayList<Gun> tempActiveGuns = new ArrayList<>();
-
     public boolean pause = false;
 
     public ArrayList<ScreenShake>
@@ -153,7 +155,7 @@ public class Player extends Drawable
         baseSpeed = sp;
         playerBody = body;
         playerBody.knockBackFactor = .01f;
-
+        playerBody.enableLocationChain = false;
         initParticleAttachments();
 
         gunDrops[0] = dF.getNewDrop(Constants.DropType.GUN,
@@ -167,9 +169,9 @@ public class Player extends Drawable
                         (float)playerBody.angle,
                         new BasicGun
                                 (
-                                        ImageParser.parseImage(context, R.drawable.basicbullet, R.drawable.basicbullet_light, sL),
+                                        ImageParser.parseImage(context, R.drawable.bullet, R.drawable.bullet_light, sL),
                                         particleSystem,
-                                        20
+                                        100
                                 ),
                         particleSystem
                 )
@@ -205,9 +207,10 @@ public class Player extends Drawable
         //thrusters[2] = new ThrustComponent(rightBoostPixels, 0, 0, 0, 2, 2, ps);
 
         tiltLoc = glGetUniformLocation(sL, TILT);
+        magLoc = glGetUniformLocation(sL, "mag");
     }
 
-    public void move(float mX, float mY)
+    public void move(float mX, float mY, float slow)
     {
         float tempMagnitude = VectorFunctions.getMagnitude(mX, mY);
         float angleMoving = (float)(Math.atan2(mY, mX));
@@ -216,8 +219,9 @@ public class Player extends Drawable
         {
             pow = ((ThrustComponent) thrusters[1].component).thrustPower;
         }
-        float tempDistX = -(float)(baseSpeed * pow * -Math.cos(angleMoving));
-        float tempDistY = -(float)(baseSpeed * pow * Math.sin(angleMoving));
+        float distance = baseSpeed * pow * slow;
+        float tempDistX = -(float)(distance * -Math.cos(angleMoving));
+        float tempDistY = -(float)(distance * Math.sin(angleMoving));
 
         if(tempMagnitude>.15)
         {
@@ -227,7 +231,7 @@ public class Player extends Drawable
                 tempDistY = 0;
             playerBody.move(tempDistX, tempDistY);
             addThrustParticles(mainBoostPixels,1, .05f);
-            rotate(angleMoving,1);
+            rotate(angleMoving,1, slow);
         }
         else if(tempMagnitude <= .15 && tempMagnitude > .028)
         {
@@ -240,32 +244,32 @@ public class Player extends Drawable
                 tempY = 0 ;
             playerBody.move(tempX,tempY);
             addThrustParticles(mainBoostPixels,tempRatio,.054f);
-            rotate(angleMoving,tempRatio);
+            rotate(angleMoving, tempRatio, slow);
         }
     }
 
 
 
-    public void rotate(float angleMoving, float ratio)
+    public void rotate(float angleMoving, float ratio, float slow)
     {
         float delta = (float)playerBody.angle - angleMoving;
 
         float sideSpd, sideSpd2;
         if(thrusters[0] != null)
         {
-            sideSpd = rotateSpeed * ((ThrustComponent) thrusters[0].component).thrustPower;
+            sideSpd = rotateSpeed * ((ThrustComponent) thrusters[0].component).thrustPower * slow;
         }
         else
         {
-            sideSpd = rotateSpeed;
+            sideSpd = rotateSpeed * slow;
         }
         if(thrusters[2] != null)
         {
-            sideSpd2 = -rotateSpeed * ((ThrustComponent)thrusters[2].component).thrustPower;
+            sideSpd2 = -rotateSpeed * ((ThrustComponent)thrusters[2].component).thrustPower * slow;
         }
         else
         {
-            sideSpd2 = -rotateSpeed;
+            sideSpd2 = -rotateSpeed * slow;
         }
 
         if (delta > sideSpd || delta < sideSpd2)
@@ -348,7 +352,7 @@ public class Player extends Drawable
         driftCount += driftDirection;
     }
 
-    public void moveGuns()
+    public void moveGuns(float slow)
     {
         if(getGuns()!= null)
         {
@@ -356,7 +360,7 @@ public class Player extends Drawable
             {
                 if (d != null && d.component != null)
                 {
-                    ((GunComponent)d.component).gun.move();
+                    ((GunComponent)d.component).gun.move(slow);
                 }
             }
         }
@@ -629,7 +633,7 @@ public class Player extends Drawable
         return resNum;
     }
 
-    public void shoot(float sX, float sY)
+    public void shoot(float sX, float sY, long curFrame, GlobalInfo gI)
     {
         float shootAngle = (float) (Math.atan2(sY, sX));
         int i = 0;
@@ -640,10 +644,21 @@ public class Player extends Drawable
                 if(((GunComponent)d.component).gun.shoot(
                         playerBody.centerX + gunOffsets[i].x,
                         playerBody.centerY + gunOffsets[i].y,
-                        shootAngle + (float) Math.PI))
+                        shootAngle + (float) Math.PI,
+                        curFrame,
+                        gI.timeSlow))
                 {
-                    screenShakeEventsX.add(new ScreenShake(.02f, 30, ((GunComponent)d.component).gun.shootDelay/2));
-                    screenShakeEventsY.add(new ScreenShake(.02f, 30, ((GunComponent)d.component).gun.shootDelay/2));
+                    screenShakeEventsX.add(new ScreenShake(((GunComponent)d.component).gun.shakeMod,
+                            240,
+                            800,
+                            gI
+                    ));
+                    screenShakeEventsY.add(new ScreenShake(((GunComponent)d.component).gun.shakeMod,
+                            240,
+                            800,
+                             gI
+                    ));
+                    //timeSlowEvents.add(new TimeSlowEvent(.7f, 400));
                 }
             }
             i++;
@@ -655,7 +670,7 @@ public class Player extends Drawable
     {
 
         handleCosmetics();
-
+        glUniform1f(magLoc, .7f);
         for(Drop d: consumableDrops)
         {
             if(d != null && d.live)
@@ -682,6 +697,7 @@ public class Player extends Drawable
 
         preventDropOverlap();
 
+        glUniform1f(magLoc, 1f);
         glUniform1f(tiltLoc, tiltAngle);
         playerBody.draw();
         glUniform1f(tiltLoc, 0);
@@ -782,18 +798,21 @@ public class Player extends Drawable
         return maxGuns;
     }
 
-    public void movePlayer()
+    public void movePlayer(float slow)
     {
         if(movementOnDownX > .8f)
         {
-            getPixelGroup().resetPixels();
+            playerBody.resetPixels();
         }
 
         if(movementDown)
         {
-            move(movementOnMoveX - movementOnDownX, movementOnMoveY - movementOnDownY);
+            move(movementOnMoveX - movementOnDownX, movementOnMoveY - movementOnDownY, slow);
         }
+    }
 
+    public void shoot(long curFrame, GlobalInfo gI)
+    {
         if(shootingDown)
         {
             float diffX = shootingOnMoveX - shootingOnDownX;
@@ -802,16 +821,25 @@ public class Player extends Drawable
 
             if (tempMagnitude > .1)
             {
-                shoot(diffX, diffY);
+                shoot(diffX, diffY, curFrame, gI);
+                panToward.set(cameraClamp * diffX / tempMagnitude, cameraClamp * diffY / tempMagnitude);
+            }
+            else
+            {
+                panToward.set(0, 0);
             }
         }
+        else
+        {
+            panToward.set(0, 0);
+        }
 
-        moveGuns();
+        moveGuns(gI.timeSlow);
     }
 
     public void moveCamera()
     {
-        if (shootingDown)
+        /*if (shootingDown)
         {
             float diffX = shootingOnMoveX - shootingOnDownX;
             float diffY = shootingOnMoveY - shootingOnDownY;
@@ -828,7 +856,7 @@ public class Player extends Drawable
         else
         {
             panToward.set(0, 0);
-        }
+        }*/
 
         float panAngle;
         float panDiffX = panToward.x - cameraPanX;
@@ -847,27 +875,25 @@ public class Player extends Drawable
             cameraPanY = panToward.y;
         }
 
-        if(getPixelGroup().getCenterX() + cameraPanX < xbound &&
-                getPixelGroup().getCenterX() + cameraPanX > -xbound)
+        if(playerBody.centerX + cameraPanX < xbound &&
+                playerBody.centerX + cameraPanX > -xbound)
         {
-            xScreenShift = getPixelGroup().getCenterX() + cameraPanX;
+            xScreenShift = playerBody.centerX + cameraPanX;
         }
-        else
+       /* else
         {
             xScreenShift -= screenShakeX;
-        }
+        }*/
 
-        if (getPixelGroup().getCenterY() - cameraPanY < ybound &&
-                getPixelGroup().getCenterY() - cameraPanY > -ybound)
+        if (playerBody.centerY - cameraPanY < ybound &&
+                playerBody.centerY - cameraPanY > -ybound)
         {
-            yScreenShift = getPixelGroup().getCenterY() - cameraPanY;
+            yScreenShift = playerBody.centerY - cameraPanY;
         }
-        else
+        /*else
         {
             yScreenShift -= screenShakeY;
-        }
-
-        handleScreenShake();
+        }*/
     }
 
     public void handleScreenShake()
@@ -902,7 +928,7 @@ public class Player extends Drawable
                 screenShakeY += s.getShake();
             }
         }
-        xScreenShift += screenShakeX;
-        yScreenShift += screenShakeY;
+        //xScreenShift += screenShakeX;
+        //yScreenShift += screenShakeY;
     }
 }

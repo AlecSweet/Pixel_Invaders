@@ -1,5 +1,7 @@
 package com.example.sweet.game20.Objects;
 
+import com.example.sweet.game20.util.Constants;
+
 import java.util.Stack;
 
 /**
@@ -14,9 +16,14 @@ public abstract class Gun
 
     protected PixelGroup pixelGroupTemplate;
 
+    public float shakeMod;
+
     protected double
             shootDelay,
             lastShotTime;
+
+    protected int shotFrameDelay;
+    protected long lastShotFrame;
 
     protected float
             spread,
@@ -35,8 +42,10 @@ public abstract class Gun
     public Gun(double sD, PixelGroup pG, ParticleSystem ps, float spd)
     {
         pixelGroupTemplate = pG;
+        shakeMod = (float)Math.sqrt(pixelGroupTemplate.totalPixels) * .001f;
         bulletPool = new Stack<>();
         shootDelay = sD;
+        shotFrameDelay = (int)(shootDelay / Constants.msPerFrame);
         speed = spd;
         int num = ((int)Math.ceil((4/(speed * 60)) * (1000/shootDelay))+1)*numShots;
         bullets = new Bullet[num];
@@ -61,11 +70,11 @@ public abstract class Gun
         }
     }
 
-    public void move()
+    public void move(float slow)
     {
         for(Bullet b: bullets)
         {
-            b.move();
+            b.move(slow);
         }
     }
 
@@ -97,7 +106,12 @@ public abstract class Gun
         lastShotTime += p;
     }
 
-    public boolean shoot(float x, float y, float angle)
+   /* public boolean shoot(float x, float y, float angle)
+    {
+        return false;
+    }*/
+
+    public boolean shoot(float x, float y, float angle, long f, float slow)
     {
         return false;
     }

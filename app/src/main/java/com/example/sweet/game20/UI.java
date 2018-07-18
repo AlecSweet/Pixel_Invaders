@@ -44,11 +44,13 @@ public class UI extends Drawable
             shootingOnDown = new PointF(0, 0),
             shootingOnMove = new PointF(0, 0);
 
-    public boolean menuPointerDown = false;
+
 
     private boolean
             movementDown = false,
             shootingDown = false;
+
+    public boolean menuPointerDown = false;
 
     public float
             xScale,
@@ -718,7 +720,7 @@ public class UI extends Drawable
                     }
                 }
             }
-            //player.modUpdate = true;
+            player.modUpdate = true;
 
             for(int t = 0; t < player.thrusters.length; t++)
             {

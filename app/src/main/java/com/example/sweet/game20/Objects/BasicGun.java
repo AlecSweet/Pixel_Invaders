@@ -25,7 +25,7 @@ public class BasicGun extends Gun
         spread = .06f;
     }*/
 
-    @Override
+    /*@Override
     public boolean shoot(float x, float y, float angle)
     {
         if (System.currentTimeMillis() > lastShotTime + shootDelay * fireRateMod)
@@ -44,16 +44,37 @@ public class BasicGun extends Gun
         }
         else
             return false;
+    }*/
+
+    @Override
+    public boolean shoot(float x, float y, float angle, long currentFrame, float slow)
+    {
+        if (currentFrame > lastShotFrame + (shotFrameDelay * fireRateMod) * (1 / slow))
+        {
+            float arc = (numShots - 1) * .1f;
+
+            for(int i = 0; i < numShots; i++)
+            {
+                float angDisp = (((float)(i + 1) / numShots) * arc) - (arc / 2);
+                angDisp += (float)(Math.random() * spread - spread / 2);
+                bulletPool.pop().resetBullet(x, y, angle + angDisp);
+                addShotParticles(angle, x, y);
+            }
+            lastShotFrame = currentFrame;
+            return true;
+        }
+        else
+            return false;
     }
 
     @Override
-    public void move()
+    public void move(float slow)
     {
         for (Bullet b: bullets)
         {
             if(b.live)
             {
-                b.move();
+                b.move(slow);
                 for(Pixel p: b.pixelGroup.pixels)
                 {
                     if (p.live && p.outside)
@@ -61,7 +82,7 @@ public class BasicGun extends Gun
                         masterParticleSystem.addParticle(
                                 p.xDisp  + b.pixelGroup.centerX, p.yDisp + b.pixelGroup.centerY,
                                 b.angle,
-                                p.r, p.g, p.b, .1f,
+                                p.r, p.g, p.b, .2f,
                                 .04f, .005f, 10f
                         );
                     }

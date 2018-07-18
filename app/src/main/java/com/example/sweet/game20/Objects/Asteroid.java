@@ -1,5 +1,6 @@
 package com.example.sweet.game20.Objects;
 
+import com.example.sweet.game20.GlobalInfo;
 import com.example.sweet.game20.util.Constants;
 import com.example.sweet.game20.util.DropFactory;
 
@@ -100,25 +101,28 @@ public class Asteroid extends Enemy
     }
 
     @Override
-    public void move(float unused, float unused1)
+    public void move(float unused, float unused1, long curFrame, float slow)
     {
+        float tempDistX = distX * slow;
+        float tempDistY = distY * slow;
         if(onScreen)
         {
             if(!screenEnterToggle)
             {
                 screenEnterToggle = true;
-                enemyBody.angle += rotationSpeed * offScreenFrames;
+                //enemyBody.angle += rotationSpeed * offScreenFrames;
                 rotate();
-                enemyBody.move(-distX * offScreenFrames, -distY * offScreenFrames);
+                //enemyBody.move(-tempDistX * offScreenFrames, -tempDistY * offScreenFrames);
+                enemyBody.setLoc(x, y);
                 offScreenFrames = 0;
             }
             else
             {
-                enemyBody.angle += rotationSpeed;
+                enemyBody.angle += rotationSpeed * slow;
                 rotate();
-                x += -distX;
-                y += -distY;
-                enemyBody.move(-distX, -distY);
+                x += -tempDistX;
+                y += -tempDistY;
+                enemyBody.move(-tempDistX, -tempDistY);
             }
         }
         else
@@ -128,8 +132,9 @@ public class Asteroid extends Enemy
                 screenEnterToggle = false;
             }
             offScreenFrames++;
-            x += -distX;
-            y += -distY;
+            enemyBody.angle += rotationSpeed * slow;
+            x += -tempDistX;
+            y += -tempDistY;
         }
 
         if (x > xbound + .02f ||

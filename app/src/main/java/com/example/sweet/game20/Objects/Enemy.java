@@ -1,5 +1,6 @@
 package com.example.sweet.game20.Objects;
 
+import com.example.sweet.game20.GlobalInfo;
 import com.example.sweet.game20.util.DropFactory;
 
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -18,6 +19,8 @@ public class Enemy extends Drawable
     protected ParticleSystem particleSystem;
 
     protected DropFactory dropFactory;
+
+    protected long lastMoveTime;
 
     public ConcurrentLinkedQueue<Drop> dropsToAdd = new ConcurrentLinkedQueue<>();
 
@@ -44,6 +47,7 @@ public class Enemy extends Drawable
 
     public Enemy(PixelGroup p, ParticleSystem ps, DropFactory dF)
     {
+        lastMoveTime = System.currentTimeMillis();
         particleSystem = ps;
         x = 0.0f;
         y = 0.0f;
@@ -52,7 +56,7 @@ public class Enemy extends Drawable
         dropFactory = dF;
     }
 
-    public void move(float mX, float mY)
+    public void move(float mX, float mY, long curFrame, float slow)
     {
         System.out.println("IN HERE");
         /*float angle = (float)Math.atan2(mY, mX);

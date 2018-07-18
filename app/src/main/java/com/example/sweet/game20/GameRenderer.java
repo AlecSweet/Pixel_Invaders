@@ -2,6 +2,7 @@ package com.example.sweet.game20;
 
 import android.content.Context;
 
+import android.opengl.GLSurfaceView;
 import android.opengl.GLSurfaceView.Renderer;
 
 import java.nio.ByteBuffer;
@@ -17,29 +18,21 @@ import javax.microedition.khronos.egl.EGLConfig;
 
 import static com.example.sweet.game20.util.Constants.DropType.*;
 import static com.example.sweet.game20.util.Constants.EnemyType.*;
-import static android.opengl.GLES20.GL_ARRAY_BUFFER;
 import static android.opengl.GLES20.GL_COLOR_BUFFER_BIT;
-import static android.opengl.GLES20.GL_FLOAT;
-import static android.opengl.GLES20.GL_STATIC_DRAW;
 import static android.opengl.GLES20.GL_TEXTURE0;
-import static android.opengl.GLES20.GL_TRIANGLE_FAN;
 import static android.opengl.GLES20.glActiveTexture;
-import static android.opengl.GLES20.glBindBuffer;
 import static android.opengl.GLES20.glBindTexture;
-import static android.opengl.GLES20.glBufferData;
+
 import static android.opengl.GLES20.glClear;
 import static android.opengl.GLES20.glClearColor;
 import static android.opengl.GLES20.GL_BLEND;
 import static android.opengl.GLES20.GL_ONE_MINUS_SRC_ALPHA;
 import static android.opengl.GLES20.GL_SRC_ALPHA;
-import static android.opengl.GLES20.glDrawArrays;
-import static android.opengl.GLES20.glEnableVertexAttribArray;
-import static android.opengl.GLES20.glGenBuffers;
+
 import static android.opengl.GLES20.glGetAttribLocation;
 import static android.opengl.GLES20.glGetUniformLocation;
 import static android.opengl.GLES20.glUniform1i;
 import static android.opengl.GLES20.glUseProgram;
-import static android.opengl.GLES20.glVertexAttribPointer;
 import static android.opengl.GLES20.glViewport;
 
 import static android.opengl.GLES20.GL_TEXTURE_2D;
@@ -54,6 +47,10 @@ import static android.opengl.GLES20.glUniform1f;
 public class GameRenderer implements Renderer
 {
     private Context context;
+
+    private GlobalInfo globalInfo;
+
+    private GLSurfaceView glSurfaceView;
 
     private ExitListener exitListener = null;
 
@@ -86,11 +83,7 @@ public class GameRenderer implements Renderer
             yScreenShiftLocationParticle,
             xScreenShiftLocation,
             yScreenShiftLocation,
-            aPositionLocation,
-            aTextureCoordLocation,
             uTextureLocation,
-            xDispLocation,
-            yDispLocation,
             pointSizeLocation,
             particlePointSizeLocation,
             uMagLoc;
@@ -118,6 +111,8 @@ public class GameRenderer implements Renderer
     private final long UPS = 60;
 
     private final long mSPU = MILLIS_PER_SECOND / UPS;
+
+    private long currentFrame = 0;
 
     private Enemy[] entities;
 
@@ -155,16 +150,36 @@ public class GameRenderer implements Renderer
 
     private float[] background = new float[]{
             0f,    0f, 0.5f, 0.5f,
-            -4f, -4f,   0f, 1f,
-            4f, -4f,   1f, 1f,
-            4f,  4f,   1f, 0f,
-            -4f,  4f,   0f, 0f,
-            -4f, -4f,   0f, 1f
+            -2.5f, -2.5f,   0f, 1f,
+            2.5f, -2.5f,   1f, 1f,
+            2.5f,  2.5f,   1f, 0f,
+            -2.5f,  2.5f,   0f, 0f,
+            -2.5f, -2.5f,   0f, 1f
+    };
+    private float[] moonVA = new float[]{
+            0f,    0f, 0.5f, 0.5f,
+            -.088f, -.088f,   0f, 1f,
+            .088f, -.088f,   1f, 1f,
+            .088f,  .088f,   1f, 0f,
+            -.088f,  .088f,   0f, 0f,
+            -.088f, -.088f,   0f, 1f
     };
 
-    private int backgroundVBO[] = new int[1];
-
-    private int backgroundTexture;
+    private float[] earthVA = new float[]{
+            0f,    0f, 0.5f, 0.5f,
+            -.256f, -.256f,   0f, 1f,
+            .256f, -.256f,   1f, 1f,
+            .256f,  .256f,   1f, 0f,
+            -.256f,  .256f,   0f, 0f,
+            -.256f, -.256f,   0f, 1f
+    };
+    private ImageContainer
+            earthC,
+            moonC,
+            stars1,
+            stars2,
+            stars3,
+            stars4;
 
     public AIThread aiRunnable;
 
@@ -187,6 +202,7 @@ public class GameRenderer implements Renderer
         pastTime = System.currentTimeMillis();
         secondMark = System.currentTimeMillis();
         context = c;
+        globalInfo = new GlobalInfo((long)globalStartTime);
     }
 
     @Override
@@ -224,10 +240,6 @@ public class GameRenderer implements Renderer
         particleShaderProgram = ShaderHelper.linkProgram(particleVertShader, particleFragShader);
         plainShaderProgram = ShaderHelper.linkProgram(plainVertShader, plainFragShader);
 
-        xDispLocation = glGetUniformLocation(plainShaderProgram, X_DISP);
-        yDispLocation = glGetUniformLocation(plainShaderProgram, Y_DISP);
-        aPositionLocation = glGetAttribLocation(plainShaderProgram, A_POSITION);
-        aTextureCoordLocation = glGetAttribLocation(plainShaderProgram, A_TEXTURECOORDINATE);
         uTextureLocation = glGetUniformLocation(plainShaderProgram, U_TEXTURE);
 
         xScaleLocationParticle = glGetUniformLocation(particleShaderProgram, X_SCALE);
@@ -262,19 +274,67 @@ public class GameRenderer implements Renderer
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-        FloatBuffer temp = ByteBuffer
-                .allocateDirect(background.length * Constants.BYTES_PER_FLOAT)
-                .order(ByteOrder.nativeOrder())
-                .asFloatBuffer()
-                .put(background);
-        temp.position(0);
+        int[] glVarLocations = new int[5];
+        glVarLocations[0] = glGetUniformLocation(plainShaderProgram, "x_displacement");
+        glVarLocations[1] = glGetUniformLocation(plainShaderProgram, "y_displacement");
+        glVarLocations[2] = glGetAttribLocation(plainShaderProgram, "a_Position");
+        glVarLocations[3] = glGetAttribLocation(plainShaderProgram, "a_TexCoordinate");
+        glVarLocations[4] = glGetUniformLocation(plainShaderProgram, "u_Texture");
+        earthC = new ImageContainer
+                (
+                        TextureLoader.loadTexture(context, R.drawable.earth),
+                        earthVA,
+                        0, 0,
+                        "earth",
+                        glVarLocations,
+                        -1, -1
+                );
 
-        glGenBuffers(1, backgroundVBO, 0);
-        glBindBuffer(GL_ARRAY_BUFFER, backgroundVBO[0]);
-        glBufferData(GL_ARRAY_BUFFER, temp.capacity() * Constants.BYTES_PER_FLOAT, temp, GL_STATIC_DRAW);
-
-        backgroundTexture = TextureLoader.loadTexture(context, R.drawable.spacebackground);
-
+        moonC = new ImageContainer
+                (
+                        TextureLoader.loadTexture(context, R.drawable.moon),
+                        moonVA,
+                        -.2f, -.34f,
+                        "earth",
+                        glVarLocations,
+                        -1, -1
+                );
+        stars1 = new ImageContainer
+                (
+                        TextureLoader.loadTexture(context, R.drawable.layer0),
+                        background,
+                        0, 0,
+                        "",
+                        glVarLocations,
+                        -1, -1
+                );
+        stars2 = new ImageContainer
+                (
+                        TextureLoader.loadTexture(context, R.drawable.layer1),
+                        background,
+                        0, 0,
+                        "",
+                        glVarLocations,
+                        -1, -1
+                );
+        stars3 = new ImageContainer
+                (
+                        TextureLoader.loadTexture(context, R.drawable.layer2),
+                        background,
+                        0, 0,
+                        "",
+                        glVarLocations,
+                        -1, -1
+                );
+        stars4 = new ImageContainer
+                (
+                        TextureLoader.loadTexture(context, R.drawable.spacebackground),
+                        background,
+                        0, 0,
+                        "",
+                        glVarLocations,
+                        -1, -1
+                );
         if(!init)
         {
             init();
@@ -324,6 +384,15 @@ public class GameRenderer implements Renderer
                 frames++;
                 lag -= mSPU;
             }
+            /*if(currentFrame < aiRunnable.currentFrame)
+            {
+                update();
+                frames++;
+            }*/
+           /* while(currentFrame < aiRunnable.currentFrame)
+            {
+                update();
+            }*/
         }
         else
         {
@@ -332,7 +401,11 @@ public class GameRenderer implements Renderer
                 saveTime = false;
             }
         }
+        draw();
+    }
 
+    public void draw()
+    {
         //setInterpolation((((long)lag >> 4)<<4)/mSPU);
         setInterpolation(0);
         glClear(GL_COLOR_BUFFER_BIT);
@@ -340,10 +413,11 @@ public class GameRenderer implements Renderer
         drawBackground();
 
         glUseProgram(particleShaderProgram);
-        glUniform1f(timeLocation, (float) ((System.currentTimeMillis() - globalStartTime) / 1000));
-        glUniform1f(xScreenShiftLocationParticle, player1.xScreenShift);
-        glUniform1f(yScreenShiftLocationParticle, player1.yScreenShift);
-        glUniform1f(particlePointSizeLocation, particlePointSize);
+        //glUniform1f(timeLocation, (float) ((System.currentTimeMillis() - globalStartTime) / 1000));
+        glUniform1f(timeLocation, globalInfo.getAugmentedTimeSeconds());
+        glUniform1f(xScreenShiftLocationParticle, player1.xScreenShift - player1.screenShakeX);
+        glUniform1f(yScreenShiftLocationParticle, player1.yScreenShift - player1.screenShakeY);
+        glUniform1f(particlePointSizeLocation, particlePointSize*1.4f);
 
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, whiteTexture);
@@ -353,8 +427,8 @@ public class GameRenderer implements Renderer
         playerParticles.draw();
 
         glUseProgram(shaderProgram);
-        glUniform1f(xScreenShiftLocation, player1.xScreenShift);
-        glUniform1f(yScreenShiftLocation, player1.yScreenShift);
+        glUniform1f(xScreenShiftLocation, player1.xScreenShift - player1.screenShakeX);
+        glUniform1f(yScreenShiftLocation, player1.yScreenShift - player1.screenShakeY);
         glUniform1f(pointSizeLocation, pointSize);
         glUniform1f(uMagLoc, 1);
 
@@ -408,10 +482,11 @@ public class GameRenderer implements Renderer
 
         glUseProgram(particleShaderProgram);
 
-        glUniform1f(timeLocation, (float) ((System.currentTimeMillis() - globalStartTime) / 1000));
-        glUniform1f(xScreenShiftLocationParticle, player1.xScreenShift);
-        glUniform1f(yScreenShiftLocationParticle, player1.yScreenShift);
-        glUniform1f(particlePointSizeLocation, particlePointSize);
+        //glUniform1f(timeLocation, (float) ((System.currentTimeMillis() - globalStartTime) / 1000));
+        glUniform1f(timeLocation, globalInfo.getAugmentedTimeSeconds());
+        glUniform1f(xScreenShiftLocationParticle, player1.xScreenShift - player1.screenShakeX);
+        glUniform1f(yScreenShiftLocationParticle, player1.yScreenShift - player1.screenShakeY);
+        glUniform1f(particlePointSizeLocation, particlePointSize* 1.4f);
 
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, whiteTexture);
@@ -427,7 +502,6 @@ public class GameRenderer implements Renderer
         ui.draw(interpolation);
 
     }
-
     @Override
     public void onSurfaceChanged(GL10 unused, int width, int height)
     {
@@ -516,7 +590,7 @@ public class GameRenderer implements Renderer
 
         player1 = new Player(dropFactory,
                 context,
-                .004f,
+                .007f,
                 shaderProgram,
                 playerParticles,ImageParser.parseImage(context, R.drawable.player, R.drawable.player_light, shaderProgram)
         );
@@ -533,7 +607,7 @@ public class GameRenderer implements Renderer
 
         entities = new Enemy[Constants.ENTITIES_LENGTH];
 
-        aiRunnable = new AIThread(entities);
+        aiRunnable = new AIThread(entities, globalInfo);
         aiThread = new Thread(aiRunnable);
         aiRunnable.setPlayer(player1);
 
@@ -542,7 +616,7 @@ public class GameRenderer implements Renderer
         collisionRunnable.setPlayer(player1);
         collisionRunnable.setCollisionHandler(collisionHandler);
 
-        levelRunnable = new LevelControllerThread(enemyFactory);
+        levelRunnable = new LevelControllerThread(enemyFactory, globalInfo);
         levelThread = new Thread(levelRunnable);
         levelRunnable.setPlayer(player1);
 
@@ -603,6 +677,7 @@ public class GameRenderer implements Renderer
                     entities[i].getPixelGroup().freeMemory();
                     entities[i] = null;
                     openEntityIndices.push(i);
+                    System.gc();
                 }
             }
         }
@@ -621,44 +696,38 @@ public class GameRenderer implements Renderer
                 enemyOverflow.add(e);
             }
         }
-        player1.movePlayer();
+        player1.movePlayer(globalInfo.timeSlow);
         player1.moveCamera();
+        currentFrame++;
         //.frameRequest++;
     }
 
     public void drawBackground()
     {
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, backgroundTexture);
-        glUniform1i(uTextureLocation, 0);
-
-        glUniform1f(xDispLocation, -player1.xScreenShift);
-        glUniform1f(yDispLocation, -player1.yScreenShift);
-
-        glBindBuffer(GL_ARRAY_BUFFER, backgroundVBO[0]);
-        glEnableVertexAttribArray(aPositionLocation);
-        glVertexAttribPointer (aPositionLocation, 2,
-                GL_FLOAT, false, Constants.BYTES_PER_FLOAT * 4,0 );
-
-        glEnableVertexAttribArray(aTextureCoordLocation);
-        glVertexAttribPointer (aTextureCoordLocation, 2,
-                GL_FLOAT, false, Constants.BYTES_PER_FLOAT * 4,Constants.BYTES_PER_FLOAT * 2);
-        glDrawArrays(GL_TRIANGLE_FAN, 0, 6);
+        float tShiftX = -player1.xScreenShift - player1.screenShakeX;
+        float tShiftY = -player1.yScreenShift - player1.screenShakeY;
+        stars4.draw(tShiftX / 6f, tShiftY / 6f);
+        stars3.draw(tShiftX / 5.4f, tShiftY /  5.4f);
+        stars2.draw(tShiftX / 4.8f, tShiftY / 4.8f);
+        stars1.draw(tShiftX / 4.2f, tShiftY / 4.2f);
+        moonC.draw(tShiftX / 2.1f, tShiftY / 2.1f);
+        earthC.draw(tShiftX / 2, tShiftY / 2);
     }
 
     public void init()
     {
-        playerParticles = new ParticleSystem(2000, particleShaderProgram , whiteTexture, globalStartTime);
+        playerParticles = new ParticleSystem(20000, particleShaderProgram , whiteTexture, globalStartTime, globalInfo);
 
-        enemyParticles = new ParticleSystem(30000, particleShaderProgram, whiteTexture, globalStartTime);
+        enemyParticles = new ParticleSystem(30000, particleShaderProgram, whiteTexture, globalStartTime, globalInfo);
 
         enemyFactory = initEnemyFactory();
 
-        collisionParticles = new ParticleSystem(4000, particleShaderProgram, whiteTexture, globalStartTime);
+        collisionParticles = new ParticleSystem(4000, particleShaderProgram, whiteTexture, globalStartTime, globalInfo);
 
         collisionHandler = new CollisionHandler(collisionParticles);
 
         ui = new UI(context, plainShaderProgram);
+
     }
 
     public EnemyFactory initEnemyFactory()
@@ -674,7 +743,7 @@ public class GameRenderer implements Renderer
                                         ImageParser.parseImage(context, R.drawable.simple1, R.drawable.simple_light, shaderProgram),
                                         new BasicGun
                                                 (
-                                                        ImageParser.parseImage(context, R.drawable.basicbullet, R.drawable.basicbullet_light, shaderProgram),
+                                                        ImageParser.parseImage(context, R.drawable.kamikaze, R.drawable.kamikaze_light, shaderProgram),
                                                         enemyParticles,
                                                         1000
                                                 ),

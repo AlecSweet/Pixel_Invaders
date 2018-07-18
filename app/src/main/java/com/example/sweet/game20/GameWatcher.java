@@ -20,6 +20,7 @@ import static android.view.View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN;
 public class GameWatcher extends Activity
 {
     private GLSurfaceView glSurfaceView;
+
     private boolean isRendererSet = false;
 
     private GameRenderer gameRender;
@@ -102,6 +103,7 @@ public class GameWatcher extends Activity
         glSurfaceView.setPreserveEGLContextOnPause(true);
         glSurfaceView.setRenderer(gameRender);
         glSurfaceView.setRenderMode(GLSurfaceView.RENDERMODE_CONTINUOUSLY);
+        //glSurfaceView.setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
         glSurfaceView.setOnTouchListener(new View.OnTouchListener()
         {
             @Override

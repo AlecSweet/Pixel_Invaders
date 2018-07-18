@@ -38,6 +38,8 @@ public class Constants
 
     public static final float MAX_PPS = 1000f;
 
+    public static final float msPerFrame = 16.67f;
+
     public static final float COMPONENT_DROP_RADIUS = .06f;
 
     public static final float COMPONENT_DROP_MOVESPEED = .001f;

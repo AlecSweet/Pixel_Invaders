@@ -105,6 +105,20 @@ public class ImageContainer
         glDrawArrays(GL_TRIANGLE_FAN, 0, 6);
     }
 
+    public void draw(float xShift, float yShift)
+    {
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, textureHandle);
+        glUniform1i(uTextureLocation, 0);
+
+        glUniform1f(xDispLoc, x + xShift);
+        glUniform1f(yDispLoc, y + yShift);
+
+        glBindBuffer(GL_ARRAY_BUFFER, vboHandle[0]);
+        bindAttributes();
+        glDrawArrays(GL_TRIANGLE_FAN, 0, 6);
+    }
+
     public void applyScale(float xS, float yS)
     {
         if(xS != xScale || yS != yScale)

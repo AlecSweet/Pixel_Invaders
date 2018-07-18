@@ -1,5 +1,7 @@
 package com.example.sweet.game20.util;
 
+import com.example.sweet.game20.GlobalInfo;
+
 /**
  * Created by Sweet on 6/19/2018.
  */
@@ -18,23 +20,37 @@ public class ScreenShake
 
     public boolean live = true;
 
-    public ScreenShake(float a, float f, double d)
+    private GlobalInfo globalInfo;
+
+    public ScreenShake(float a, float f, double d, GlobalInfo gi)
     {
         amplitude = a;
         frequency = f;
         duration = d;
-        startTime = System.currentTimeMillis();
+        globalInfo = gi;
+        startTime = gi.getAugmentedTimeMillis();
 
         points = new float[(int)((duration/1000) * frequency)];
+        float flip;
+        if(Math.random() < .5)
+        {
+            flip = -1;
+        }
+        else
+        {
+            flip = 1;
+        }
+
         for(int i = 0; i < points.length; i++)
         {
-            points[i] = (float)(Math.random() * 2 - 1)*amplitude;
+            points[i] = (float)(Math.random() * flip)*amplitude;
+            flip *= -1;
         }
     }
 
     public float getShake()
     {
-        double timeRunning = (System.currentTimeMillis()-startTime);
+        double timeRunning = (globalInfo.getAugmentedTimeMillis()-startTime);
         if(timeRunning > duration)
         {
             live = false;

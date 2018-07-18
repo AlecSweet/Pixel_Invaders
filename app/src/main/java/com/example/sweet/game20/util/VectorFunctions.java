@@ -4,7 +4,8 @@ package com.example.sweet.game20.util;
  * Created by Sweet on 3/16/2018.
  */
 
-public class VectorFunctions {
+public class VectorFunctions
+{
     public static float getMagnitude(float tX, float tY)
     {
         return (float)Math.sqrt((double)(tX * tX + tY * tY));

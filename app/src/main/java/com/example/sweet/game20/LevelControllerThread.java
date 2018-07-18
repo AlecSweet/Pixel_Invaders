@@ -2,7 +2,9 @@ package com.example.sweet.game20;
 
 import com.example.sweet.game20.Objects.Asteroid;
 import com.example.sweet.game20.Objects.BasicGun;
+import com.example.sweet.game20.Objects.Drop;
 import com.example.sweet.game20.Objects.Enemy;
+import com.example.sweet.game20.Objects.GunComponent;
 import com.example.sweet.game20.Objects.ModComponent;
 import com.example.sweet.game20.Objects.Player;
 import com.example.sweet.game20.Objects.Simple;
@@ -28,6 +30,8 @@ public class LevelControllerThread implements Runnable
 
     private EnemyFactory enemyFactory;
 
+    private GlobalInfo globalInfo;
+
     private Stack<Integer> openEntityIndices = new Stack<>();
 
     public volatile boolean
@@ -45,8 +49,9 @@ public class LevelControllerThread implements Runnable
             spawnDelay = 1000,
             pauseTime = 0;
 
-    public LevelControllerThread(EnemyFactory eF)
+    public LevelControllerThread(EnemyFactory eF, GlobalInfo gI)
     {
+        globalInfo = gI;
         enemyFactory = eF;
         for(int i = 0; i < Constants.ENTITIES_LENGTH; i++)
         {
@@ -101,11 +106,12 @@ public class LevelControllerThread implements Runnable
             }
         }*/
 
+
         if(System.currentTimeMillis() - spawnDelay > lastSpawn)
         {
             lastSpawn = System.currentTimeMillis();
             System.out.println("Spawned");
-            Asteroid a = null;
+            /*Asteroid a = null;
 
             switch((int)(Math.random()*4.9))
             {
@@ -115,7 +121,7 @@ public class LevelControllerThread implements Runnable
                 case 3: a = (Asteroid)enemyFactory.getNewEnemy(ASTEROID_RED_SMALL); break;
                 case 4: a = (Asteroid)enemyFactory.getNewEnemy(ASTEROID_RED_TINY); break;
                 //case 5: a = (Asteroid)enemyFactory.getNewEnemy(ASTEROID_RED_MEDIUM); break;
-            }
+            }*/
 
             Simple s = (Simple)enemyFactory.getNewEnemy(SIMPLE);
             //distributeEnemy(a);
@@ -127,9 +133,16 @@ public class LevelControllerThread implements Runnable
             //uiEntities[index] = a;
             spawnonce = true;
         }
-        /*if(player1.modUpdate)
+        if(player1.modUpdate)
         {
-            for(int m = 0; m < player1.getMaxMods(); m++)
+            for(Drop d: player1.getGuns())
+            {
+                if( d != null && d.component != null)
+                {
+                    ((GunComponent)d.component).gun.updateBulletPool();
+                }
+            }
+            /*for(int m = 0; m < player1.getMaxMods(); m++)
             {
                 if(player1.mods[m] != null && player1.mods[m].component != null)
                 {
@@ -139,8 +152,8 @@ public class LevelControllerThread implements Runnable
                     }
                 }
             }
-            player1.modUpdate = false;
-        }*/
+            player1.modUpdate = false;*/
+        }
     }
 
     /*public void distributeEnemy(Enemy e)
