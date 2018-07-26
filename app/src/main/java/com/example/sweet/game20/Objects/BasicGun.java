@@ -12,9 +12,9 @@ import com.example.sweet.game20.util.ImageParser;
 
 public class BasicGun extends Gun
 {
-    public BasicGun(PixelGroup pG, ParticleSystem ps, double delay)
+    public BasicGun(PixelGroup pG, ParticleSystem ps, double delay, float spd)
     {
-        super(delay, pG, ps, .038f);
+        super(delay, pG, ps, spd);
         spread = .04f;
     }
 
@@ -72,18 +72,43 @@ public class BasicGun extends Gun
     {
         for (Bullet b: bullets)
         {
+            float centerX;
+            float centerY;
+            if(b.pixelGroup.enableLocationChain)
+            {
+                /*centerX = b.pixelGroup.locationDrawTail.x;
+                centerY = b.pixelGroup.locationDrawTail.y;*/
+                centerX = b.pixelGroup.centerX - b.cosA * .01f;
+                centerY = b.pixelGroup.centerY - b.sinA * .01f;
+            }
+            else
+            {
+                centerX = b.pixelGroup.centerX - b.cosA * .01f;
+                centerY = b.pixelGroup.centerY - b.sinA * .01f;
+            }
             if(b.live)
             {
                 b.move(slow);
+                /*for(int i = 0; i < 4; i ++)
+                {
+                    masterParticleSystem.addParticle(
+                            centerX, centerY,
+                            b.angle + (float) (Math.random() * .3 - .15),
+                            b.pixelGroup.pixels[0].r, b.pixelGroup.pixels[0].g, b.pixelGroup.pixels[0].b, 1f,
+                            (float)(Math.random()*.03f) + .01f, (float)(Math.random()*.003f) + .002f, 10f
+                    );
+                }*/
                 for(Pixel p: b.pixelGroup.pixels)
                 {
+                    //float cC = (float)(Math.random()) * .1f -.5f + 1;
                     if (p.live && p.outside)
                     {
+                        float cC = (float)(Math.random()) * 1f + .5f;
                         masterParticleSystem.addParticle(
-                                p.xDisp  + b.pixelGroup.centerX, p.yDisp + b.pixelGroup.centerY,
-                                b.angle,
-                                p.r, p.g, p.b, .2f,
-                                .04f, .005f, 10f
+                                p.xDisp + centerX, p.yDisp + centerY,
+                                -b.angle + (float)(Math.random()* .2f - 1f),
+                                p.r * cC, p.g * cC, p.b * cC, .6f,
+                                .2f, .02f, 4f
                         );
                     }
                 }
@@ -111,6 +136,6 @@ public class BasicGun extends Gun
     @Override
     public BasicGun clone()
     {
-        return new BasicGun(pixelGroupTemplate.clone(), masterParticleSystem, shootDelay);
+        return new BasicGun(pixelGroupTemplate.clone(), masterParticleSystem, shootDelay, speed);
     }
 }

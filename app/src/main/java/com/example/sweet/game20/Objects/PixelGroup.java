@@ -50,8 +50,6 @@ public class  PixelGroup extends Collidable
             uMagLoc,
             pointSizeLoc;
 
-    private float[] colorVA;
-
     private FloatBuffer cbuf;
 
     private int[]
@@ -64,12 +62,10 @@ public class  PixelGroup extends Collidable
 
     private boolean glInit = false;
 
-    public boolean onScreen = false;
-
     private float
-            r,
-            g,
-            b;
+            edgeColorR,
+            edgeColorG,
+            edgeColorB;
 
     private boolean whiteToColor = false;
 
@@ -99,16 +95,16 @@ public class  PixelGroup extends Collidable
         }
         if(enableLocationChain)
         {
-            if(locationTail.nextLocation != null && locationTail.nextLocation.readyToBeConsumed)
+            /*if(locationDrawTail.nextLocation != null && locationDrawTail.nextLocation.readyToBeConsumed)
             {
-                locationTail = locationTail.nextLocation;
-            }
-            /*while(locationTail.nextLocation != null && locationTail.nextLocation.readyToBeConsumed)
-            {
-                locationTail = locationTail.nextLocation;
+                locationDrawTail = locationDrawTail.nextLocation;
             }*/
-            glUniform1f(xDispLoc, locationTail.x);
-            glUniform1f(yDispLoc, locationTail.y);
+            while(locationDrawTail.nextLocation != null && locationDrawTail.nextLocation.readyToBeConsumed)
+            {
+                locationDrawTail = locationDrawTail.nextLocation;
+            }
+            glUniform1f(xDispLoc, locationDrawTail.x);
+            glUniform1f(yDispLoc, locationDrawTail.y);
         }
         else
         {
@@ -202,7 +198,7 @@ public class  PixelGroup extends Collidable
 
     public void initBuffers()
     {
-        colorVA = new float[pixels.length * 4];
+        /*colorVA = new float[pixels.length * 4];
 
         //Fill the VA's with data from the pixel array;
         int cIter = 0;
@@ -213,13 +209,12 @@ public class  PixelGroup extends Collidable
             colorVA[cIter+2] = tP.b;
             colorVA[cIter+3] = tP.a;
             cIter+=4;
-        }
+        }*/
 
         cbuf = ByteBuffer
-                .allocateDirect(colorVA.length * Constants.BYTES_PER_FLOAT)
+                .allocateDirect(pixels.length * 4 * Constants.BYTES_PER_FLOAT)
                 .order(ByteOrder.nativeOrder())
-                .asFloatBuffer()
-                .put(colorVA);
+                .asFloatBuffer();
         cbuf.position(0);
 
         glGenBuffers(1, cBuffer, 0);
@@ -227,6 +222,26 @@ public class  PixelGroup extends Collidable
         glBindBuffer(GL_ARRAY_BUFFER, cBuffer[0]);
         glBufferData(GL_ARRAY_BUFFER, cbuf.capacity() * Constants.BYTES_PER_FLOAT, cbuf, GL_DYNAMIC_DRAW);
         glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+        int tSize = pixels.length;
+        for (int i = 0; i < tSize; i++)
+        {
+            if (pixels[i].live)
+            {
+                cbuf.put((i + 1) * 4 - 4, pixels[i].r);
+                cbuf.put((i + 1) * 4 - 3, pixels[i].g);
+                cbuf.put((i + 1) * 4 - 2, pixels[i].b);
+                cbuf.put((i + 1) * 4 - 1, pixels[i].a);
+            }
+            else if(pixels[i].a != 0 && !pixels[i].live)
+            {
+                pixels[i].a = 0;
+                cbuf.put((i + 1) * 4 - 1, 0f);
+            }
+        }
+
+        glBindBuffer(GL_ARRAY_BUFFER, cBuffer[0]);
+        glBufferSubData(GL_ARRAY_BUFFER,0,cbuf.capacity()*Constants.BYTES_PER_FLOAT,cbuf);
     }
 
     /*Update the color buffer for the group of pixels so that live pixels have an alpha of 1
@@ -235,26 +250,50 @@ public class  PixelGroup extends Collidable
     public void updatePixels()
     {
         int tSize = pixels.length;
-        for(int i = 0; i < tSize; i++)
+        if(restorable)
         {
-            if(pixels[i].live)
+            for (int i = 0; i < tSize; i++)
             {
-                cbuf.put((i + 1) * 4 - 4, pixels[i].r);
-                cbuf.put((i + 1) * 4 - 3, pixels[i].g);
-                cbuf.put((i + 1) * 4 - 2, pixels[i].b);
-                cbuf.put((i + 1) * 4 - 1, pixels[i].a);
+                if (pixels[i].live && !pixels[i].insideEdge)
+                {
+                    cbuf.put((i + 1) * 4 - 4, pixels[i].r);
+                    cbuf.put((i + 1) * 4 - 3, pixels[i].g);
+                    cbuf.put((i + 1) * 4 - 2, pixels[i].b);
+                    cbuf.put((i + 1) * 4 - 1, pixels[i].a);
+                }
+                else if(pixels[i].insideEdge)
+                {
+                    cbuf.put((i + 1) * 4 - 4, edgeColorR);
+                    cbuf.put((i + 1) * 4 - 3, edgeColorG);
+                    cbuf.put((i + 1) * 4 - 2, edgeColorB);
+                }
+                else
+                {
+                    if (pixels[i].a != 0 && !pixels[i].live)
+                    {
+                        pixels[i].a = 0;
+                        cbuf.put((i + 1) * 4 - 1, 0f);
+                    }
+                }
             }
-            else
+        }
+        else
+        {
+            for (int i = 0; i < tSize; i++)
             {
-                cbuf.put((i + 1) * 4 - 1, 0f);
+                if(pixels[i].a != 0 && !pixels[i].live)
+                {
+                    pixels[i].a = 0;
+                    cbuf.put((i + 1) * 4 - 1, 0f);
+                }
+                else if(pixels[i].insideEdge)
+                {
+                    cbuf.put((i + 1) * 4 - 4, edgeColorR);
+                    cbuf.put((i + 1) * 4 - 3, edgeColorG);
+                    cbuf.put((i + 1) * 4 - 2, edgeColorB);
+                    pixels[i].insideEdge = false;
+                }
             }
-
-           /* if(pixels[i].outside)
-            {
-                cbuf.put((i + 1) * 4 - 4, 1);
-                cbuf.put((i + 1) * 4 - 3, 1);
-                cbuf.put((i + 1) * 4 - 2, 1);
-            }*/
         }
 
         glBindBuffer(GL_ARRAY_BUFFER, cBuffer[0]);
@@ -263,10 +302,17 @@ public class  PixelGroup extends Collidable
 
     public void setWhiteToColor(float r, float g, float b)
     {
-        this.r = r;
-        this.g = g;
-        this.b = b;
+        this.edgeColorR = r;
+        this.edgeColorG = g;
+        this.edgeColorB = b;
         whiteToColor = true;
+    }
+
+    public void setEdgeColor(float r, float g, float b)
+    {
+        this.edgeColorR = r;
+        this.edgeColorG = g;
+        this.edgeColorB = b;
     }
 
     public void setWhiteToColor()
@@ -276,9 +322,9 @@ public class  PixelGroup extends Collidable
         {
             if( pixels[i].r == 1 && pixels[i].g == 1 && pixels[i].b == 1)
             {
-                cbuf.put((i + 1) * 4 - 4, r);
-                cbuf.put((i + 1) * 4 - 3, g);
-                cbuf.put((i + 1) * 4 - 2, b);
+                cbuf.put((i + 1) * 4 - 4, edgeColorR);
+                cbuf.put((i + 1) * 4 - 3, edgeColorG);
+                cbuf.put((i + 1) * 4 - 2, edgeColorB);
             }
         }
 
@@ -335,26 +381,11 @@ public class  PixelGroup extends Collidable
     public void freeMemory()
     {
         glDeleteBuffers(1, cBuffer, 0);
-    }
-
-    public void resetPixels()
-    {
-        for(Pixel p: pixels)
-        {
-            p.live = true;
-            p.outside = false;
-            p.groupFlag = -1;
-            for(Pixel n: p.neighbors)
-            {
-                if (n == null)
-                {
-                    p.outside = true;
-                }
-            }
-        }
-        collidableLive = true;
-        needsUpdate = true;
-        numLivePixels = totalPixels;
+        pMap = null;
+        cbuf = null;
+        pixels = null;
+        zones = null;
+        lastPixelKilled = null;
     }
 
     @Override
@@ -362,13 +393,9 @@ public class  PixelGroup extends Collidable
     {
         ArrayList<Pixel> p1 = new ArrayList<>();
         Pixel[][] cloneMap = new Pixel[pMap.length][pMap[0].length];
-        //int numGroupsWidth = (int)((float)pMap[0].length/Constants.CELL_LENGTH) + 1;
         int numGroupsWidth = pMap[0].length/Constants.CELL_LENGTH + 1;
-        //int numGroupsHeight = (int)((float)pMap.length/Constants.CELL_LENGTH) + 1;
         int numGroupsHeight = pMap.length/Constants.CELL_LENGTH + 1;
-        //int numZonesWidth = (int)((float)(numGroupsWidth) / Constants.ZONE_LENGTH) + 1;
         int numZonesWidth = numGroupsWidth / Constants.ZONE_LENGTH + 1;
-        //int numZonesHeight = (int)((float)(numGroupsHeight) / Constants.ZONE_LENGTH) + 1;
         int numZonesHeight = numGroupsHeight / Constants.ZONE_LENGTH + 1;
 
         CollidableGroup[] cGroups = new CollidableGroup[numGroupsWidth * numGroupsHeight];
@@ -378,9 +405,11 @@ public class  PixelGroup extends Collidable
         for(int r = 0; r < zoneMap.length; r++)
         {
             for (int c = 0; c < zoneMap[0].length; c++)
+            {
                 zoneMap[r][c] = new Zone(c * Constants.ZONE_SIZE + Constants.ZONE_SIZE / 2 - Constants.ZONE_SIZE * numZonesWidth / 2 + Constants.PIXEL_SIZE,
                         r * Constants.ZONE_SIZE + Constants.ZONE_SIZE / 2 - Constants.ZONE_SIZE * numZonesHeight / 2 + Constants.PIXEL_SIZE,
                         Constants.ZONE_SIZE / 2);
+            }
         }
         for(int r = 0; r < groupMap.length; r++)
         {
@@ -403,7 +432,6 @@ public class  PixelGroup extends Collidable
                 {
                     cloneMap[r][c] = pMap[r][c].clone();
                     p1.add(cloneMap[r][c]);
-                    //groupMap[(int) ((float) r / Constants.CELL_LENGTH)][(int) ((float) c / Constants.CELL_LENGTH)].p.add(cloneMap[r][c]);
                     groupMap[r / Constants.CELL_LENGTH][c / Constants.CELL_LENGTH].p.add(cloneMap[r][c]);
                 }
             }

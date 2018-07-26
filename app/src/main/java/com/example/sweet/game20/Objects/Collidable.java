@@ -28,11 +28,12 @@ public class Collidable
 
     protected boolean
             enableOrphanChunkDeletion,
-            enableLocationChain = false;
+            enableLocationChain = true;
 
     protected LocationHistory
             locationHead,
-            locationTail;
+            locationDrawTail,
+            locationCollisionTail;
 
     protected boolean
             collidableLive,
@@ -48,12 +49,15 @@ public class Collidable
 
     public Pixel lastPixelKilled;
 
+    protected boolean restorable = false;
+
     public Collidable(float x, float y, float hSL, Pixel[] p, boolean chunkDeletion, Zone[] z)
     {
         centerX = x;
         centerY = y;
-        locationTail = new LocationHistory(centerX, centerY);
-        locationHead = locationTail;
+        locationDrawTail = new LocationHistory(centerX, centerY);
+        locationCollisionTail = locationDrawTail;
+        locationHead = locationDrawTail;
         halfSquareLength = hSL;
         pixels = p;
         totalPixels = pixels.length;
@@ -97,13 +101,13 @@ public class Collidable
         {
             if (z != null)
             {
-                z.move(mX, mY);
+                //z.move(mX, mY);
                 boolean zoneCheck = false;
                 for (CollidableGroup cG: z.collidableGroups)
                 {
                     if (cG != null)
                     {
-                        cG.move(mX, mY);
+                        //cG.move(mX, mY);
                         boolean groupCheck = false;
                         for(Pixel p: cG.pixels)
                         {
@@ -136,12 +140,12 @@ public class Collidable
         {
             if (z != null)
             {
-                z.rotate(cosA, sinA, centerX, centerY);
+                z.rotate(cosA, sinA);
                 for (CollidableGroup cG: z.collidableGroups)
                 {
                     if (cG != null)
                     {
-                        cG.rotate(cosA, sinA, centerX, centerY);
+                        cG.rotate(cosA, sinA);
                     }
                 }
             }
@@ -152,13 +156,15 @@ public class Collidable
     {
         centerX = mX;
         centerY = mY;
-        if(enableLocationChain)
+        /*if(enableLocationChain)
         {
             locationHead.nextLocation = new LocationHistory(centerX, centerY);
+            locationHead.nextLocation.chainID = locationHead.chainID++;
             LocationHistory prev = locationHead;
             locationHead = locationHead.nextLocation;
             prev.readyToBeConsumed = true;
-        }
+        }*/
+        move(0,0);
         /*for(Pixel p: pixels)
         {
             p.xDisp = p.xOriginal*cosA + p.yOriginal*sinA + centerX;
@@ -175,7 +181,7 @@ public class Collidable
                         zones[z].collidableGroups[cG].setLoc(mX, mY);
             }
         }*/
-        for(Zone z: zones)
+        /*for(Zone z: zones)
         {
             if (z != null)
             {
@@ -186,7 +192,7 @@ public class Collidable
                     if (cG != null)
                     {
                         cG.setLoc(mX, mY);
-                        /*boolean groupCheck = false;
+                        *//*boolean groupCheck = false;
                         for(Pixel p: cG.pixels)
                         {
                             p.xDisp = p.xOriginal*cosA + p.yOriginal*sinA + centerX;
@@ -198,12 +204,40 @@ public class Collidable
                         {
                             zoneCheck = true;
                         }
-                        cG.live = groupCheck;*/
+                        cG.live = groupCheck;*//*
                     }
                 }
                 //z.live = zoneCheck;
             }
+        }*/
+    }
+
+    public void resetPixels()
+    {
+        for(Pixel p: pixels)
+        {
+            p.live = true;
+            p.outside = false;
+            p.insideEdge = false;
+            p.groupFlag = -1;
+            for(Pixel n: p.neighbors)
+            {
+                if (n == null)
+                {
+                    p.outside = true;
+                }
+            }
         }
+        collidableLive = true;
+        needsUpdate = true;
+        numLivePixels = totalPixels;
+    }
+
+    public void resetLocationHistory(float x, float y)
+    {
+        locationDrawTail = new LocationHistory(x, y);
+        locationCollisionTail = locationDrawTail;
+        locationHead = locationDrawTail;
     }
 
     public void knockBack(float tempDistX, float tempDistY)
@@ -216,7 +250,6 @@ public class Collidable
             if (z != null)
             {
                 z.move(tempDistX, tempDistY);
-                //boolean zoneCheck = false;
                 for (CollidableGroup cG: z.collidableGroups)
                 {
                     if (cG != null)
@@ -254,12 +287,34 @@ public class Collidable
 
     public float getCenterX()
     {
-        return centerX;
+        if(enableLocationChain)
+        {
+            return locationCollisionTail.x;
+        }
+        else
+        {
+            return centerX;
+        }
     }
 
     public float getCenterY()
     {
-        return centerY;
+        if(enableLocationChain)
+        {
+            return locationCollisionTail.y;
+        }
+        else
+        {
+            return centerY;
+        }
+    }
+    
+    public void consumeCollisionLocation()
+    {
+        if(locationCollisionTail.nextLocation != null && locationCollisionTail.nextLocation.readyToBeConsumed)
+        {
+            locationCollisionTail = locationCollisionTail.nextLocation;
+        }
     }
 
     public float getHalfSquareLength()
@@ -292,4 +347,8 @@ public class Collidable
         return livablePercentage;
     }
 
+    public void setRestorable(boolean b)
+    {
+        restorable = b;
+    }
 }

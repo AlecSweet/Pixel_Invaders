@@ -86,13 +86,13 @@ public class Player extends Drawable
 
     private int[] topLeft = new int[]{22, 5, 22, 6, 23, 5, 23, 6};
 
-    private int[] bottomLeft = new int[]{8, 7, 9, 7, 8, 8, 9, 8};
+    //private int[] bottomLeft = new int[]{8, 7, 9, 7, 8, 8, 9, 8};
 
     private int[] middle = new int[]{16, 15, 17, 15, 16, 16, 17, 16};
 
     private int[] topRight = new int[]{22, 25, 22, 26, 23, 25, 23, 26};
 
-    private int[] bottomRight = new int[]{8, 23, 9, 23, 8, 24, 9, 24};
+    //private int[] bottomRight = new int[]{8, 23, 9, 23, 8, 24, 9, 24};
 
     private int
             tiltLoc,
@@ -154,8 +154,10 @@ public class Player extends Drawable
         particleSystem = ps;
         baseSpeed = sp;
         playerBody = body;
-        playerBody.knockBackFactor = .01f;
         playerBody.enableLocationChain = false;
+        playerBody.knockBackFactor = .01f;
+        playerBody.setRestorable(true);
+        //playerBody.enableLocationChain = false;
         initParticleAttachments();
 
         gunDrops[0] = dF.getNewDrop(Constants.DropType.GUN,
@@ -169,9 +171,10 @@ public class Player extends Drawable
                         (float)playerBody.angle,
                         new BasicGun
                                 (
-                                        ImageParser.parseImage(context, R.drawable.bullet, R.drawable.bullet_light, sL),
+                                        ImageParser.parseImage(context, R.drawable.bullet1, R.drawable.bullet1_light, sL),
                                         particleSystem,
-                                        100
+                                        100,
+                                        .05f
                                 ),
                         particleSystem
                 )
@@ -202,9 +205,6 @@ public class Player extends Drawable
         );
         thrusters[2].held = true;
         componentDrops.add(thrusters[2]);
-        //thrusters[0] = new ThrustComponent(mainBoostPixels, 0, 0, 0, 0, 3, ps);
-        //thrusters[1] = new ThrustComponent(leftBoostPixels, 0, 0, 0, 1, 2, ps);
-        //thrusters[2] = new ThrustComponent(rightBoostPixels, 0, 0, 0, 2, 2, ps);
 
         tiltLoc = glGetUniformLocation(sL, TILT);
         magLoc = glGetUniformLocation(sL, "mag");

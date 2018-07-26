@@ -8,7 +8,10 @@ import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.View;
 
+import com.example.sweet.game20.Objects.Bullet;
+import com.example.sweet.game20.Objects.Drop;
 import com.example.sweet.game20.Objects.Enemy;
+import com.example.sweet.game20.Objects.GunComponent;
 import com.example.sweet.game20.Objects.Player;
 import com.example.sweet.game20.Objects.TimeSlowEvent;
 import com.example.sweet.game20.util.CollisionHandler;
@@ -28,16 +31,20 @@ public class AIThread implements Runnable
 {
     public Player player1;
 
+    public volatile float averageFrameTime = 0;
+
     private GlobalInfo globalInfo;
     private ArrayList<TimeSlowEvent> timeSlowEvents;
 
-    public Enemy[] entities;
+    public volatile Enemy[] entities;
 
     public volatile boolean
             running = true,
             pause = false;
 
     private boolean saveTime = false;
+
+    private CollisionHandler collisionHandler;
 
     private double pauseTime = 0;
 
@@ -51,52 +58,9 @@ public class AIThread implements Runnable
     private float slowTime = 1;
     private static final int INVALID_POINTER_ID = -1;
 
-    private int
-            movementPointerId = INVALID_POINTER_ID,
-            shootingPointerId = INVALID_POINTER_ID;
-
-    public float xScale, yScale;
-    private boolean
-            movementDown = false,
-            shootingDown = false;
-    private double
-            pastTime = 0.0,
-            lag = 0.0,
-            globalStartTime = 0.0,
-            secondMark = 0.0,
-            interpolation = 0.0;
-
-    private float tempInc = 0;
-    /*private PointF panToward = new PointF(0,0);
-
-    public float
-            xbound = 0,
-            ybound = 0,
-            xScreenShift = 0,
-            yScreenShift = 0,
-            cameraSpeed = .014f,
-            cameraPanX = 0f,
-            cameraPanY = 0f,
-            cameraClamp = .16f,
-            screenShakeX = 0,
-            screenShakeY = 0;
-
-    public volatile float
-            movementOnDownX = 0f,
-            movementOnMoveX = 0f,
-            shootingOnDownX = 0f,
-            shootingOnMoveX = 0f,
-            movementOnDownY = 0f,
-            movementOnMoveY = 0f,
-            shootingOnDownY = 0f,
-            shootingOnMoveY = 0f;
-
-    public volatile boolean
-            movementDown = false,
-            shootingDown = false;*/
-
-    public AIThread(Enemy[] e, GlobalInfo gI)
+    public AIThread(Enemy[] e, GlobalInfo gI, CollisionHandler cH)
     {
+        collisionHandler = cH;
         entities = e;
         globalInfo = gI;
     }
@@ -119,16 +83,21 @@ public class AIThread implements Runnable
                         }
                     }
                     saveTime = true;
-                    //
-                    pastTime += pauseLength;
-                    //
                 }
 
                 if (currentFrame < frameRequest)
                 {
-                    //System.out.println("FRAME DIFFERENCE: " + (frameRequest - currentFrame));
                     currentFrame++;
+                    long startTime = System.currentTimeMillis();
                     update();
+                    if(averageFrameTime == 0)
+                    {
+                        averageFrameTime = startTime - System.currentTimeMillis();
+                    }
+                    else
+                    {
+                        averageFrameTime = (averageFrameTime + (System.currentTimeMillis() - startTime)) / 2;
+                    }
                 }
 
                 /*double currentTime = System.currentTimeMillis() - globalStartTime;
@@ -182,7 +151,7 @@ public class AIThread implements Runnable
         player1.handleScreenShake();
         enemyActions();
     }
-    
+
     public void enemyActions()
     {
         for(int i = 0; i < Constants.ENTITIES_LENGTH; i++)
@@ -207,6 +176,21 @@ public class AIThread implements Runnable
                             currentFrame,
                             globalInfo.timeSlow
                     );
+
+                    if (entities[i].getPixelGroup().getCollidableLive())
+                    {
+                        if (Math.abs(entities[i].getX() - player1.xScreenShift) * globalInfo.getScaleX() <=
+                                1 + entities[i].getPixelGroup().getHalfSquareLength() * 2 &&
+                                Math.abs(entities[i].getY() - player1.yScreenShift) * globalInfo.getScaleY() <=
+                                1 + entities[i].getPixelGroup().getHalfSquareLength() * 2)
+                        {
+                            entities[i].onScreen = true;
+                        }
+                        else
+                        {
+                            entities[i].onScreen = false;
+                        }
+                    }
                     //entities[i].move(0, 0);
                 }
                 else

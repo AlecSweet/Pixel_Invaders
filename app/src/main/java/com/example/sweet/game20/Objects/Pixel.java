@@ -23,9 +23,10 @@ public class Pixel
 
     public volatile int groupFlag = -1;
 
-    public boolean live = true;
-
-    public boolean outside = false;
+    public boolean
+            live = true,
+            outside = false,
+            insideEdge = false;
 
     /*  Neighbor Indexes:
         0-Up
@@ -46,12 +47,14 @@ public class Pixel
     public void killPixel(float cosA, float sinA)
     {
         live = false;
+        insideEdge = false;
         for(Pixel n: neighbors)
         {
-            if (n != null)
+            if (n != null && n.outside != true)
             {
                 //n.xDisp = n.xOriginal * cosA + n.yOriginal * sinA;
                 //n.yDisp = n.yOriginal * cosA - n.xOriginal * sinA;
+                n.insideEdge = true;
                 n.outside = true;
             }
         }

@@ -34,6 +34,7 @@ public class Enemy extends Drawable
     protected boolean hasGun = false;
 
     public volatile boolean
+            uiRemoveConsensus = false,
             aiRemoveConsensus = false,
             collisionRemoveConsensus = false;
 
@@ -92,7 +93,21 @@ public class Enemy extends Drawable
     @Override
     public void draw(double interpolation)
     {
-        enemyBody.draw();
+        if(onScreen && getPixelGroup().getCollidableLive())
+        {
+            enemyBody.draw();
+        }
+
+        if(getHasGun())
+        {
+            for (GunComponent gC: getGunComponents())
+            {
+                if(gC != null)
+                {
+                    gC.gun.draw(0);
+                }
+            }
+        }
     }
 
     public void shoot()
@@ -143,5 +158,28 @@ public class Enemy extends Drawable
         Enemy e = new Enemy(enemyBody.clone(), particleSystem, dropFactory);
         e.setLoc(x, y);
         return e;
+    }
+
+    public void freeMemory()
+    {
+        if (getHasGun())
+        {
+            for (GunComponent gC : getGunComponents())
+            {
+                if (gC != null)
+                {
+                    for (Bullet b : gC.gun.getBullets())
+                    {
+                        b.freeResources();
+                    }
+                }
+            }
+        }
+        getPixelGroup().freeMemory();
+        enemyBody = null;
+        particleSystem = null;
+        dropsToAdd = null;
+        guns = null;
+        thrusters = null;
     }
 }

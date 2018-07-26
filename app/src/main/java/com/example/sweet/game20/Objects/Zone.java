@@ -12,22 +12,22 @@ public class Zone
 
     public ArrayList<CollidableGroup> c;
 
-    public float
-            x,
-            y;
+    public volatile float
+            xDisp,
+            yDisp;
 
     public float
             xOriginal,
             yOriginal,
             halfSquareLength;
 
-    public boolean live = true;
+    public  volatile boolean live = true;
 
     public Zone(float x, float y, float halfSquareLength)
     {
         c = new ArrayList<>();
-        this.x = x;
-        this.y = y;
+        this.xDisp = x;
+        this.yDisp = y;
         xOriginal = x;
         yOriginal = y;
         live = true;
@@ -36,20 +36,20 @@ public class Zone
 
     public void move(float mX, float mY)
     {
-        x += mX;
-        y += mY;
+       /* x += mX;
+        y += mY;*/
     }
 
-    public void rotate(float c, float s, float cX, float cY)
+    public void rotate(float c, float s)
     {
-        x = xOriginal*c + yOriginal*s + cX;
-        y = yOriginal*c - xOriginal*s + cY;
+        xDisp = xOriginal*c + yOriginal*s;
+        yDisp = yOriginal*c - xOriginal*s;
     }
 
     public void setLoc(float mX, float mY)
     {
-        x = mX;
-        y = mY;
+       /* x = mX;
+        y = mY;*/
     }
 
     public void initCollidableGroupArray()

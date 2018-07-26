@@ -12,6 +12,8 @@ public class GlobalInfo
 
     private volatile long setTime;
 
+    private volatile float scaleX, scaleY;
+
 
     public GlobalInfo(long globalStart)
     {
@@ -39,5 +41,21 @@ public class GlobalInfo
         totalAugmentedTime += (long)((System.currentTimeMillis() - setTime) * timeSlow);
         setTime = System.currentTimeMillis();
         timeSlow = tS;
+    }
+
+    public float getScaleX()
+    {
+        return scaleX;
+    }
+
+    public float getScaleY()
+    {
+        return scaleY;
+    }
+
+    public void setScale(float sX, float sY)
+    {
+        scaleX = sX;
+        scaleY = sY;
     }
 }

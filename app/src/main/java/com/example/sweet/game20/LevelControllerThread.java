@@ -2,6 +2,7 @@ package com.example.sweet.game20;
 
 import com.example.sweet.game20.Objects.Asteroid;
 import com.example.sweet.game20.Objects.BasicGun;
+import com.example.sweet.game20.Objects.Carrier;
 import com.example.sweet.game20.Objects.Drop;
 import com.example.sweet.game20.Objects.Enemy;
 import com.example.sweet.game20.Objects.GunComponent;
@@ -46,7 +47,7 @@ public class LevelControllerThread implements Runnable
 
     private double
             lastSpawn,
-            spawnDelay = 1000,
+            spawnDelay = 4000,
             pauseTime = 0;
 
     public LevelControllerThread(EnemyFactory eF, GlobalInfo gI)
@@ -111,24 +112,27 @@ public class LevelControllerThread implements Runnable
         {
             lastSpawn = System.currentTimeMillis();
             System.out.println("Spawned");
-            /*Asteroid a = null;
+            Asteroid a = null;
 
-            switch((int)(Math.random()*4.9))
+            switch((int)(Math.random()*5.99))
             {
-                case 0: a = (Asteroid)enemyFactory.getNewEnemy(ASTEROID_GREY_TINY); break;
-                case 1: a = (Asteroid)enemyFactory.getNewEnemy(ASTEROID_GREY_SMALL); break;
-                case 2: a = (Asteroid)enemyFactory.getNewEnemy(ASTEROID_GREY_TINY); break;
-                case 3: a = (Asteroid)enemyFactory.getNewEnemy(ASTEROID_RED_SMALL); break;
-                case 4: a = (Asteroid)enemyFactory.getNewEnemy(ASTEROID_RED_TINY); break;
-                //case 5: a = (Asteroid)enemyFactory.getNewEnemy(ASTEROID_RED_MEDIUM); break;
-            }*/
+                case 0: enemiesToAdd.add((Asteroid)enemyFactory.getNewEnemy(ASTEROID_GREY_TINY)); break;
+                case 1: enemiesToAdd.add((Asteroid)enemyFactory.getNewEnemy(ASTEROID_GREY_SMALL)); break;
+                case 2: enemiesToAdd.add((Asteroid)enemyFactory.getNewEnemy(ASTEROID_GREY_TINY)); break;
+                case 3: enemiesToAdd.add((Asteroid)enemyFactory.getNewEnemy(ASTEROID_RED_SMALL)); break;
+                case 4: enemiesToAdd.add((Asteroid)enemyFactory.getNewEnemy(ASTEROID_RED_TINY)); break;
+                case 5: enemiesToAdd.add((Asteroid)enemyFactory.getNewEnemy(ASTEROID_RED_MEDIUM)); break;
+            }
 
-            Simple s = (Simple)enemyFactory.getNewEnemy(SIMPLE);
+            if (!spawnonce)
+            {
+                enemiesToAdd.add(enemyFactory.getNewEnemy(CARRIER));
+            }
             //distributeEnemy(a);
             //int index = openEntityIndices.pop();
             //aiRunnable.entities[index] = a;
             //collisionRunnable.entities[index] = a;
-            enemiesToAdd.add(s);
+            enemiesToAdd.add(enemyFactory.getNewEnemy(SIMPLE));
             //enemiesToAdd.add(a);
             //uiEntities[index] = a;
             spawnonce = true;

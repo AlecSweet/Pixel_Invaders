@@ -35,20 +35,29 @@ public class Simple extends Enemy
         super(p, ps, dF);
 
         for(int i = 0; i < thusterPixelCoordinates.length; i += 2)
-            thrusterPixels[i/2] = enemyBody.getpMap()[thusterPixelCoordinates[i+1]][thusterPixelCoordinates[i]];
+        {
+            thrusterPixels[i / 2] = enemyBody.getpMap()[thusterPixelCoordinates[i + 1]][thusterPixelCoordinates[i]];
+        }
 
         for(int i = 0; i < gunPixelCoordinates.length; i += 2)
-            gun1Pixels[i/2] = enemyBody.getpMap()[gunPixelCoordinates[i+1]][gunPixelCoordinates[i]];
+        {
+            gun1Pixels[i / 2] = enemyBody.getpMap()[gunPixelCoordinates[i + 1]][gunPixelCoordinates[i]];
+        }
 
         guns = new GunComponent[1];
+        guns[0] = new GunComponent(gun1Pixels, 0, 0, 0, g, ps);
+        hasGun = true;
+
         thrusters = new ThrustComponent[1];
         thrusters[0] = new ThrustComponent(thrusterPixels, 0, 0, 0,0, 2, ps);
-        guns[0] = new GunComponent(gun1Pixels, 0, 0, 0, g, ps);
+
         enemyBody.angle = 3.14;
         enemyBody.rotate(enemyBody.angle);
+
         baseSpeed = .005f;
         p.speed = baseSpeed;
-        hasGun = true;
+
+        enemyBody.setEdgeColor(.5f, 0f, .5f);
     }
 
     public void move(float pX, float pY, long curFrame, float slow)
@@ -233,19 +242,29 @@ public class Simple extends Enemy
         if (delta > rotateSpeed || delta < -rotateSpeed)
         {
             if (delta < -Math.PI || (delta > 0 && delta < Math.PI))
+            {
                 enemyBody.angle -= rotateSpeed * slow;
+            }
             else
+            {
                 enemyBody.angle += rotateSpeed * slow;
+            }
         }
         else
-            enemyBody.angle =  angleMoving;
+        {
+            enemyBody.angle = angleMoving;
+        }
 
         enemyBody.rotate(enemyBody.angle);
 
         if (enemyBody.angle > Math.PI)
+        {
             enemyBody.angle -= Constants.twoPI;
+        }
         else if (enemyBody.angle < -Math.PI)
+        {
             enemyBody.angle += Constants.twoPI;
+        }
     }
     
     public void addThrustParticles(Pixel[] pixels, float ratio, float dist)
@@ -258,11 +277,17 @@ public class Simple extends Enemy
                 float yDisp = p.yOriginal * enemyBody.cosA - p.xOriginal * enemyBody.sinA;
                 for (int t = 0; t < 2; t++)
                 {
-                    particleSystem.addParticle(xDisp + enemyBody.centerX, yDisp + enemyBody.centerY,
+                    particleSystem.addParticle(xDisp + enemyBody.centerX,
+                            yDisp + enemyBody.centerY,
                             //-enemyBody.cosA, enemyBody.sinA,
                             (float)-enemyBody.angle + (float)Math.PI,
-                            p.r, p.g, p.b, .7f,
-                            (baseSpeed * thrusters[0].thrustPower * (float)(Math.random()*70+20)) * ratio, dist * ratio * (float)Math.random()*2, (float)(Math.random()*20)
+                            p.r,
+                            p.g,
+                            p.b,
+                            .7f,
+                            (baseSpeed * thrusters[0].thrustPower * (float)(Math.random()*70+20)) * ratio,
+                            dist * ratio * (float)Math.random()*2,
+                            (float)(Math.random()*20)
                     );
                 }
             }
@@ -295,8 +320,6 @@ public class Simple extends Enemy
     @Override
     public Simple clone()
     {
-        //public Simple(PixelGroup p, int sL, Gun g, ParticleSystem ps, float modifier)
-        Simple s = new Simple(enemyBody.clone(), guns[0].gun.clone(), particleSystem, dropFactory);
-        return s;
+        return new Simple(enemyBody.clone(), guns[0].gun.clone(), particleSystem, dropFactory);
     }
 }

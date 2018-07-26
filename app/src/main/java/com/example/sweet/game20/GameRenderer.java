@@ -49,7 +49,7 @@ public class GameRenderer implements Renderer
     private Context context;
 
     private GlobalInfo globalInfo;
-
+    private float averageFrameTime = 0;
     private GLSurfaceView glSurfaceView;
 
     private ExitListener exitListener = null;
@@ -94,11 +94,7 @@ public class GameRenderer implements Renderer
             X_SCREENSHIFT = "x_ScreenShift",
             Y_SCREENSHIFT = "y_ScreenShift",
             U_TIME = "u_Time",
-            A_POSITION = "a_Position",
-            A_TEXTURECOORDINATE = "a_TexCoordinate",
             U_TEXTURE = "u_Texture",
-            X_DISP = "x_displacement",
-            Y_DISP = "y_displacement",
             POINT_SIZE = "pointSize";
 
     private int frames;
@@ -114,7 +110,7 @@ public class GameRenderer implements Renderer
 
     private long currentFrame = 0;
 
-    private Enemy[] entities;
+    private volatile Enemy[] entities;
 
     private Drop[] drops;
 
@@ -347,6 +343,7 @@ public class GameRenderer implements Renderer
     @Override
     public void onDrawFrame(GL10 unused)
     {
+        long startTime = System.currentTimeMillis();
         if(!isPlaying)
         {
             newGame();
@@ -375,14 +372,19 @@ public class GameRenderer implements Renderer
             double currentTime = System.currentTimeMillis();
             double elapsedTime = currentTime - pastTime;
             pastTime = currentTime;
-            lag += elapsedTime;
-
-            while(lag >= mSPU)
+            if(aiRunnable.frameRequest - aiRunnable.currentFrame < 2 &&
+                collisionRunnable.frameRequest - collisionRunnable.currentFrame < 2)
             {
-                update();
-                aiRunnable.frameRequest++;
-                frames++;
-                lag -= mSPU;
+                lag += elapsedTime;
+
+                while (lag >= mSPU)
+                {
+                    update();
+                    aiRunnable.frameRequest++;
+                    collisionRunnable.frameRequest++;
+                    frames++;
+                    lag -= mSPU;
+                }
             }
             /*if(currentFrame < aiRunnable.currentFrame)
             {
@@ -401,7 +403,20 @@ public class GameRenderer implements Renderer
                 saveTime = false;
             }
         }
+
         draw();
+
+        if(averageFrameTime == 0)
+        {
+            averageFrameTime = startTime - System.currentTimeMillis();
+        }
+        else
+        {
+            averageFrameTime = (averageFrameTime + (System.currentTimeMillis() - startTime)) / 2;
+        }
+        ui.aiAvgFrame = aiRunnable.averageFrameTime;
+        ui.collisionAvgFrame = collisionRunnable.averageFrameTime;
+        ui.uiAvgFrame = averageFrameTime;
     }
 
     public void draw()
@@ -417,7 +432,7 @@ public class GameRenderer implements Renderer
         glUniform1f(timeLocation, globalInfo.getAugmentedTimeSeconds());
         glUniform1f(xScreenShiftLocationParticle, player1.xScreenShift - player1.screenShakeX);
         glUniform1f(yScreenShiftLocationParticle, player1.yScreenShift - player1.screenShakeY);
-        glUniform1f(particlePointSizeLocation, particlePointSize*1.4f);
+        glUniform1f(particlePointSizeLocation, particlePointSize * 1.1f);
 
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, whiteTexture);
@@ -453,27 +468,37 @@ public class GameRenderer implements Renderer
 
         player1.draw(interpolation);
 
-        for(Enemy e: entities)
+        for(int i = 0; i < Constants.ENTITIES_LENGTH; i++)
         {
-            if(e != null)
+            if(entities[i] != null)
             {
-                if (e.onScreen && e.getPixelGroup().getCollidableLive())
+                while(!entities[i].dropsToAdd.isEmpty())
                 {
-                    e.draw(interpolation);
-                }
-                if (e.getHasGun())
-                {
-                    for (GunComponent gC: e.getGunComponents())
+                    drops[dropIndex] = entities[i].dropsToAdd.peek();
+                    entities[i].dropsToAdd.remove(drops[dropIndex]);
+                    player1.addDrop(drops[dropIndex]);
+                    dropIndex++;
+                    if(dropIndex >= Constants.DROPS_LENGTH)
                     {
-                        if(gC != null)
-                        {
-                            gC.gun.draw(0);
-                        }
+                        dropIndex -= Constants.DROPS_LENGTH;
                     }
+                }
+
+                if(entities[i].aiRemoveConsensus && entities[i].collisionRemoveConsensus)
+                {
+                    entities[i].freeMemory();
+                    entities[i].uiRemoveConsensus  = true;
+                    entities[i] = null;
+                    openEntityIndices.push(i);
+                    System.gc();
+                }
+                else
+                {
+                    entities[i].draw(0);
                 }
             }
         }
-
+        
         if(pause)
         {
             glUniform1f(xScreenShiftLocation, 0);
@@ -486,7 +511,7 @@ public class GameRenderer implements Renderer
         glUniform1f(timeLocation, globalInfo.getAugmentedTimeSeconds());
         glUniform1f(xScreenShiftLocationParticle, player1.xScreenShift - player1.screenShakeX);
         glUniform1f(yScreenShiftLocationParticle, player1.yScreenShift - player1.screenShakeY);
-        glUniform1f(particlePointSizeLocation, particlePointSize* 1.4f);
+        glUniform1f(particlePointSizeLocation, particlePointSize * 1.1f);
 
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, whiteTexture);
@@ -496,12 +521,17 @@ public class GameRenderer implements Renderer
 
         glUseProgram(plainShaderProgram);
         if(!pause)
+        {
             ui.gameState = Constants.GameState.IN_GAME;
+        }
         else
+        {
             ui.gameState = Constants.GameState.PAUSE_MENU;
+        }
         ui.draw(interpolation);
 
     }
+
     @Override
     public void onSurfaceChanged(GL10 unused, int width, int height)
     {
@@ -533,7 +563,7 @@ public class GameRenderer implements Renderer
                 ui.xScale = xScale;
                 ui.yScale = yScale;
                 player1.setScale(xScale, yScale);
-                System.out.println(yScale);
+                globalInfo.setScale(xScale, yScale);
                 float pSize = (height / numPixels);
                 pointSize = 2.02f * pSize;
                 particlePointSize = 3.02f * pSize;
@@ -558,7 +588,7 @@ public class GameRenderer implements Renderer
                 ui.xScale = xScale;
                 ui.yScale = yScale;
                 player1.setScale(xScale, yScale);
-                System.out.println(yScale);
+                globalInfo.setScale(xScale, yScale);
                 float pSize = (width / numPixels);
                 pointSize = 2.02f * pSize;
                 particlePointSize = 3.02f * pSize;
@@ -590,7 +620,7 @@ public class GameRenderer implements Renderer
 
         player1 = new Player(dropFactory,
                 context,
-                .007f,
+                .0054f,
                 shaderProgram,
                 playerParticles,ImageParser.parseImage(context, R.drawable.player, R.drawable.player_light, shaderProgram)
         );
@@ -607,12 +637,13 @@ public class GameRenderer implements Renderer
 
         entities = new Enemy[Constants.ENTITIES_LENGTH];
 
-        aiRunnable = new AIThread(entities, globalInfo);
+        aiRunnable = new AIThread(entities, globalInfo, collisionHandler);
         aiThread = new Thread(aiRunnable);
         aiRunnable.setPlayer(player1);
 
         collisionRunnable = new CollisionThread(entities);
         collisionThread = new Thread(collisionRunnable);
+        //collisionThread = new Thread(null, collisionRunnable, "collision", 6000000);
         collisionRunnable.setPlayer(player1);
         collisionRunnable.setCollisionHandler(collisionHandler);
 
@@ -627,61 +658,6 @@ public class GameRenderer implements Renderer
 
     public void update()
     {
-        for(int i = 0; i < Constants.ENTITIES_LENGTH; i++)
-        {
-            if(entities[i] != null)
-            {
-                while(!entities[i].dropsToAdd.isEmpty())
-                {
-                    drops[dropIndex] = entities[i].dropsToAdd.peek();
-                    entities[i].dropsToAdd.remove(drops[dropIndex]);
-                    player1.addDrop(drops[dropIndex]);
-                    dropIndex++;
-                    if(dropIndex >= Constants.DROPS_LENGTH)
-                    {
-                        dropIndex -= Constants.DROPS_LENGTH;
-                    }
-                }
-
-                if (entities[i].getPixelGroup().getCollidableLive())
-                {
-                    if (Math.abs(entities[i].getX() - player1.xScreenShift) * xScale <=
-                        1.05 + entities[i].getPixelGroup().getHalfSquareLength() &&
-                        Math.abs(entities[i].getY() - player1.yScreenShift) * yScale <=
-                        1.05 + entities[i].getPixelGroup().getHalfSquareLength())
-                    {
-                        entities[i].onScreen = true;
-                    }
-                    else
-                    {
-                        entities[i].onScreen = false;
-                    }
-                }
-                else if(!entities[i].getPixelGroup().getCollidableLive() &&
-                        entities[i].aiRemoveConsensus &&
-                        entities[i].collisionRemoveConsensus)
-                {
-                    if (entities[i].getHasGun())
-                    {
-                        for (GunComponent gC : entities[i].getGunComponents())
-                        {
-                            if (gC != null)
-                            {
-                                for (Bullet b : gC.gun.getBullets())
-                                {
-                                    b.freeResources();
-                                }
-                            }
-                        }
-                    }
-                    entities[i].getPixelGroup().freeMemory();
-                    entities[i] = null;
-                    openEntityIndices.push(i);
-                    System.gc();
-                }
-            }
-        }
-
         if(!levelRunnable.enemiesToAdd.isEmpty())
         {
             Enemy e = levelRunnable.enemiesToAdd.peek();
@@ -697,9 +673,7 @@ public class GameRenderer implements Renderer
             }
         }
         player1.movePlayer(globalInfo.timeSlow);
-        player1.moveCamera();
         currentFrame++;
-        //.frameRequest++;
     }
 
     public void drawBackground()
@@ -707,9 +681,9 @@ public class GameRenderer implements Renderer
         float tShiftX = -player1.xScreenShift - player1.screenShakeX;
         float tShiftY = -player1.yScreenShift - player1.screenShakeY;
         stars4.draw(tShiftX / 6f, tShiftY / 6f);
-        stars3.draw(tShiftX / 5.4f, tShiftY /  5.4f);
-        stars2.draw(tShiftX / 4.8f, tShiftY / 4.8f);
-        stars1.draw(tShiftX / 4.2f, tShiftY / 4.2f);
+        stars3.draw(tShiftX / 4.4f, tShiftY /  5.4f);
+        stars2.draw(tShiftX / 3.8f, tShiftY / 4.8f);
+        stars1.draw(tShiftX / 3.2f, tShiftY / 4.2f);
         moonC.draw(tShiftX / 2.1f, tShiftY / 2.1f);
         earthC.draw(tShiftX / 2, tShiftY / 2);
     }
@@ -722,7 +696,7 @@ public class GameRenderer implements Renderer
 
         enemyFactory = initEnemyFactory();
 
-        collisionParticles = new ParticleSystem(4000, particleShaderProgram, whiteTexture, globalStartTime, globalInfo);
+        collisionParticles = new ParticleSystem(12000, particleShaderProgram, whiteTexture, globalStartTime, globalInfo);
 
         collisionHandler = new CollisionHandler(collisionParticles);
 
@@ -743,9 +717,10 @@ public class GameRenderer implements Renderer
                                         ImageParser.parseImage(context, R.drawable.simple1, R.drawable.simple_light, shaderProgram),
                                         new BasicGun
                                                 (
-                                                        ImageParser.parseImage(context, R.drawable.kamikaze, R.drawable.kamikaze_light, shaderProgram),
+                                                        ImageParser.parseImage(context, R.drawable.basicbullet, R.drawable.basicbullet_light, shaderProgram),
                                                         enemyParticles,
-                                                        1000
+                                                        1000,
+                                                        .022f
                                                 ),
                                         enemyParticles,
                                         dropFactory

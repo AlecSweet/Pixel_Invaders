@@ -35,7 +35,7 @@ public class Bullet
         pixelGroup.rotate(a);
         maxDistance = mD;
         distance = 0;
-        pixelGroup.livablePercentage = .3f;
+        pixelGroup.livablePercentage = .2f;
     }
 
     public void move(float slow)
@@ -78,6 +78,7 @@ public class Bullet
     public void resetBullet(float x, float y, float a)
     {
         pixelGroup.resetPixels();
+        pixelGroup.resetLocationHistory(x, y);
         pixelGroup.setLoc(x,y);
         rotate(a);
         pixelGroup.rotate(a);

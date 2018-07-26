@@ -17,8 +17,6 @@ public class Asteroid extends Enemy
             distX,
             distY;
 
-    private int offScreenFrames = 0;
-
     private boolean screenEnterToggle = true;
 
     private int
@@ -40,6 +38,7 @@ public class Asteroid extends Enemy
         generatePath();
         healthDropRarity = (int)(Math.random()*140+40);
         healthDropGoal = enemyBody.totalPixels  - (int)(Math.random() * healthDropRarity + 9);
+        enemyBody.setEdgeColor(.3f, .3f, .3f);
     }
 
     public void generatePath()
@@ -97,6 +96,7 @@ public class Asteroid extends Enemy
         distY = (float)(baseSpeed * Math.sin(travelAngle));
         x = enemyBody.centerX;
         y = enemyBody.centerY;
+        enemyBody.resetLocationHistory(x, y);
         //enemyBody.setLoc(0f,0f);
     }
 
@@ -105,25 +105,23 @@ public class Asteroid extends Enemy
     {
         float tempDistX = distX * slow;
         float tempDistY = distY * slow;
-        if(onScreen)
+       /* if(onScreen)
         {
             if(!screenEnterToggle)
             {
                 screenEnterToggle = true;
-                //enemyBody.angle += rotationSpeed * offScreenFrames;
                 rotate();
-                //enemyBody.move(-tempDistX * offScreenFrames, -tempDistY * offScreenFrames);
                 enemyBody.setLoc(x, y);
-                offScreenFrames = 0;
+                enemyBody.resetLocationHistory(x, y);
             }
             else
-            {
+            {*/
                 enemyBody.angle += rotationSpeed * slow;
                 rotate();
                 x += -tempDistX;
                 y += -tempDistY;
                 enemyBody.move(-tempDistX, -tempDistY);
-            }
+       /*     }
         }
         else
         {
@@ -131,19 +129,18 @@ public class Asteroid extends Enemy
             {
                 screenEnterToggle = false;
             }
-            offScreenFrames++;
             enemyBody.angle += rotationSpeed * slow;
             x += -tempDistX;
             y += -tempDistY;
-        }
+        }*/
 
         if (x > xbound + .02f ||
                 x < -xbound - .02f ||
                 x > ybound + .02f ||
                 x < -ybound - .02f)
         {
-            enemyBody.collidableLive = false;
-            System.out.println("Asteroid Dead");
+            aiRemoveConsensus = true;
+            //System.out.println("Asteroid Dead");
         }
 
         if(enemyBody.numLivePixels < healthDropGoal)
@@ -158,9 +155,13 @@ public class Asteroid extends Enemy
         enemyBody.rotate(enemyBody.angle);
 
         if (enemyBody.angle > Math.PI)
+        {
             enemyBody.angle -= Constants.twoPI;
+        }
         else if (enemyBody.angle < -Math.PI)
+        {
             enemyBody.angle += Constants.twoPI;
+        }
     }
 
 

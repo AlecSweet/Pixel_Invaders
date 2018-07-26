@@ -83,14 +83,34 @@ public class TextPresenter
     {
         glUniform1f(xDispLoc, x);
         int itr = 0;
-        while(i > 0)
+        if(i > 0)
         {
-            int digit = i % 10;
-            i /= 10;
-            itr++;
+            while (i > 0)
+            {
+                int digit = i % 10;
+                i /= 10;
+                itr++;
 
+                glActiveTexture(GL_TEXTURE0);
+                glBindTexture(GL_TEXTURE_2D, digitTextures[digit]);
+                glUniform1i(uTextureLocation, 0);
+
+                glUniform1f(yDispLoc, y + itr * Constants.dSkipY);
+
+                glBindBuffer(GL_ARRAY_BUFFER, vboHandle[0]);
+                bindAttributes();
+                glDrawArrays(GL_TRIANGLE_FAN, 0, 6);
+
+                if (i <= 0)
+                {
+                    break;
+                }
+            }
+        }
+        else
+        {
             glActiveTexture(GL_TEXTURE0);
-            glBindTexture(GL_TEXTURE_2D, digitTextures[digit]);
+            glBindTexture(GL_TEXTURE_2D, digitTextures[0]);
             glUniform1i(uTextureLocation, 0);
 
             glUniform1f(yDispLoc, y + itr * Constants.dSkipY);
@@ -98,11 +118,6 @@ public class TextPresenter
             glBindBuffer(GL_ARRAY_BUFFER, vboHandle[0]);
             bindAttributes();
             glDrawArrays(GL_TRIANGLE_FAN, 0, 6);
-
-            if(i <= 0)
-            {
-                break;
-            }
         }
     }
 

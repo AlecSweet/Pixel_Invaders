@@ -44,6 +44,9 @@ public class UI extends Drawable
             shootingOnDown = new PointF(0, 0),
             shootingOnMove = new PointF(0, 0);
 
+    public float uiAvgFrame,
+            collisionAvgFrame,
+            aiAvgFrame;
 
 
     private boolean
@@ -621,6 +624,10 @@ public class UI extends Drawable
 
             textPresenter.drawInt(score, -.86f, -.07f);
         }
+        //System.out.println(uiAvgFrame + "   " + aiAvgFrame +  "   " + collisionAvgFrame);
+        textPresenter.drawInt((int)uiAvgFrame, .9f, .5f);
+        textPresenter.drawInt((int)aiAvgFrame, .9f, 0f);
+        textPresenter.drawInt((int)collisionAvgFrame, .9f, -.5f);
     }
 
     public void pointerDown()
