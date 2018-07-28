@@ -212,8 +212,21 @@ public class AIThread implements Runnable
                 }
             }
         }
+        publishLocations();
     }
 
+    public void publishLocations()
+    {
+        for(Enemy e: entities)
+        {
+            if(e != null && !e.aiRemoveConsensus)
+            {
+                e.publishLocation(currentFrame);
+            }
+        }
+
+        player1.publishLocation(currentFrame);
+    }
     public synchronized void setPlayer(Player p)
     {
         player1 = p;

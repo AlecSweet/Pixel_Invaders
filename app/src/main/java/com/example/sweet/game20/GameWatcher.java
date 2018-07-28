@@ -134,30 +134,33 @@ public class GameWatcher extends Activity
                         }
 
                         movementPointerId = event.getPointerId(0);
-                        final float normX = ((event.getX(event.findPointerIndex(movementPointerId)) / v.getWidth()) * 2 - 1) / gameRender.xScale;
-                        final float normY = ((event.getY(event.findPointerIndex(movementPointerId)) / v.getHeight()) * 2 - 1) / gameRender.yScale;
-
-                        if(!pause)
+                        int id = event.findPointerIndex(movementPointerId);
+                        if(id != -1)
                         {
-                            movementDown = true;
+                            final float normX = ((event.getX(event.findPointerIndex(movementPointerId)) / v.getWidth()) * 2 - 1) / gameRender.xScale;
+                            final float normY = ((event.getY(event.findPointerIndex(movementPointerId)) / v.getHeight()) * 2 - 1) / gameRender.yScale;
 
-                            gameRender.ui.setMovementDown(true);
-                            gameRender.player1.movementDown = true;
+                            if (!pause)
+                            {
+                                movementDown = true;
 
-                            gameRender.ui.movementOnDown.set(normX, normY);
-                            gameRender.ui.movementOnMove.set(normX, normY);
-                            gameRender.player1.movementOnDownX = normX;
-                            gameRender.player1.movementOnDownY = normY;
-                            gameRender.player1.movementOnMoveX = normX;
-                            gameRender.player1.movementOnMoveY = normY;
-                        }
-                        else
-                        {
-                            gameRender.ui.menuPointerDown = true;
-                            gameRender.ui.menuOnDown.set(normX, normY);
-                            gameRender.ui.menuOnMove.set(normX, normY);
-                            gameRender.ui.pointerDown();
-                            //gameRender.triggerActionDown();
+                                gameRender.ui.setMovementDown(true);
+                                gameRender.player1.movementDown = true;
+
+                                gameRender.ui.movementOnDown.set(normX, normY);
+                                gameRender.ui.movementOnMove.set(normX, normY);
+                                gameRender.player1.movementOnDownX = normX;
+                                gameRender.player1.movementOnDownY = normY;
+                                gameRender.player1.movementOnMoveX = normX;
+                                gameRender.player1.movementOnMoveY = normY;
+                            } else
+                            {
+                                gameRender.ui.menuPointerDown = true;
+                                gameRender.ui.menuOnDown.set(normX, normY);
+                                gameRender.ui.menuOnMove.set(normX, normY);
+                                gameRender.ui.pointerDown();
+                                //gameRender.triggerActionDown();
+                            }
                         }
                         break;
                     }

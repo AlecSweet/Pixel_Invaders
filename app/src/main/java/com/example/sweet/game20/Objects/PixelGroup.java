@@ -9,13 +9,8 @@ import java.nio.FloatBuffer;
 import java.util.ArrayList;
 
 import static android.opengl.GLES20.glDeleteBuffers;
-import static android.opengl.GLES20.GL_TEXTURE0;
-import static android.opengl.GLES20.GL_TEXTURE_2D;
-import static android.opengl.GLES20.glActiveTexture;
-import static android.opengl.GLES20.glBindTexture;
 import static android.opengl.GLES20.glGetUniformLocation;
 import static android.opengl.GLES20.glUniform1f;
-import static android.opengl.GLES20.glUniform1i;
 import static android.opengl.GLES20.GL_DYNAMIC_DRAW;
 import static android.opengl.GLES20.GL_FLOAT;
 import static android.opengl.GLES20.GL_POINTS;
@@ -95,14 +90,25 @@ public class  PixelGroup extends Collidable
         }
         if(enableLocationChain)
         {
-            /*if(locationDrawTail.nextLocation != null && locationDrawTail.nextLocation.readyToBeConsumed)
-            {
-                locationDrawTail = locationDrawTail.nextLocation;
-            }*/
             while(locationDrawTail.nextLocation != null && locationDrawTail.nextLocation.readyToBeConsumed)
             {
                 locationDrawTail = locationDrawTail.nextLocation;
             }
+            /*if(locationDrawTail.nextLocation != null && locationDrawTail.nextLocation.readyToBeConsumed)
+            {
+                locationDrawTail.collisionConsumed = true;
+                if(locationDrawTail.uiConsumed)
+                {
+                    locationPoolHead.nextLocation = locationDrawTail;
+                    locationPoolHead = locationHead.nextLocation;
+                    locationDrawTail = locationDrawTail.nextLocation;
+                    locationPoolHead.reset();
+                }
+                else
+                {
+                    locationDrawTail = locationDrawTail.nextLocation;
+                }
+            }*/
             glUniform1f(xDispLoc, locationDrawTail.x);
             glUniform1f(yDispLoc, locationDrawTail.y);
         }
@@ -387,6 +393,7 @@ public class  PixelGroup extends Collidable
         zones = null;
         lastPixelKilled = null;
     }
+
 
     @Override
     public PixelGroup clone()

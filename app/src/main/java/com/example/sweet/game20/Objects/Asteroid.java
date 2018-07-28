@@ -96,7 +96,7 @@ public class Asteroid extends Enemy
         distY = (float)(baseSpeed * Math.sin(travelAngle));
         x = enemyBody.centerX;
         y = enemyBody.centerY;
-        enemyBody.resetLocationHistory(x, y);
+        //enemyBody.resetLocationHistory(x, y);
         //enemyBody.setLoc(0f,0f);
     }
 

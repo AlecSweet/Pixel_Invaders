@@ -34,6 +34,8 @@ public class Collidable
             locationHead,
             locationDrawTail,
             locationCollisionTail;
+            //locationPoolHead,
+            //locationPoolTail;
 
     protected boolean
             collidableLive,
@@ -55,9 +57,7 @@ public class Collidable
     {
         centerX = x;
         centerY = y;
-        locationDrawTail = new LocationHistory(centerX, centerY);
-        locationCollisionTail = locationDrawTail;
-        locationHead = locationDrawTail;
+
         halfSquareLength = hSL;
         pixels = p;
         totalPixels = pixels.length;
@@ -67,20 +67,49 @@ public class Collidable
         collidableLive = true;
         needsUpdate = false;
         lastOrphanChunkCheck = System.currentTimeMillis();
+
+        /*locationPoolTail = new LocationHistory(0,0);
+        locationPoolHead = locationPoolTail;
+        for(int i = 0; i < 4; i++)
+        {
+            locationPoolHead.nextLocation = new LocationHistory(0,0);
+            locationPoolHead = locationPoolHead.nextLocation;
+        }
+
+
+
+        locationPoolTail.x = centerX;
+        locationPoolTail.y = centerY;
+        locationHead = locationPoolTail;
+        locationDrawTail = locationPoolTail;
+        locationCollisionTail = locationPoolTail;
+        locationPoolTail = locationPoolTail.nextLocation;
+        locationHead.nextLocation = null;*/
+        locationDrawTail = new LocationHistory(centerX, centerY);
+        locationCollisionTail = locationDrawTail;
+        locationHead = locationDrawTail;
+        for(int i = 0; i < 19; i++)
+        {
+            locationHead.nextLocation = new LocationHistory(centerX,centerY);
+            locationHead = locationHead.nextLocation;
+        }
+
+        locationHead.nextLocation = locationDrawTail;
+        locationHead = locationDrawTail;
+
+       /* int itr = 0;
+        while(locationPoolTail.nextLocation != null)
+        {
+            itr++;
+            System.out.println(itr);
+            locationPoolTail = locationPoolTail.nextLocation;
+        }*/
     }
 
     public void move(float mX, float mY)
     {
         centerX += mX;
         centerY += mY;
-        if(enableLocationChain)
-        {
-            locationHead.nextLocation = new LocationHistory(centerX, centerY);
-            locationHead.nextLocation.chainID = locationHead.chainID++;
-            LocationHistory prev = locationHead;
-            locationHead = locationHead.nextLocation;
-            prev.readyToBeConsumed = true;
-        }
 
         /*for(Pixel p: pixels)
         {
@@ -233,12 +262,12 @@ public class Collidable
         numLivePixels = totalPixels;
     }
 
-    public void resetLocationHistory(float x, float y)
+    /*public void resetLocationHistory(float x, float y)
     {
         locationDrawTail = new LocationHistory(x, y);
         locationCollisionTail = locationDrawTail;
         locationHead = locationDrawTail;
-    }
+    }*/
 
     public void knockBack(float tempDistX, float tempDistY)
     {
@@ -309,11 +338,56 @@ public class Collidable
         }
     }
     
-    public void consumeCollisionLocation()
+    public long consumeCollisionLocation(long currentFrame)
     {
-        if(locationCollisionTail.nextLocation != null && locationCollisionTail.nextLocation.readyToBeConsumed)
+        if(locationCollisionTail.nextLocation != null &&
+                locationCollisionTail.nextLocation.readyToBeConsumed &&
+                locationCollisionTail.frame < currentFrame)
         {
             locationCollisionTail = locationCollisionTail.nextLocation;
+        }
+
+        return locationCollisionTail.frame;
+        /*f(enableLocationChain)
+        {
+            if(locationCollisionTail.nextLocation != null && locationCollisionTail.nextLocation.readyToBeConsumed)
+            {
+                locationCollisionTail.collisionConsumed = true;
+                if (locationCollisionTail.uiConsumed)
+                {
+                    locationPoolHead.nextLocation = locationCollisionTail;
+                    locationPoolHead = locationHead.nextLocation;
+                    locationCollisionTail = locationCollisionTail.nextLocation;
+                    locationPoolHead.reset();
+                } else
+                {
+                    locationCollisionTail = locationCollisionTail.nextLocation;
+                }
+            }
+        }*/
+    }
+
+    public void publishLocation(long frame)
+    {
+        if(enableLocationChain)
+        {
+            locationHead.nextLocation.setLocation(centerX,centerY);
+            locationHead.nextLocation.frame = frame;
+            LocationHistory prev = locationHead;
+            locationHead = locationHead.nextLocation;
+            prev.readyToBeConsumed = true;
+            /*locationPoolTail.x = centerX;
+            locationPoolTail.y = centerY;
+
+            locationHead.nextLocation = locationPoolTail;
+
+            locationHead = locationHead.nextLocation;
+            if (locationPoolTail.nextLocation != null)
+            {
+                locationPoolTail.readyToBeConsumed = true;
+                locationPoolTail = locationPoolTail.nextLocation;
+            }*/
+
         }
     }
 

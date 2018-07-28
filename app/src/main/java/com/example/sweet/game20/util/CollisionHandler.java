@@ -111,8 +111,11 @@ public class CollisionHandler
                 {
                     if (System.currentTimeMillis() - c2.lastOrphanChunkCheck > c2.orphanChunkCheckDelay)
                     {
+                        long startTime = System.currentTimeMillis();
+                        int numLive = c2.numLivePixels;
                         c2.lastOrphanChunkCheck = System.currentTimeMillis();
                         removeOrphanChunks(c2);
+                        System.out.println(System.currentTimeMillis() - startTime + "ms   size: " + numLive);
                     }
                 }
                 else
@@ -129,8 +132,11 @@ public class CollisionHandler
                 {
                     if (System.currentTimeMillis() - c.lastOrphanChunkCheck > c.orphanChunkCheckDelay)
                     {
+                        long startTime = System.currentTimeMillis();
+                        int numLive = c2.numLivePixels;
                         c.lastOrphanChunkCheck = System.currentTimeMillis();
                         removeOrphanChunks(c);
+                        System.out.println(System.currentTimeMillis() - startTime + "ms   size: " + numLive);
                     }
                 }
                 else

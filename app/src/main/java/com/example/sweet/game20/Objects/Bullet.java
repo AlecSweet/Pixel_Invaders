@@ -78,7 +78,7 @@ public class Bullet
     public void resetBullet(float x, float y, float a)
     {
         pixelGroup.resetPixels();
-        pixelGroup.resetLocationHistory(x, y);
+        //pixelGroup.resetLocationHistory(x, y);
         pixelGroup.setLoc(x,y);
         rotate(a);
         pixelGroup.rotate(a);

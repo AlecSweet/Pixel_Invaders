@@ -160,6 +160,24 @@ public class Enemy extends Drawable
         return e;
     }
 
+    public void publishLocation(long frame)
+    {
+        if(enemyBody.enableLocationChain)
+        {
+            enemyBody.publishLocation(frame);
+        }
+        if(getHasGun())
+        {
+            for (GunComponent gC: getGunComponents())
+            {
+                if(gC != null)
+                {
+                    gC.gun.publishLocation(frame);
+                }
+            }
+        }
+    }
+
     public void freeMemory()
     {
         if (getHasGun())

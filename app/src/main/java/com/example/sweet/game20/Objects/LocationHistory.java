@@ -8,11 +8,14 @@ public class LocationHistory
 {
     public float x, y;
 
-    public boolean readyToBeConsumed;
+    public long frame;
+
+    public volatile boolean
+            readyToBeConsumed = false,
+            uiConsumed = false,
+            collisionConsumed = false;
 
     public LocationHistory nextLocation;
-
-    public int chainID;
 
     public LocationHistory(float x, float y)
     {
@@ -20,6 +23,14 @@ public class LocationHistory
         this.y = y;
     }
 
+    public void setLocation(float x, float y)
+    {
+        this.x = x;
+        this.y = y;
+        readyToBeConsumed = false;
+        //uiConsumed = false;
+        //collisionConsumed = false;
+    }
     /*public void setNextLocation(LocationHistory nL)
     {
         nextLocation = nL;

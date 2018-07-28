@@ -113,6 +113,13 @@ public abstract class Gun
         return false;
     }*/
 
+   public void publishLocation(long frame)
+   {
+       for(Bullet b: bullets)
+       {
+           b.pixelGroup.publishLocation(frame);
+       }
+   }
     public boolean shoot(float x, float y, float angle, long f, float slow)
     {
         return false;

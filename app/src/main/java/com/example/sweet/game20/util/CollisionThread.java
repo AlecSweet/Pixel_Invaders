@@ -31,6 +31,7 @@ public class CollisionThread implements Runnable
 
     public volatile long currentFrame = 0;
     public volatile long frameRequest = 0;
+    public long lowestFrame;
 
     private boolean saveTime = false;
 
@@ -65,7 +66,7 @@ public class CollisionThread implements Runnable
                     update();
                     lag -= mSPU;
                 }*/
-                if (currentFrame < frameRequest)
+                if (lowestFrame < frameRequest)
                 {
                     currentFrame++;
                     long startTime = System.currentTimeMillis();
@@ -174,7 +175,7 @@ public class CollisionThread implements Runnable
     */
     private void consumeCollisionLocations()
     {
-        player1.getPixelGroup().consumeCollisionLocation();
+        checkLowestHelper(player1.getPixelGroup().consumeCollisionLocation(frameRequest));
 
         for (Drop d : player1.getGuns())
         {
@@ -184,7 +185,7 @@ public class CollisionThread implements Runnable
                 {
                     if (b.live)
                     {
-                        b.pixelGroup.consumeCollisionLocation();
+                        checkLowestHelper(b.pixelGroup.consumeCollisionLocation(frameRequest));
                     }
                 }
             }
@@ -192,9 +193,9 @@ public class CollisionThread implements Runnable
 
         for(Enemy e: entities)
         {
-            if(e != null)
+            if(e != null && !e.collisionRemoveConsensus)
             {
-                e.getPixelGroup().consumeCollisionLocation();
+                checkLowestHelper(e.getPixelGroup().consumeCollisionLocation(frameRequest));
 
                 if (e.getHasGun())
                 {
@@ -206,13 +207,21 @@ public class CollisionThread implements Runnable
                             {
                                 if (b.live)
                                 {
-                                    b.pixelGroup.consumeCollisionLocation();
+                                    checkLowestHelper(b.pixelGroup.consumeCollisionLocation(frameRequest));
                                 }
                             }
                         }
                     }
                 }
             }
+        }
+    }
+
+    private void checkLowestHelper(long frame)
+    {
+        if(frame < lowestFrame)
+        {
+            lowestFrame = frame;
         }
     }
     public synchronized void setPlayer(Player p)

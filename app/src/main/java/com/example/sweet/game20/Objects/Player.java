@@ -931,4 +931,23 @@ public class Player extends Drawable
         //xScreenShift += screenShakeX;
         //yScreenShift += screenShakeY;
     }
+
+    public void publishLocation(long frame)
+    {
+        if(playerBody.enableLocationChain)
+        {
+            playerBody.publishLocation(frame);
+        }
+        if(getGuns()!= null)
+        {
+            for (Drop d: gunDrops)
+            {
+                if (d != null && d.component != null)
+                {
+                    ((GunComponent)d.component).gun.publishLocation(frame);
+                }
+            }
+        }
+    }
+
 }
