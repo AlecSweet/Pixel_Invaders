@@ -8,9 +8,9 @@ import com.example.sweet.game20.GlobalInfo;
 
 public class ScreenShake
 {
-    private float
-            amplitude,
-            frequency;
+    private float amplitude;
+
+    private int frequency;
 
     private double duration;
 
@@ -22,7 +22,7 @@ public class ScreenShake
 
     private GlobalInfo globalInfo;
 
-    public ScreenShake(float a, float f, double d, GlobalInfo gi)
+    public ScreenShake(float a, int f, double d, GlobalInfo gi)
     {
         amplitude = a;
         frequency = f;
@@ -43,9 +43,15 @@ public class ScreenShake
 
         for(int i = 0; i < points.length; i++)
         {
-            points[i] = (float)(Math.random() * flip)*amplitude;
+            points[i] = (float)(Math.random() * flip);
             flip *= -1;
         }
+    }
+
+    public ScreenShake(GlobalInfo gi)
+    {
+        globalInfo = gi;
+        live = false;
     }
 
     public float getShake()
@@ -68,8 +74,23 @@ public class ScreenShake
             }
             else
             {
-                return (points[lowerIndex] + (mid - lowerIndex)*(points[upperIndex] - points[lowerIndex])) * decay;
+                return (points[lowerIndex] + (mid - lowerIndex)*(points[upperIndex] - points[lowerIndex])) * decay * amplitude;
             }
         }
+    }
+
+    public void resetScreenShake(float amp, int freq, double dur, float[] pat)
+    {
+        amplitude = amp;
+        frequency = freq;
+        duration = dur;
+        points = pat;
+        startTime = globalInfo.getAugmentedTimeMillis();
+        live = true;
+    }
+
+    public float getRemainingPercentTime()
+    {
+        return (float)((duration - (globalInfo.getAugmentedTimeMillis()-startTime)) / duration);
     }
 }

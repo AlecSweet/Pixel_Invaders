@@ -476,7 +476,7 @@ public class UI extends Drawable
                 joyBaseShoot.draw();
                 joyStickShoot.draw();
             }
-            textPresenter.drawInt(score++, -.9f, 0f - String.valueOf(score).length() / 2 * dSkipY);
+            textPresenter.drawInt(score++, -.9f, 0f, true);
         }
         else if (gameState == GameState.PAUSE_MENU)
         {
@@ -583,16 +583,19 @@ public class UI extends Drawable
                     case GUN: gunPanel.draw();
                             textPresenter.drawInt(
                                     (int)((GunComponent)selectedButton.drop.component).gun.getShotDelay(),
-                                    Constants.iPnum1X, Constants.infoPanelY
+                                    Constants.iPnum1X, Constants.infoPanelY,
+                                    false
                             );
                             textPresenter.drawInt(
                                     ((GunComponent)selectedButton.drop.component).gun.getTemplate().totalPixels,
-                                    Constants.iPnum2X, Constants.infoPanelY
+                                    Constants.iPnum2X, Constants.infoPanelY,
+                                    false
                             );
                             textPresenter.drawInt(
                                     (int)(((GunComponent)selectedButton.drop.component).gun.getTemplate().totalPixels *
                                             (1000 / ((GunComponent)selectedButton.drop.component).gun.getShotDelay())),
-                                    Constants.iPnum3X, Constants.infoPanelY
+                                    Constants.iPnum3X, Constants.infoPanelY,
+                                    false
                             );
                             break;
                     case MOD: modPanel.draw();
@@ -622,12 +625,12 @@ public class UI extends Drawable
                 playerMods[m].draw(menuOnMove.x, menuOnMove.y);
             }
 
-            textPresenter.drawInt(score, -.86f, -.07f);
+            textPresenter.drawInt(score, -.86f, -.07f, false);
         }
         //System.out.println(uiAvgFrame + "   " + aiAvgFrame +  "   " + collisionAvgFrame);
-        textPresenter.drawInt((int)uiAvgFrame, .9f, .5f);
-        textPresenter.drawInt((int)aiAvgFrame, .9f, 0f);
-        textPresenter.drawInt((int)collisionAvgFrame, .9f, -.5f);
+        textPresenter.drawInt((int)uiAvgFrame, .9f, .5f, false);
+        textPresenter.drawInt((int)aiAvgFrame, .9f, 0f, false);
+        textPresenter.drawInt((int)collisionAvgFrame, .9f, -.5f, false);
     }
 
     public void pointerDown()

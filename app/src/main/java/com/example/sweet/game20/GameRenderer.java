@@ -192,6 +192,8 @@ public class GameRenderer implements Renderer
 
     private LinkedList<Enemy> enemyOverflow = new LinkedList<>();
 
+    private float catchUp = 1;
+
     public GameRenderer(Context c)
     {
         globalStartTime = System.currentTimeMillis();
@@ -372,20 +374,44 @@ public class GameRenderer implements Renderer
             double currentTime = System.currentTimeMillis();
             double elapsedTime = currentTime - pastTime;
             pastTime = currentTime;
-            if(aiRunnable.frameRequest - aiRunnable.currentFrame < 2 &&
+            /*if(aiRunnable.frameRequest - aiRunnable.currentFrame < 2 &&
                 collisionRunnable.frameRequest - collisionRunnable.currentFrame < 2)
-            {
+            {*/
                 lag += elapsedTime;
 
-                while (lag >= mSPU)
+                while (lag >= mSPU * catchUp)
                 {
+                    int frameLag = 0;
+                    if(aiRunnable.frameRequest - aiRunnable.currentFrame <
+                            collisionRunnable.frameRequest - collisionRunnable.currentFrame)
+                    {
+                        frameLag = (int)(collisionRunnable.frameRequest - collisionRunnable.lowestFrame);
+                    }
+                    else
+                    {
+                        frameLag = (int)(aiRunnable.frameRequest - aiRunnable.currentFrame);
+                    }
+
+                    if(frameLag <= 2)
+                    {
+                        catchUp = 1;
+                    }
+                    else if( frameLag > 2 && frameLag <= 6)
+                    {
+                        catchUp = 2;
+                    }
+                    else if( frameLag > 6)
+                    {
+                        catchUp = 4;
+                    }
+
                     update();
                     aiRunnable.frameRequest++;
                     collisionRunnable.frameRequest++;
                     frames++;
                     lag -= mSPU;
                 }
-            }
+            //}
             /*if(currentFrame < aiRunnable.currentFrame)
             {
                 update();
@@ -490,7 +516,6 @@ public class GameRenderer implements Renderer
                     entities[i].uiRemoveConsensus  = true;
                     entities[i] = null;
                     openEntityIndices.push(i);
-                    System.gc();
                 }
                 else
                 {
@@ -622,7 +647,9 @@ public class GameRenderer implements Renderer
                 context,
                 .0054f,
                 shaderProgram,
-                playerParticles,ImageParser.parseImage(context, R.drawable.player, R.drawable.player_light, shaderProgram)
+                playerParticles,
+                ImageParser.parseImage(context, R.drawable.player, R.drawable.player_light, shaderProgram),
+                globalInfo
         );
         player1.xscale = xScale;
         player1.yscale = yScale;
@@ -642,8 +669,8 @@ public class GameRenderer implements Renderer
         aiRunnable.setPlayer(player1);
 
         collisionRunnable = new CollisionThread(entities);
-        collisionThread = new Thread(collisionRunnable);
-        //collisionThread = new Thread(null, collisionRunnable, "collision", 6000000);
+        //collisionThread = new Thread(collisionRunnable);
+        collisionThread = new Thread(null, collisionRunnable, "collision", 6000000);
         collisionRunnable.setPlayer(player1);
         collisionRunnable.setCollisionHandler(collisionHandler);
 

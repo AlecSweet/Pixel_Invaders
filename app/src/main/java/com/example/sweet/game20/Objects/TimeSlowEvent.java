@@ -12,7 +12,7 @@ public class TimeSlowEvent
 
     private double startTime;
 
-    public boolean live = true;
+    public boolean active = true;
 
     public TimeSlowEvent(float a, double d)
     {
@@ -21,12 +21,25 @@ public class TimeSlowEvent
         startTime = System.currentTimeMillis();
     }
 
+    public TimeSlowEvent()
+    {
+        active = false;
+    }
+
+    public void resetEvent(float a, double d)
+    {
+        amplitude = a;
+        duration = d;
+        startTime = System.currentTimeMillis();
+        active = true;
+    }
+
     public float getSlow()
     {
         double timeRunning = (System.currentTimeMillis()-startTime);
         if(timeRunning > duration)
         {
-            live = false;
+            active = false;
             return 0;
         }
         else
@@ -34,5 +47,10 @@ public class TimeSlowEvent
             float t = Math.abs((float)(timeRunning / duration));
             return t * t * t * amplitude + 1 - amplitude;
         }
+    }
+
+    public float getRemainingPercentTime()
+    {
+        return (float)((System.currentTimeMillis()-startTime) / duration);
     }
 }

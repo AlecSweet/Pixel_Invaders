@@ -66,8 +66,9 @@ public class Pixel
         live = false;
         for(Pixel n: neighbors)
         {
-            if (n != null)
+            if (n != null && n.outside != true)
             {
+                n.insideEdge = true;
                 n.outside = true;
             }
         }

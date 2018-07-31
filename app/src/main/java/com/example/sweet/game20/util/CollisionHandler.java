@@ -21,6 +21,8 @@ public class CollisionHandler
         collisionParticles = pS;
     }
 
+    public int[] groupSizes =  new int[30];
+
     public int checkCollisions(Collidable c, Collidable c2)
     {
         boolean collision = false;
@@ -103,7 +105,7 @@ public class CollisionHandler
             }
         }
 
-        if(collision)
+        /*if(collision)
         {
             if(c2.getChunkDeletion())
             {
@@ -111,11 +113,11 @@ public class CollisionHandler
                 {
                     if (System.currentTimeMillis() - c2.lastOrphanChunkCheck > c2.orphanChunkCheckDelay)
                     {
-                        long startTime = System.currentTimeMillis();
-                        int numLive = c2.numLivePixels;
+                        //long startTime = System.currentTimeMillis();
+                        //int numLive = c2.numLivePixels;
                         c2.lastOrphanChunkCheck = System.currentTimeMillis();
                         removeOrphanChunks(c2);
-                        System.out.println(System.currentTimeMillis() - startTime + "ms   size: " + numLive);
+                        //System.out.println(System.currentTimeMillis() - startTime + "ms   size: " + numLive);
                     }
                 }
                 else
@@ -132,14 +134,35 @@ public class CollisionHandler
                 {
                     if (System.currentTimeMillis() - c.lastOrphanChunkCheck > c.orphanChunkCheckDelay)
                     {
-                        long startTime = System.currentTimeMillis();
-                        int numLive = c2.numLivePixels;
+                        //long startTime = System.currentTimeMillis();
+                        //int numLive = c2.numLivePixels;
                         c.lastOrphanChunkCheck = System.currentTimeMillis();
                         removeOrphanChunks(c);
-                        System.out.println(System.currentTimeMillis() - startTime + "ms   size: " + numLive);
+                        //System.out.println(System.currentTimeMillis() - startTime + "ms   size: " + numLive);
                     }
                 }
                 else
+                {
+                    removeOrphanChunksRecursive(c);
+                }
+            }
+            c.setNeedsUpdate(true);
+        }*/
+        if(collision)
+        {
+            if(c2.getChunkDeletion())
+            {
+                if (System.currentTimeMillis() - c2.lastOrphanChunkCheck > c2.orphanChunkCheckDelay)
+                {
+                    removeOrphanChunksRecursive(c2);
+                }
+            }
+
+            c2.setNeedsUpdate(true);
+
+            if(c.getChunkDeletion())
+            {
+                if (System.currentTimeMillis() - c.lastOrphanChunkCheck > c.orphanChunkCheckDelay)
                 {
                     removeOrphanChunksRecursive(c);
                 }
@@ -349,14 +372,28 @@ public class CollisionHandler
         int groupNumberIterator = 0;
         int highestSize = 0;
 
-        ArrayList<Integer> groupSizes = new ArrayList<>();
+        /*ArrayList<Integer> groupSizes = new ArrayList<>();
         for(Pixel p: c.getPixels())
         {
             if(p != null && p.live && p.groupFlag == -1)
             {
                 groupSizes.add(orphanChunkHelper(p, groupNumberIterator, 0));
                 if(groupSizes.get(groupNumberIterator) > highestSize)
+                {
                     highestSize = groupSizes.get(groupNumberIterator);
+                }
+                groupNumberIterator++;
+            }
+        }*/
+        for(Pixel p: c.getPixels())
+        {
+            if(p != null && p.live && p.groupFlag == -1)
+            {
+                groupSizes[groupNumberIterator] = (orphanChunkHelper(p, groupNumberIterator, 0));
+                if(groupSizes[groupNumberIterator] > highestSize)
+                {
+                    highestSize = groupSizes[groupNumberIterator];
+                }
                 groupNumberIterator++;
             }
         }
@@ -370,7 +407,7 @@ public class CollisionHandler
         {
             for (Pixel p : c.getPixels())
             {
-                if (p.groupFlag != -1 && groupSizes.get(p.groupFlag) < highestSize)
+                if (p.groupFlag != -1 && groupSizes[p.groupFlag] < highestSize)
                 {
                     p.killPixel();
                     c.numLivePixels--;

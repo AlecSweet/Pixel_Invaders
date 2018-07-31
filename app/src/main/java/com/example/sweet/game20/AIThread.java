@@ -13,6 +13,7 @@ import com.example.sweet.game20.Objects.Drop;
 import com.example.sweet.game20.Objects.Enemy;
 import com.example.sweet.game20.Objects.GunComponent;
 import com.example.sweet.game20.Objects.Player;
+import com.example.sweet.game20.Objects.TimeSlowEngine;
 import com.example.sweet.game20.Objects.TimeSlowEvent;
 import com.example.sweet.game20.util.CollisionHandler;
 import com.example.sweet.game20.util.Constants;
@@ -34,7 +35,7 @@ public class AIThread implements Runnable
     public volatile float averageFrameTime = 0;
 
     private GlobalInfo globalInfo;
-    private ArrayList<TimeSlowEvent> timeSlowEvents;
+    //private ArrayList<TimeSlowEvent> timeSlowEvents;
 
     public volatile Enemy[] entities;
 
@@ -51,11 +52,13 @@ public class AIThread implements Runnable
     public volatile long currentFrame = 0;
     public volatile long frameRequest = 0;
 
-    private final long MILLIS_PER_SECOND = 1000;
-    private final long UPS = 60;
-    private final long mSPU = MILLIS_PER_SECOND / UPS;
+    private TimeSlowEngine timeEngine;
 
-    private float slowTime = 1;
+    /*private final long MILLIS_PER_SECOND = 1000;
+    private final long UPS = 60;
+    private final long mSPU = MILLIS_PER_SECOND / UPS;*/
+
+    //private float slowTime = 1;
     private static final int INVALID_POINTER_ID = -1;
 
     public AIThread(Enemy[] e, GlobalInfo gI, CollisionHandler cH)
@@ -63,6 +66,7 @@ public class AIThread implements Runnable
         collisionHandler = cH;
         entities = e;
         globalInfo = gI;
+        timeEngine = new TimeSlowEngine(globalInfo, 20);
     }
 
     public void run()
@@ -131,12 +135,12 @@ public class AIThread implements Runnable
         /*float s = (float)(Math.cos(tempInc))*.25f + .75f;
         globalInfo.setTimeSlow(s);
         tempInc += .1;*/
-        globalInfo.timeSlow = 1;
-        Iterator<TimeSlowEvent> itrT = player1.timeSlowEvents.iterator();
+        timeEngine.runEngine();
+        /*Iterator<TimeSlowEvent> itrT = player1.timeSlowEvents.iterator();
         while(itrT.hasNext())
         {
             TimeSlowEvent t = itrT.next();
-            if(!t.live)
+            if(!t.active)
             {
                 itrT.remove();
             }
@@ -144,7 +148,7 @@ public class AIThread implements Runnable
             {
                 globalInfo.setTimeSlow(slowTime * t.getSlow());
             }
-        }
+        }*/
 
         player1.shoot(currentFrame, globalInfo);
         player1.moveCamera();
@@ -195,7 +199,7 @@ public class AIThread implements Runnable
                 }
                 else
                 {
-                    player1.screenShakeEventsX.add(new ScreenShake(
+                   /* player1.screenShakeEventsX.add(new ScreenShake(
                             (float)(.002f * Math.sqrt(entities[i].getPixelGroup().totalPixels)),
                             120,
                             1000,
@@ -206,8 +210,14 @@ public class AIThread implements Runnable
                             120,
                             1000,
                             globalInfo
-                    ));
-                    player1.timeSlowEvents.add(new TimeSlowEvent(.7f, 400));
+                    ));*/
+                    player1.shakeEngine.addShake(
+                            (float)(.002f * Math.sqrt(entities[i].getPixelGroup().totalPixels)),
+                            120,
+                            1000
+                    );
+                    //player1.timeSlowEvents.add(new TimeSlowEvent(.7f, 400));
+                    timeEngine.addSlow(.7f, 400);
                     entities[i].aiRemoveConsensus = true;
                 }
             }

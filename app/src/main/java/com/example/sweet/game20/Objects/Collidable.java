@@ -85,12 +85,12 @@ public class Collidable
         locationCollisionTail = locationPoolTail;
         locationPoolTail = locationPoolTail.nextLocation;
         locationHead.nextLocation = null;*/
-        locationDrawTail = new LocationHistory(centerX, centerY);
+        locationDrawTail = new LocationHistory(4f, 4f);
         locationCollisionTail = locationDrawTail;
         locationHead = locationDrawTail;
-        for(int i = 0; i < 19; i++)
+        for(int i = 0; i < 9; i++)
         {
-            locationHead.nextLocation = new LocationHistory(centerX,centerY);
+            locationHead.nextLocation = new LocationHistory(4f,4f);
             locationHead = locationHead.nextLocation;
         }
 

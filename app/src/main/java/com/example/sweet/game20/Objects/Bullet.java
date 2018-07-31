@@ -26,6 +26,7 @@ public class Bullet
     {
         pixelGroup = pG;
         pixelGroup.setEnableOrphanChunkDeletion(true);
+        pixelGroup.restorable = true;
         pixelGroup.orphanChunkCheckDelay = 0;
         speed = spd;
         angle = a;

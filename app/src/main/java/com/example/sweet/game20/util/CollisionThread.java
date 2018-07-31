@@ -66,7 +66,7 @@ public class CollisionThread implements Runnable
                     update();
                     lag -= mSPU;
                 }*/
-                if (lowestFrame < frameRequest)
+                if(lowestFrame < frameRequest)
                 {
                     currentFrame++;
                     long startTime = System.currentTimeMillis();
@@ -158,10 +158,10 @@ public class CollisionThread implements Runnable
                     entities[i].collisionRemoveConsensus = true;
                 }
             }
-            else if(entities[i] != null && entities[i].uiRemoveConsensus)
+            /*else if(entities[i] != null && entities[i].uiRemoveConsensus)
             {
                 entities[i] = null;
-            }
+            }*/
         }
 
         player1.consumableCollisionCheck();

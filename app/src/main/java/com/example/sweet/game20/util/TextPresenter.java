@@ -79,9 +79,14 @@ public class TextPresenter
         glBufferData(GL_ARRAY_BUFFER, buffer.capacity() * Constants.BYTES_PER_FLOAT, buffer, GL_STATIC_DRAW);
     }
 
-    public void drawInt(int i, float x, float y)
+    public void drawInt(int i, float x, float y, boolean center)
     {
         glUniform1f(xDispLoc, x);
+        float disp = 0;
+        if(center)
+        {
+            disp = Constants.dSkipY * getNumDigitsInt(i);
+        }
         int itr = 0;
         if(i > 0)
         {
@@ -95,7 +100,7 @@ public class TextPresenter
                 glBindTexture(GL_TEXTURE_2D, digitTextures[digit]);
                 glUniform1i(uTextureLocation, 0);
 
-                glUniform1f(yDispLoc, y + itr * Constants.dSkipY);
+                glUniform1f(yDispLoc, y + itr * Constants.dSkipY - disp);
 
                 glBindBuffer(GL_ARRAY_BUFFER, vboHandle[0]);
                 bindAttributes();
@@ -113,7 +118,7 @@ public class TextPresenter
             glBindTexture(GL_TEXTURE_2D, digitTextures[0]);
             glUniform1i(uTextureLocation, 0);
 
-            glUniform1f(yDispLoc, y + itr * Constants.dSkipY);
+            glUniform1f(yDispLoc, y + itr * Constants.dSkipY - disp);
 
             glBindBuffer(GL_ARRAY_BUFFER, vboHandle[0]);
             bindAttributes();
@@ -173,4 +178,71 @@ public class TextPresenter
         bindAttributes();
         glDrawArrays(GL_TRIANGLE_FAN, 0, 6);
     }*/
+    public int getNumDigitsInt(int number)
+    {
+        if (number < 100000)
+        {
+            if (number < 100)
+            {
+                if (number < 10)
+                {
+                    return 1;
+                }
+                else
+                {
+                    return 2;
+                }
+            }
+            else
+            {
+                if (number < 1000)
+                {
+                    return 3;
+                }
+                else
+                {
+                    if (number < 10000)
+                    {
+                        return 4;
+                    }
+                    else
+                    {
+                        return 5;
+                    }
+                }
+            }
+        }
+        else
+        {
+            if (number < 10000000)
+            {
+                if (number < 1000000)
+                {
+                    return 6;
+                }
+                else
+                {
+                    return 7;
+                }
+            }
+            else
+            {
+                if (number < 100000000)
+                {
+                    return 8;
+                }
+                else
+                {
+                    if (number < 1000000000)
+                    {
+                        return 9;
+                    }
+                    else
+                    {
+                        return 10;
+                    }
+                }
+            }
+        }
+    }
 }

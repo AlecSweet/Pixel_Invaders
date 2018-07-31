@@ -42,6 +42,7 @@ public abstract class Gun
     public Gun(double sD, PixelGroup pG, ParticleSystem ps, float spd)
     {
         pixelGroupTemplate = pG;
+        pixelGroupTemplate.restorable = true;
         shakeMod = (float)Math.sqrt(pixelGroupTemplate.totalPixels) * .001f + .002f;
         bulletPool = new Stack<>();
         shootDelay = sD;

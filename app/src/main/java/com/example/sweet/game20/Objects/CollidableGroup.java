@@ -12,6 +12,8 @@ public class CollidableGroup
 
     public Pixel[] pixels;
 
+    public int tempItr = 0;
+
     public volatile float
             xDisp,
             yDisp;

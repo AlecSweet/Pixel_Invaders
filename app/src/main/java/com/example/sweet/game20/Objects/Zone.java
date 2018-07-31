@@ -10,6 +10,7 @@ public class Zone
 {
     public CollidableGroup[] collidableGroups;
 
+    public int tempItr = 0;
     public ArrayList<CollidableGroup> c;
 
     public volatile float

@@ -78,12 +78,14 @@ public class Drop
         pixelGroup.softDraw(mx, my, angle, tiltAngle, mag, pS);
     }
 
-    public void checkAlive()
+    public double checkAlive()
     {
-        if(System.currentTimeMillis() - creationTime > liveTime)
+        double timeLeft = System.currentTimeMillis() - creationTime;
+        if(timeLeft > liveTime && !held)
         {
             live = false;
         }
+        return timeLeft;
     }
 
     public void move(float mX, float mY)
