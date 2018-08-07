@@ -10,7 +10,7 @@ import java.util.ArrayList;
 
 public class PixelShapes
 {
-    public static ArrayList<Pixel> makeFillPixelCircle( int cX, int cY, int radius, float size)
+    /*public static ArrayList<Pixel> makeFillPixelCircle( int cX, int cY, int radius, float size)
     {
         ArrayList<Pixel> p = new ArrayList<>();
         Pixel[][] map = new Pixel[radius * 2 +  2][radius * 2 + 2];
@@ -154,5 +154,5 @@ public class PixelShapes
         }
 
         return p;
-    }
+    }*/
 }

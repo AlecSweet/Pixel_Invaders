@@ -56,7 +56,7 @@ public class LevelControllerThread implements Runnable
         enemyFactory = eF;
         for(int i = 0; i < Constants.ENTITIES_LENGTH; i++)
         {
-            openEntityIndices.push(i);
+            openEntityIndices.add(i);
         }
     }
 

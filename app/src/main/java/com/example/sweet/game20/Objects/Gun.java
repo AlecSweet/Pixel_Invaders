@@ -55,7 +55,7 @@ public abstract class Gun
             bullets[i] = new Bullet(0, 0, 0,
                     speed, 4f, pixelGroupTemplate.clone());
             bullets[i].live = false;
-            bulletPool.push(bullets[i]);
+            bulletPool.add(bullets[i]);
         }
         lastShotTime = System.currentTimeMillis();
         masterParticleSystem = ps;
@@ -97,7 +97,7 @@ public abstract class Gun
                     newBullets[i] = new Bullet(0, 0, 0,
                             speed, 4f, pixelGroupTemplate.clone());
                     newBullets[i].live = false;
-                    bulletPool.push(newBullets[i]);
+                    bulletPool.add(newBullets[i]);
                 }
             }
             bullets = newBullets;

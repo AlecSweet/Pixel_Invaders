@@ -11,9 +11,7 @@ public class LocationHistory
     public long frame;
 
     public volatile boolean
-            readyToBeConsumed = false,
-            uiConsumed = false,
-            collisionConsumed = false;
+            readyToBeConsumed = false;
 
     public LocationHistory nextLocation;
 

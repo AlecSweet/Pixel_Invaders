@@ -43,7 +43,13 @@ public class Collidable
 
     protected Pixel[] pixels;
 
+    public Pixel[][] pMap;
+
+    public PixelInfo[][] infoMap;
+
     public Zone[] zones;
+
+    protected CollidableGroup[] totalGroups;
 
     public int
             totalPixels,
@@ -53,38 +59,22 @@ public class Collidable
 
     protected boolean restorable = false;
 
-    public Collidable(float x, float y, float hSL, Pixel[] p, boolean chunkDeletion, Zone[] z)
+    public Collidable(float x, float y, float hSL, Pixel[] p, boolean chunkDeletion, Zone[] z, CollidableGroup[] g, PixelInfo[][] iM)
     {
         centerX = x;
         centerY = y;
 
         halfSquareLength = hSL;
         pixels = p;
+        infoMap = iM;
         totalPixels = pixels.length;
         numLivePixels = totalPixels;
         enableOrphanChunkDeletion = chunkDeletion;
         zones = z;
+        totalGroups = g;
         collidableLive = true;
         needsUpdate = false;
         lastOrphanChunkCheck = System.currentTimeMillis();
-
-        /*locationPoolTail = new LocationHistory(0,0);
-        locationPoolHead = locationPoolTail;
-        for(int i = 0; i < 4; i++)
-        {
-            locationPoolHead.nextLocation = new LocationHistory(0,0);
-            locationPoolHead = locationPoolHead.nextLocation;
-        }
-
-
-
-        locationPoolTail.x = centerX;
-        locationPoolTail.y = centerY;
-        locationHead = locationPoolTail;
-        locationDrawTail = locationPoolTail;
-        locationCollisionTail = locationPoolTail;
-        locationPoolTail = locationPoolTail.nextLocation;
-        locationHead.nextLocation = null;*/
         locationDrawTail = new LocationHistory(4f, 4f);
         locationCollisionTail = locationDrawTail;
         locationHead = locationDrawTail;
@@ -96,14 +86,42 @@ public class Collidable
 
         locationHead.nextLocation = locationDrawTail;
         locationHead = locationDrawTail;
+    }
 
-       /* int itr = 0;
-        while(locationPoolTail.nextLocation != null)
+    public Collidable(float x, float y, float hSL, Pixel[] p, boolean chunkDeletion, Zone[] z, PixelInfo[][] iM)
+    {
+        centerX = x;
+        centerY = y;
+
+        halfSquareLength = hSL;
+        pixels = p;
+        infoMap = iM;
+        totalPixels = pixels.length;
+        numLivePixels = totalPixels;
+        enableOrphanChunkDeletion = chunkDeletion;
+        zones = z;
+        collidableLive = true;
+        needsUpdate = false;
+        lastOrphanChunkCheck = System.currentTimeMillis();
+
+        locationDrawTail = new LocationHistory(4f, 4f);
+        locationCollisionTail = locationDrawTail;
+        locationHead = locationDrawTail;
+        for(int i = 0; i < 9; i++)
         {
-            itr++;
-            System.out.println(itr);
-            locationPoolTail = locationPoolTail.nextLocation;
-        }*/
+            locationHead.nextLocation = new LocationHistory(4f,4f);
+            locationHead = locationHead.nextLocation;
+        }
+
+        locationHead.nextLocation = locationDrawTail;
+        locationHead = locationDrawTail;
+    }
+
+    public void resetLocationHistory(float x, float y)
+    {
+        locationHead.x = x;
+        locationHead.y = y;
+        locationDrawTail = locationHead;
     }
 
     public void move(float mX, float mY)
@@ -111,39 +129,25 @@ public class Collidable
         centerX += mX;
         centerY += mY;
 
-        /*for(Pixel p: pixels)
-        {
-            p.xDisp += mX;
-            p.yDisp += mY;
-        }
-        for(int z = 0; z < zones.length; z++)
-        {
-            if (zones[z] != null)
-            {
-                zones[z].move(mX, mY);
-                for (int cG = 0; cG < zones[z].collidableGroups.length; cG++)
-                    if (zones[z].collidableGroups[cG] != null)
-                        zones[z].collidableGroups[cG].move(mX, mY);
-            }
-        }*/
         for(Zone z: zones)
         {
             if (z != null)
             {
-                //z.move(mX, mY);
                 boolean zoneCheck = false;
                 for (CollidableGroup cG: z.collidableGroups)
                 {
                     if (cG != null)
                     {
-                        //cG.move(mX, mY);
                         boolean groupCheck = false;
                         for(Pixel p: cG.pixels)
                         {
-                            if(p.live)
+                            //if(p.live)
+                            if(p.state >= 1)
                             {
-                                p.xDisp = p.xOriginal * cosA + p.yOriginal * sinA;
-                                p.yDisp = p.yOriginal * cosA - p.xOriginal * sinA;
+                                p.xDisp = infoMap[p.row][p.col].xOriginal * cosA +
+                                        infoMap[p.row][p.col].yOriginal * sinA;
+                                p.yDisp = infoMap[p.row][p.col].yOriginal * cosA -
+                                        infoMap[p.row][p.col].xOriginal * sinA;
                                 groupCheck = true;
                             }
                         }
@@ -185,76 +189,37 @@ public class Collidable
     {
         centerX = mX;
         centerY = mY;
-        /*if(enableLocationChain)
-        {
-            locationHead.nextLocation = new LocationHistory(centerX, centerY);
-            locationHead.nextLocation.chainID = locationHead.chainID++;
-            LocationHistory prev = locationHead;
-            locationHead = locationHead.nextLocation;
-            prev.readyToBeConsumed = true;
-        }*/
         move(0,0);
-        /*for(Pixel p: pixels)
-        {
-            p.xDisp = p.xOriginal*cosA + p.yOriginal*sinA + centerX;
-            p.yDisp = p.yOriginal*cosA - p.xOriginal*sinA + centerY;
-        }
-
-        for(int z = 0; z < zones.length; z++)
-        {
-            if (zones[z] != null)
-            {
-                zones[z].setLoc(mX, mY);
-                for (int cG = 0; cG < zones[z].collidableGroups.length; cG++)
-                    if (zones[z].collidableGroups[cG] != null)
-                        zones[z].collidableGroups[cG].setLoc(mX, mY);
-            }
-        }*/
-        /*for(Zone z: zones)
-        {
-            if (z != null)
-            {
-                z.setLoc(mX, mY);
-                //boolean zoneCheck = false;
-                for (CollidableGroup cG: z.collidableGroups)
-                {
-                    if (cG != null)
-                    {
-                        cG.setLoc(mX, mY);
-                        *//*boolean groupCheck = false;
-                        for(Pixel p: cG.pixels)
-                        {
-                            p.xDisp = p.xOriginal*cosA + p.yOriginal*sinA + centerX;
-                            p.yDisp = p.yOriginal*cosA - p.xOriginal*sinA + centerY;
-                            if(p.outside)
-                                groupCheck = true;
-                        }
-                        if(groupCheck)
-                        {
-                            zoneCheck = true;
-                        }
-                        cG.live = groupCheck;*//*
-                    }
-                }
-                //z.live = zoneCheck;
-            }
-        }*/
     }
 
     public void resetPixels()
     {
         for(Pixel p: pixels)
         {
-            p.live = true;
+            /*p.live = true;
             p.outside = false;
-            p.insideEdge = false;
+            p.insideEdge = false;*/
+            p.state = 1;
             p.groupFlag = -1;
-            for(Pixel n: p.neighbors)
+            if (pMap[p.row + 1][p.col] == null)
             {
-                if (n == null)
-                {
-                    p.outside = true;
-                }
+                //p.outside = true;
+                p.state = 2;
+            }
+            else if (pMap[p.row - 1][p.col] == null)
+            {
+                //p.outside = true;
+                p.state = 2;
+            }
+            else if (pMap[p.row][p.col + 1] == null)
+            {
+                //p.outside = true;
+                p.state = 2;
+            }
+            else if (pMap[p.row][p.col - 1] == null)
+            {
+                //p.outside = true;
+                p.state = 2;
             }
         }
         collidableLive = true;

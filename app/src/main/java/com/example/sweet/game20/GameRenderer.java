@@ -515,7 +515,7 @@ public class GameRenderer implements Renderer
                     entities[i].freeMemory();
                     entities[i].uiRemoveConsensus  = true;
                     entities[i] = null;
-                    openEntityIndices.push(i);
+                    openEntityIndices.add(i);
                 }
                 else
                 {
@@ -640,7 +640,7 @@ public class GameRenderer implements Renderer
         openEntityIndices = new Stack<>();
         for(int i = 0; i < Constants.ENTITIES_LENGTH; i++)
         {
-            openEntityIndices.push(i);
+            openEntityIndices.add(i);
         }
 
         player1 = new Player(dropFactory,

@@ -176,7 +176,7 @@ public class Player extends Drawable
                         (float)playerBody.angle,
                         new BasicGun
                                 (
-                                        ImageParser.parseImage(context, R.drawable.simple1, R.drawable.simple1, sL),
+                                        ImageParser.parseImage(context, R.drawable.bullet1, R.drawable.bullet1_light, sL),
                                         particleSystem,
                                         100,
                                         .05f
@@ -324,7 +324,8 @@ public class Player extends Drawable
         }
         for(Pixel p: pixels)
         {
-            if(p.live)
+            //if(p.live)
+            if(p.state >= 1)
             {
                 for (int t = 0; t < 4; t++)
                 {
@@ -582,7 +583,7 @@ public class Player extends Drawable
 
     public void revivePixels()
     {
-        HashSet<Pixel> affectedPixels = new HashSet<>();
+        /*HashSet<Pixel> affectedPixels = new HashSet<>();
         int resNum = 24;
         for(Pixel p: playerBody.pixels)
         {
@@ -621,12 +622,12 @@ public class Player extends Drawable
                 }
             }
         }
-        playerBody.needsUpdate = true;
+        playerBody.needsUpdate = true;*/
     }
 
     private int revivePixelHelper(Pixel p, int rN, HashSet<Pixel> affectedPixels)
     {
-        int resNum = rN;
+        /*int resNum = rN;
         p.live = true;
         p.insideEdge = false;
         playerBody.numLivePixels++;
@@ -647,7 +648,8 @@ public class Player extends Drawable
                 }
             }
         }
-        return resNum;
+        return resNum;*/
+        return 0;
     }
 
     public void shoot(float sX, float sY, long curFrame, GlobalInfo gI)
@@ -768,25 +770,25 @@ public class Player extends Drawable
     public void initParticleAttachments()
     {
         for(int i = 0; i < gravParticles.length; i += 2)
-            gravParticlePixels[i/2] = playerBody.getpMap()[gravParticles[i+1]][gravParticles[i]];
+            gravParticlePixels[i/2] = playerBody.getpMap()[gravParticles[i+1] + 1][gravParticles[i] + 1];
 
         for(int i = 0; i < leftBoost.length; i += 2)
-            leftBoostPixels[i/2] = playerBody.getpMap()[leftBoost[i+1]][leftBoost[i]];
+            leftBoostPixels[i/2] = playerBody.getpMap()[leftBoost[i+1] + 1][leftBoost[i] + 1];
 
         for(int i = 0; i < rightBoost.length; i += 2)
-            rightBoostPixels[i/2] = playerBody.getpMap()[rightBoost[i+1]][rightBoost[i]];
+            rightBoostPixels[i/2] = playerBody.getpMap()[rightBoost[i+1] + 1][rightBoost[i] + 1];
 
         for(int i = 0; i < mainBoost.length; i += 2)
-            mainBoostPixels[i/2] = playerBody.getpMap()[mainBoost[i+1]][mainBoost[i]];
+            mainBoostPixels[i/2] = playerBody.getpMap()[mainBoost[i+1] + 1][mainBoost[i] + 1];
 
         for(int i = 0; i < middle.length; i += 2)
-            gunMiddlePixels[i/2] = playerBody.getpMap()[middle[i+1]][middle[i]];
+            gunMiddlePixels[i/2] = playerBody.getpMap()[middle[i+1] + 1][middle[i] + 1];
 
         for(int i = 0; i < topRight.length; i += 2)
-            gunTopRightPixels[i/2] = playerBody.getpMap()[topRight[i+1]][topRight[i]];
+            gunTopRightPixels[i/2] = playerBody.getpMap()[topRight[i+1] + 1][topRight[i] + 1];
 
         for(int i = 0; i < topLeft.length; i += 2)
-            gunTopLeftPixels[i/2] = playerBody.getpMap()[topLeft[i+1]][topLeft[i]];
+            gunTopLeftPixels[i/2] = playerBody.getpMap()[topLeft[i+1] + 1][topLeft[i] + 1];
 
         /*for(int i = 0; i < bottomLeft.length; i += 2)
             gunBottomLeftPixels[i/2] = playerBody.getpMap()[bottomLeft[i+1]][bottomLeft[i]];

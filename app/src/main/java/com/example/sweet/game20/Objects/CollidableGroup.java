@@ -25,9 +25,31 @@ public class CollidableGroup
 
     public volatile boolean live = true;
 
+    /*public CollidableGroup(float x, float y, float halfSquareLength, int length)
+    {
+        pixels = new Pixel[length];
+        this.xDisp = x;
+        this.yDisp = y;
+        xOriginal = x;
+        yOriginal = y;
+        live = true;
+        this.halfSquareLength = halfSquareLength;
+    }*/
+
+    public CollidableGroup(float x, float y, float halfSquareLength, ArrayList<Pixel> a)
+    {
+        p = a;
+        this.xDisp = x;
+        this.yDisp = y;
+        xOriginal = x;
+        yOriginal = y;
+        live = true;
+        this.halfSquareLength = halfSquareLength;
+    }
+
     public CollidableGroup(float x, float y, float halfSquareLength)
     {
-        p = new ArrayList<>();
+        //p = new ArrayList<>();
         this.xDisp = x;
         this.yDisp = y;
         xOriginal = x;
@@ -57,6 +79,7 @@ public class CollidableGroup
     public void initPixelArray()
     {
         pixels = p.toArray(new Pixel[p.size()]);
+        p = null;
     }
 
     @Override

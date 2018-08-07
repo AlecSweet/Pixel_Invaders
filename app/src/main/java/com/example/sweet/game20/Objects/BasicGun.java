@@ -101,13 +101,17 @@ public class BasicGun extends Gun
                 for(Pixel p: b.pixelGroup.pixels)
                 {
                     //float cC = (float)(Math.random()) * .1f -.5f + 1;
-                    if (p.live && p.outside)
+                    //if (p.live && p.outside)
+                    if(p.state >= 2)
                     {
                         float cC = (float)(Math.random()) * 1f + .5f;
                         masterParticleSystem.addParticle(
                                 p.xDisp + centerX, p.yDisp + centerY,
                                 -b.angle + (float)(Math.random()* .2f - 1f),
-                                p.r * cC, p.g * cC, p.b * cC, .6f,
+                                b.pixelGroup.infoMap[p.row][p.col].r * cC,
+                                b.pixelGroup.infoMap[p.row][p.col].g * cC,
+                                b.pixelGroup.infoMap[p.row][p.col].b * cC,
+                                .6f,
                                 .2f, .02f, 4f
                         );
                     }
@@ -115,7 +119,7 @@ public class BasicGun extends Gun
             }
             if(!b.live)
             {
-                bulletPool.push(b);
+                bulletPool.add(b);
             }
         }
     }
@@ -136,6 +140,6 @@ public class BasicGun extends Gun
     @Override
     public BasicGun clone()
     {
-        return new BasicGun(pixelGroupTemplate.clone(), masterParticleSystem, shootDelay, speed);
+        return new BasicGun(pixelGroupTemplate, masterParticleSystem, shootDelay, speed);
     }
 }

@@ -36,12 +36,12 @@ public class Simple extends Enemy
 
         for(int i = 0; i < thusterPixelCoordinates.length; i += 2)
         {
-            thrusterPixels[i / 2] = enemyBody.getpMap()[thusterPixelCoordinates[i + 1]][thusterPixelCoordinates[i]];
+            thrusterPixels[i / 2] = enemyBody.getpMap()[thusterPixelCoordinates[i + 1] + 1][thusterPixelCoordinates[i] + 1];
         }
 
         for(int i = 0; i < gunPixelCoordinates.length; i += 2)
         {
-            gun1Pixels[i / 2] = enemyBody.getpMap()[gunPixelCoordinates[i + 1]][gunPixelCoordinates[i]];
+            gun1Pixels[i / 2] = enemyBody.getpMap()[gunPixelCoordinates[i + 1] + 1][gunPixelCoordinates[i] + 1];
         }
 
         guns = new GunComponent[1];
@@ -110,7 +110,7 @@ public class Simple extends Enemy
         {
             guns[0].gun.move(slow);
         }
-        addThrustParticles(thrusterPixels, ratio, .03f);
+        addThrustParticles(thrusterPixels, ratio, .03f, enemyBody);
 
         if(!dropAdded && enemyBody.numLivePixels <= .5 * enemyBody.totalPixels)
         {
@@ -267,23 +267,26 @@ public class Simple extends Enemy
         }
     }
     
-    public void addThrustParticles(Pixel[] pixels, float ratio, float dist)
+    public void addThrustParticles(Pixel[] pixels, float ratio, float dist, Collidable c)
     {
         for(Pixel p: pixels)
         {
-            if(p.live)
+            //if(p.live)
+            if(p.state >= 1)
             {
-                float xDisp = p.xOriginal * enemyBody.cosA + p.yOriginal * enemyBody.sinA;
-                float yDisp = p.yOriginal * enemyBody.cosA - p.xOriginal * enemyBody.sinA;
+                float xDisp = c.infoMap[p.row][p.col].xOriginal * enemyBody.cosA +
+                        c.infoMap[p.row][p.col].yOriginal * enemyBody.sinA;
+                float yDisp = c.infoMap[p.row][p.col].yOriginal * enemyBody.cosA -
+                        c.infoMap[p.row][p.col].xOriginal * enemyBody.sinA;
                 for (int t = 0; t < 2; t++)
                 {
                     particleSystem.addParticle(xDisp + enemyBody.centerX,
                             yDisp + enemyBody.centerY,
                             //-enemyBody.cosA, enemyBody.sinA,
                             (float)-enemyBody.angle + (float)Math.PI,
-                            p.r,
-                            p.g,
-                            p.b,
+                            c.infoMap[p.row][p.col].r,
+                            c.infoMap[p.row][p.col].g,
+                            c.infoMap[p.row][p.col].b,
                             .7f,
                             (baseSpeed * thrusters[0].thrustPower * (float)(Math.random()*70+20)) * ratio,
                             dist * ratio * (float)Math.random()*2,

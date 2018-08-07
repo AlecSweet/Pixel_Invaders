@@ -12,88 +12,75 @@ public class Pixel
             xDisp = 0f,
             yDisp = 0f;
 
-    public float
-            xOriginal,
-            yOriginal,
-            depth = 0,
-            r,
-            g,
-            b,
-            a;
+    public int
+            row,
+            col,
+            groupFlag = -1;
 
-    public volatile int groupFlag = -1;
+    public volatile int state = 1;
 
-    public boolean
+    /*public boolean
             live = true,
             outside = false,
-            insideEdge = false;
+            insideEdge = false;*/
 
-    /*  Neighbor Indexes:
-        0-Up
-        1-Right
-        2-Down
-        3-Left
-     */
-    public Pixel[] neighbors = new Pixel[4];
-
-    public Pixel(float x, float y)
+    public Pixel( int r, int c)
     {
-        xDisp = x;
-        yDisp = y;
-        xOriginal = x;
-        yOriginal = y;
+        row = r;
+        col = c;
     }
 
-    public void killPixel(float cosA, float sinA)
+    public void killPixel(Pixel[][] pMap)
     {
-        live = false;
-        insideEdge = false;
-        for(Pixel n: neighbors)
+        /*live = false;
+        if (pMap[row + 1][col] != null && !pMap[row + 1][col].outside)
         {
-            if (n != null && n.outside != true)
-            {
-                //n.xDisp = n.xOriginal * cosA + n.yOriginal * sinA;
-                //n.yDisp = n.yOriginal * cosA - n.xOriginal * sinA;
-                n.insideEdge = true;
-                n.outside = true;
-            }
+            pMap[row + 1][col].insideEdge = true;
+            pMap[row + 1][col].outside = true;
+        }
+        
+        if (pMap[row - 1][col] != null && !pMap[row - 1][col].outside)
+        {
+            pMap[row - 1][col].insideEdge = true;
+            pMap[row - 1][col].outside = true;
+        }
+        
+        if (pMap[row][col + 1] != null && !pMap[row][col + 1].outside)
+        {
+            pMap[row][col + 1].insideEdge = true;
+            pMap[row][col + 1].outside = true;
+        }
+        
+        if (pMap[row][col - 1] != null && !pMap[row][col - 1].outside)
+        {
+            pMap[row][col - 1].insideEdge = true;
+            pMap[row][col - 1].outside = true;
+        }*/
+        state = 0;
+        if (pMap[row + 1][col] != null && pMap[row + 1][col].state == 1)
+        {
+            pMap[row + 1][col].state = 3;
         }
 
-    }
-
-    public void killPixel()
-    {
-        live = false;
-        for(Pixel n: neighbors)
+        if (pMap[row - 1][col] != null && pMap[row - 1][col].state == 1)
         {
-            if (n != null && n.outside != true)
-            {
-                n.insideEdge = true;
-                n.outside = true;
-            }
+            pMap[row - 1][col].state = 3;
+        }
+
+        if (pMap[row][col + 1] != null && pMap[row][col + 1].state == 1)
+        {
+            pMap[row][col + 1].state = 3;
+        }
+
+        if (pMap[row][col - 1] != null && pMap[row][col - 1].state == 1)
+        {
+            pMap[row][col - 1].state = 3;
         }
     }
-
-    /*@Override
-    public boolean equals(Object obj)
-    {
-        return false;
-    }
-    @Override
-    public int hashCode()
-    {
-        return 0;
-    }*/
 
     @Override
     public Pixel clone()
     {
-        Pixel p = new Pixel(xOriginal,yOriginal);
-        //p.depth = this.depth;
-        p.r = this.r;
-        p.g = this.g;
-        p.b = this.b;
-        p.a = this.a;
-        return p;
+        return new Pixel(row, col);
     }
 }

@@ -9,8 +9,8 @@ import java.util.ArrayList;
 public class Zone
 {
     public CollidableGroup[] collidableGroups;
-
     public int tempItr = 0;
+
     public ArrayList<CollidableGroup> c;
 
     public volatile float
@@ -24,9 +24,30 @@ public class Zone
 
     public  volatile boolean live = true;
 
+    /*public Zone(float x, float y, float halfSquareLength, int length)
+    {
+        collidableGroups = new CollidableGroup[length];
+        this.xDisp = x;
+        this.yDisp = y;
+        xOriginal = x;
+        yOriginal = y;
+        live = true;
+        this.halfSquareLength = halfSquareLength;
+    }*/
+    public Zone(float x, float y, float halfSquareLength, ArrayList<CollidableGroup> a)
+    {
+        c = a;
+        this.xDisp = x;
+        this.yDisp = y;
+        xOriginal = x;
+        yOriginal = y;
+        live = true;
+        this.halfSquareLength = halfSquareLength;
+    }
+
     public Zone(float x, float y, float halfSquareLength)
     {
-        c = new ArrayList<>();
+        //c = new ArrayList<>();
         this.xDisp = x;
         this.yDisp = y;
         xOriginal = x;
@@ -56,17 +77,12 @@ public class Zone
     public void initCollidableGroupArray()
     {
         collidableGroups = c.toArray(new CollidableGroup[c.size()]);
+        c = null;
     }
 
     @Override
     public Zone clone()
     {
-        Zone z = new Zone(xOriginal, yOriginal, halfSquareLength);
-        z.collidableGroups = new CollidableGroup[collidableGroups.length];
-        for(int i = 0; i < collidableGroups.length; i++)
-        {
-            z.collidableGroups[i] = collidableGroups[i].clone();
-        }
-        return z;
+        return new Zone(xOriginal, yOriginal, halfSquareLength);
     }
 }
