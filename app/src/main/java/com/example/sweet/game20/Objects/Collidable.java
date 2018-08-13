@@ -13,7 +13,12 @@ public class Collidable
     public float
             cosA = 0,
             sinA = 0,
-            speed;
+            speed,
+            centerMassX = 0,
+            centerMassY = 0,
+            angleKnockback = 0,
+            posKnockbackX = 0,
+            posKnockbackY = 0;
 
     public float
             halfSquareLength,
@@ -57,7 +62,11 @@ public class Collidable
 
     public Pixel lastPixelKilled;
 
-    protected boolean restorable = false;
+    public boolean
+            restorable = false,
+            knockable = true;
+
+    public volatile boolean readyToKnockback = false;
 
     public Collidable(float x, float y, float hSL, Pixel[] p, boolean chunkDeletion, Zone[] z, CollidableGroup[] g, PixelInfo[][] iM)
     {
@@ -128,7 +137,21 @@ public class Collidable
     {
         centerX += mX;
         centerY += mY;
+        if(knockable && readyToKnockback)
+        {
+            centerX += posKnockbackX;
+            centerY += posKnockbackY;
+            angle += angleKnockback;
 
+            rotate(angle);
+            posKnockbackX = 0;
+            posKnockbackY = 0;
+            angleKnockback = 0;
+            readyToKnockback = false;
+        }
+        float tempCMX = 0;
+        float tempCMY = 0;
+        int numOutside = 0;
         for(Zone z: zones)
         {
             if (z != null)
@@ -148,7 +171,19 @@ public class Collidable
                                         infoMap[p.row][p.col].yOriginal * sinA;
                                 p.yDisp = infoMap[p.row][p.col].yOriginal * cosA -
                                         infoMap[p.row][p.col].xOriginal * sinA;
+                                /*float tempX = infoMap[p.row][p.col].xOriginal + centerMassX;
+                                float tempY = infoMap[p.row][p.col].yOriginal + centerMassY;
+                                p.xDisp = tempX * cosA +
+                                        tempY * sinA;
+                                p.yDisp = tempY * cosA -
+                                        tempX * sinA;*/
                                 groupCheck = true;
+                                if(p.state >= 2)
+                                {
+                                    tempCMX += infoMap[p.row][p.col].xOriginal;
+                                    tempCMY += infoMap[p.row][p.col].yOriginal;
+                                    numOutside++;
+                                }
                             }
                         }
                         if(groupCheck)
@@ -160,6 +195,13 @@ public class Collidable
                 }
                 z.live = zoneCheck;
             }
+        }
+        if(numOutside > 0)
+        {
+            tempCMX /= numOutside;
+            tempCMY /= numOutside;
+            centerMassX = tempCMX;
+            centerMassY = tempCMY;
         }
     }
 
@@ -173,11 +215,15 @@ public class Collidable
         {
             if (z != null)
             {
+                z.centerMassX = centerMassX;
+                z.centerMassY = centerMassY;
                 z.rotate(cosA, sinA);
                 for (CollidableGroup cG: z.collidableGroups)
                 {
                     if (cG != null)
                     {
+                        cG.centerMassX = centerMassX;
+                        cG.centerMassY = centerMassY;
                         cG.rotate(cosA, sinA);
                     }
                 }

@@ -148,6 +148,10 @@ public class CollisionThread implements Runnable
                             }
                         }
                     }
+
+
+                    entities[i].getPixelGroup().readyToKnockback = true;
+
                 }
                 else if (!entities[i].getPixelGroup().getCollidableLive() || entities[i].aiRemoveConsensus)
                 {

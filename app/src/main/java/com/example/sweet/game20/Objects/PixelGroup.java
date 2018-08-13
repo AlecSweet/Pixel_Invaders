@@ -18,6 +18,7 @@ import static android.opengl.GLES20.glBufferSubData;
 import static android.opengl.GLES20.glGenBuffers;
 import static android.opengl.GLES20.glEnableVertexAttribArray;
 import static android.opengl.GLES20.glGetAttribLocation;
+import static android.opengl.GLES20.glUniform2f;
 import static android.opengl.GLES20.glVertexAttribPointer;
 
 /**
@@ -39,7 +40,9 @@ public class  PixelGroup extends Collidable
             yDispLoc,
             uTiltAngleLocation,
             uMagLoc,
-            pointSizeLoc;
+            pointSizeLoc,
+            uCenterMassXLoc,
+            uCenterMassYLoc;
 
     private FloatBuffer cbuf;
 
@@ -121,6 +124,8 @@ public class  PixelGroup extends Collidable
 
         glUniform1f(uAngleLocation, (float)angle);
         glUniform1f(uSquareLengthLocation, halfSquareLength);
+        glUniform1f(uCenterMassXLoc, centerMassX);
+        glUniform1f(uCenterMassYLoc, centerMassY);
 
         glBindBuffer(GL_ARRAY_BUFFER, vBuffer[0]);
         glEnableVertexAttribArray(aPositionLocation);
@@ -402,6 +407,8 @@ public class  PixelGroup extends Collidable
         uTiltAngleLocation = glGetUniformLocation(shaderLocation,"tilt");
         uMagLoc = glGetUniformLocation(shaderLocation,"mag");
         pointSizeLoc = glGetUniformLocation(shaderLocation,"pointSize");
+        uCenterMassXLoc = glGetUniformLocation(shaderLocation, "centerMassX");
+        uCenterMassYLoc = glGetUniformLocation(shaderLocation, "centerMassY");
 
         initBuffers();
         glInit = true;

@@ -101,10 +101,11 @@ public class Asteroid extends Enemy
     }
 
     @Override
-    public void move(float unused, float unused1, long curFrame, float slow)
+    //public void move(float unused, float unused1, long curFrame, float slow)
+    public void move(float unused, float unused1, GlobalInfo gI)
     {
-        float tempDistX = distX * slow;
-        float tempDistY = distY * slow;
+        float tempDistX = distX * gI.timeSlow;
+        float tempDistY = distY * gI.timeSlow;
        /* if(onScreen)
         {
             if(!screenEnterToggle)
@@ -116,7 +117,7 @@ public class Asteroid extends Enemy
             }
             else
             {*/
-                enemyBody.angle += rotationSpeed * slow;
+                enemyBody.angle += rotationSpeed * gI.timeSlow;
                 rotate();
                 x += -tempDistX;
                 y += -tempDistY;

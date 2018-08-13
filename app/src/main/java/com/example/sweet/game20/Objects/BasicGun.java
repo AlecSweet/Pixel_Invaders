@@ -2,6 +2,7 @@ package com.example.sweet.game20.Objects;
 
 import android.content.Context;
 
+import com.example.sweet.game20.GlobalInfo;
 import com.example.sweet.game20.R;
 import com.example.sweet.game20.util.Constants;
 import com.example.sweet.game20.util.ImageParser;
@@ -46,10 +47,10 @@ public class BasicGun extends Gun
             return false;
     }*/
 
-    @Override
+    /*@Override
     public boolean shoot(float x, float y, float angle, long currentFrame, float slow)
     {
-        if (currentFrame > lastShotFrame + (shotFrameDelay * fireRateMod) * (1 / slow))
+        if ((currentFrame - lastShotFrame) * slow > shotFrameDelay * fireRateMod)
         {
             float arc = (numShots - 1) * .1f;
 
@@ -57,7 +58,9 @@ public class BasicGun extends Gun
             {
                 float angDisp = (((float)(i + 1) / numShots) * arc) - (arc / 2);
                 angDisp += (float)(Math.random() * spread - spread / 2);
-                bulletPool.pop().resetBullet(x, y, angle + angDisp);
+                //bulletPool.pop().resetBullet(x, y, angle + angDisp);
+                bullets[((Integer)openIndexTail.object)].resetBullet(x, y, angle + angDisp);
+                openIndexTail = openIndexTail.nextObject;
                 addShotParticles(angle, x, y);
             }
             lastShotFrame = currentFrame;
@@ -66,39 +69,64 @@ public class BasicGun extends Gun
         else
             return false;
     }
+*/
+    @Override
+    public boolean shoot(float x, float y, float angle, GlobalInfo gI)
+    {
+        if (gI.getAugmentedTimeMillis() > lastShotTime + shootDelay * fireRateMod)
+        {
+            float arc = (numShots - 1) * .1f;
 
+            for(int i = 0; i < numShots; i++)
+            {
+                float angDisp = (((float)(i + 1) / numShots) * arc) - (arc / 2);
+                angDisp += (float)(Math.random() * spread - spread / 2);
+                //bulletPool.pop().resetBullet(x, y, angle + angDisp);
+                bullets[((Integer)openIndexTail.object)].resetBullet(x, y, angle + angDisp);
+                openIndexTail = openIndexTail.nextObject;
+                addShotParticles(angle, x, y);
+            }
+            lastShotTime = gI.getAugmentedTimeMillis();
+            return true;
+        }
+        else
+            return false;
+    }
     @Override
     public void move(float slow)
     {
-        for (Bullet b: bullets)
+        /*for (Bullet b: bullets)
+        {*/
+        int l = bullets.length;
+        for (int i = 0; i < l; i++)
         {
             float centerX;
             float centerY;
-            if(b.pixelGroup.enableLocationChain)
+            if(bullets[i].pixelGroup.enableLocationChain)
             {
-                /*centerX = b.pixelGroup.locationDrawTail.x;
-                centerY = b.pixelGroup.locationDrawTail.y;*/
-                centerX = b.pixelGroup.centerX - b.cosA * .01f;
-                centerY = b.pixelGroup.centerY - b.sinA * .01f;
+                /*centerX = bullets[i].pixelGroup.locationDrawTail.x;
+                centerY = bullets[i].pixelGroup.locationDrawTail.y;*/
+                centerX = bullets[i].pixelGroup.centerX - bullets[i].cosA * .01f;
+                centerY = bullets[i].pixelGroup.centerY - bullets[i].sinA * .01f;
             }
             else
             {
-                centerX = b.pixelGroup.centerX - b.cosA * .01f;
-                centerY = b.pixelGroup.centerY - b.sinA * .01f;
+                centerX = bullets[i].pixelGroup.centerX - bullets[i].cosA * .01f;
+                centerY = bullets[i].pixelGroup.centerY - bullets[i].sinA * .01f;
             }
-            if(b.live)
+            if(bullets[i].live)
             {
-                b.move(slow);
+                bullets[i].move(slow);
                 /*for(int i = 0; i < 4; i ++)
                 {
                     masterParticleSystem.addParticle(
                             centerX, centerY,
-                            b.angle + (float) (Math.random() * .3 - .15),
-                            b.pixelGroup.pixels[0].r, b.pixelGroup.pixels[0].g, b.pixelGroup.pixels[0].b, 1f,
+                            bullets[i].angle + (float) (Math.random() * .3 - .15),
+                            bullets[i].pixelGroup.pixels[0].r, bullets[i].pixelGroup.pixels[0].g, bullets[i].pixelGroup.pixels[0].b, 1f,
                             (float)(Math.random()*.03f) + .01f, (float)(Math.random()*.003f) + .002f, 10f
                     );
                 }*/
-                for(Pixel p: b.pixelGroup.pixels)
+                for(Pixel p: bullets[i].pixelGroup.pixels)
                 {
                     //float cC = (float)(Math.random()) * .1f -.5f + 1;
                     //if (p.live && p.outside)
@@ -107,19 +135,23 @@ public class BasicGun extends Gun
                         float cC = (float)(Math.random()) * 1f + .5f;
                         masterParticleSystem.addParticle(
                                 p.xDisp + centerX, p.yDisp + centerY,
-                                -b.angle + (float)(Math.random()* .2f - 1f),
-                                b.pixelGroup.infoMap[p.row][p.col].r * cC,
-                                b.pixelGroup.infoMap[p.row][p.col].g * cC,
-                                b.pixelGroup.infoMap[p.row][p.col].b * cC,
+                                -bullets[i].angle + (float)(Math.random()* .2f - 1f),
+                                bullets[i].pixelGroup.infoMap[p.row][p.col].r * cC,
+                                bullets[i].pixelGroup.infoMap[p.row][p.col].g * cC,
+                                bullets[i].pixelGroup.infoMap[p.row][p.col].b * cC,
                                 .6f,
                                 .2f, .02f, 4f
                         );
                     }
                 }
             }
-            if(!b.live)
+            if(!bullets[i].live && bullets[i].active)
             {
-                bulletPool.add(b);
+                //bulletPool.add(b);
+                indexNodes[i].nextObject = null;
+                openIndexHead.nextObject = indexNodes[i];
+                openIndexHead = openIndexHead.nextObject;
+                bullets[i].active = false;
             }
         }
     }

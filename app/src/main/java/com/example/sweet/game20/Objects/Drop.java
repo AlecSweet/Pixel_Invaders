@@ -20,11 +20,14 @@ public class Drop
             tiltAngle = 0,
             angle;
 
-    public volatile boolean live = true;
+    public volatile boolean
+            live = true,
+            inPullRange = false;
 
     public boolean held = false;
 
     public boolean consumable;
+
 
     /*
     0: Health Drop
@@ -101,4 +104,5 @@ public class Drop
             ((GunComponent)component).gun.freeMemory();
         }
     }
+
 }

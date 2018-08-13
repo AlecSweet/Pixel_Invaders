@@ -454,15 +454,20 @@ public class GameRenderer implements Renderer
         drawBackground();
 
         glUseProgram(particleShaderProgram);
+
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, whiteTexture);
+        glUniform1i(uTextureLocation, 0);
+
         //glUniform1f(timeLocation, (float) ((System.currentTimeMillis() - globalStartTime) / 1000));
         glUniform1f(timeLocation, globalInfo.getAugmentedTimeSeconds());
         glUniform1f(xScreenShiftLocationParticle, player1.xScreenShift - player1.screenShakeX);
         glUniform1f(yScreenShiftLocationParticle, player1.yScreenShift - player1.screenShakeY);
         glUniform1f(particlePointSizeLocation, particlePointSize * 1.1f);
 
-        glActiveTexture(GL_TEXTURE0);
+        /*glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, whiteTexture);
-        glUniform1i(uTextureLocation, 0);
+        glUniform1i(uTextureLocation, 0);*/
 
         enemyParticles.draw();
         playerParticles.draw();
@@ -473,9 +478,9 @@ public class GameRenderer implements Renderer
         glUniform1f(pointSizeLocation, pointSize);
         glUniform1f(uMagLoc, 1);
 
-        glActiveTexture(GL_TEXTURE0);
+        /*glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, whiteTexture);
-        glUniform1i(uTextureLocation, 0);
+        glUniform1i(uTextureLocation, 0);*/
 
         /*for(Drop d: player1.consumableDrops)
         {
@@ -538,9 +543,9 @@ public class GameRenderer implements Renderer
         glUniform1f(yScreenShiftLocationParticle, player1.yScreenShift - player1.screenShakeY);
         glUniform1f(particlePointSizeLocation, particlePointSize * 1.1f);
 
-        glActiveTexture(GL_TEXTURE0);
+        /*glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, whiteTexture);
-        glUniform1i(uTextureLocation, 0);
+        glUniform1i(uTextureLocation, 0);*/
 
         collisionParticles.draw();
 
@@ -717,13 +722,13 @@ public class GameRenderer implements Renderer
 
     public void init()
     {
-        playerParticles = new ParticleSystem(20000, particleShaderProgram , whiteTexture, globalStartTime, globalInfo);
+        playerParticles = new ParticleSystem(10000, particleShaderProgram , whiteTexture, globalStartTime, globalInfo);
 
-        enemyParticles = new ParticleSystem(30000, particleShaderProgram, whiteTexture, globalStartTime, globalInfo);
+        enemyParticles = new ParticleSystem(20000, particleShaderProgram, whiteTexture, globalStartTime, globalInfo);
 
         enemyFactory = initEnemyFactory();
 
-        collisionParticles = new ParticleSystem(12000, particleShaderProgram, whiteTexture, globalStartTime, globalInfo);
+        collisionParticles = new ParticleSystem(9000, particleShaderProgram, whiteTexture, globalStartTime, globalInfo);
 
         collisionHandler = new CollisionHandler(collisionParticles);
 

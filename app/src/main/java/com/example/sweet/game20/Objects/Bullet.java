@@ -18,7 +18,9 @@ public class Bullet
             cosA,
             sinA;
 
-    public boolean live = true;
+    public boolean
+            live = false,
+            active = false;
 
     public PixelGroup pixelGroup;
 
@@ -28,6 +30,7 @@ public class Bullet
         pixelGroup.setEnableOrphanChunkDeletion(true);
         pixelGroup.restorable = true;
         pixelGroup.orphanChunkCheckDelay = 0;
+        pixelGroup.knockable = false;
         speed = spd;
         angle = a;
         cosA = (float)Math.cos(angle);
@@ -36,7 +39,7 @@ public class Bullet
         pixelGroup.rotate(a);
         maxDistance = mD;
         distance = 0;
-        pixelGroup.livablePercentage = .2f;
+        pixelGroup.livablePercentage = .4f;
     }
 
     public void move(float slow)
@@ -85,6 +88,7 @@ public class Bullet
         pixelGroup.rotate(a);
         distance = 0;
         live = true;
+        active = true;
     }
     /*@Override
     public Bullet clone()

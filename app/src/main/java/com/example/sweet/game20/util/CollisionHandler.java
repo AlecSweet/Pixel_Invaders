@@ -27,7 +27,11 @@ public class CollisionHandler
     {
         boolean collision = false;
         int numCheck = 0;
-
+        int numKilled = 0;
+        float tempX = 0;
+        float tempY = 0;
+        float tempX2 = 0;
+        float tempY2 = 0;
         numCheck++;
         if (Math.abs(c.getCenterX() - c2.getCenterX()) <=
                 c.getHalfSquareLength() + c2.getHalfSquareLength() &&
@@ -71,23 +75,28 @@ public class CollisionHandler
                                                         if(p2.state >= 2)
                                                         {
                                                             numCheck++;
-                                                            if (Math.abs((p.xDisp + c.getCenterX()) - (p2.xDisp + c2.getCenterX())) - .004 <=
-                                                                        Constants.PIXEL_SIZE + .008 &&
-                                                                Math.abs((p.yDisp + c.getCenterY()) - (p2.yDisp + c2.getCenterY())) - .004 <=
-                                                                        Constants.PIXEL_SIZE + .008)
+                                                            if (Math.abs((p.xDisp + c.getCenterX()) - (p2.xDisp + c2.getCenterX())) <=
+                                                                        Constants.PIXEL_SIZE + .01 &&
+                                                                Math.abs((p.yDisp + c.getCenterY()) - (p2.yDisp + c2.getCenterY())) <=
+                                                                        Constants.PIXEL_SIZE + .01)
                                                             {
                                                                 addParticleHelper(p, c);
                                                                 //p.killPixel(c.cosA, c.sinA);
                                                                 p.killPixel(c.pMap);
                                                                 c.numLivePixels--;
                                                                 c.lastPixelKilled = p;
+                                                                tempX += p.xDisp;
+                                                                tempY += p.yDisp;
 
                                                                 addParticleHelper(p2, c2);
                                                                 //p2.killPixel(c2.cosA, c2.sinA);
                                                                 p2.killPixel(c2.pMap);
                                                                 c2.numLivePixels--;
                                                                 c2.lastPixelKilled = p2;
+                                                                tempX2 += p2.xDisp;
+                                                                tempY2 += p2.yDisp;
 
+                                                                numKilled++;
                                                                 collision = true;
                                                                 break;
                                                             }
@@ -106,6 +115,48 @@ public class CollisionHandler
                             }
                         }
                     }
+                }
+            }
+
+            if(numKilled > 0)
+            {
+                if(c.knockable)
+                {
+                    float knockFactor = ((float)c2.totalPixels / (float)(c.totalPixels + c2.totalPixels));
+                    knockFactor *= .04;
+                    c.posKnockbackX += -c2.cosA * knockFactor;
+                    c.posKnockbackY += c2.sinA * knockFactor;
+
+                    float colPointX = tempX / numKilled;
+                    float colPointY = tempY / numKilled;
+                    float tX = colPointX - c.centerMassX;
+                    float tY = colPointY - c.centerMassY;
+
+                    float dist = (float)Math.sqrt(tX * tX + tY * tY);
+                    float torqueAng = (float)(Math.atan2(tY, tX) - c2.angle);
+
+                    torqueAng *= knockFactor * dist ;
+                    c.angleKnockback += torqueAng;
+                }
+
+                if(c2.knockable)
+                {
+                    float knockFactor = ((float)c.totalPixels / (float)(c.totalPixels + c2.totalPixels));
+                    knockFactor *= .04;
+                    c2.posKnockbackX += -c.cosA * knockFactor;
+                    c2.posKnockbackY += c.sinA * knockFactor;
+
+
+                    float colPointX = tempX2 / numKilled;
+                    float colPointY = tempY2 / numKilled;
+                    float tX = colPointX - c2.centerMassX;
+                    float tY = colPointY - c2.centerMassY;
+
+                    float dist = (float)Math.sqrt(tX * tX + tY * tY);
+                    float torqueAng = (float)(Math.atan2(tY, tX) - c.angle);
+
+                    torqueAng *= knockFactor * dist;
+                    c2.angleKnockback += torqueAng;
                 }
             }
         }
@@ -187,11 +238,71 @@ public class CollisionHandler
         {
             if(e.getPixelGroup().totalPixels <= e2.getPixelGroup().totalPixels)
             {
-                e.knockBack((float) Math.atan2(-cY, -cX), 1, .003f);
+                if(overlapHelper(e.getPixelGroup(), e2.getPixelGroup()))
+                {
+                    e.knockBack((float) Math.atan2(-cY, -cX), 1, .008f);
+                }
             }
         }
     }
 
+    private static boolean overlapHelper(Collidable c, Collidable c2)
+    {
+        for(Zone z: c.zones)
+        {
+            if (z.live)
+            {
+                for (Zone z2 : c2.zones)
+                {
+                    if (z2.live &&
+                        Math.abs((z.xDisp + c.getCenterX()) - (z2.xDisp + c2.getCenterX())) <=
+                                z.halfSquareLength + z2.halfSquareLength &&
+                        Math.abs((z.yDisp + c.getCenterY()) - (z2.yDisp + c2.getCenterY())) <=
+                                z.halfSquareLength + z2.halfSquareLength)
+                    {
+                        for (CollidableGroup cG : z.collidableGroups)
+                        {
+                            if(cG.live)
+                            {
+                                for (CollidableGroup cG2 : z2.collidableGroups)
+                                {
+                                    if (cG2.live &&
+                                        Math.abs((cG.xDisp + c.getCenterX()) - (cG2.xDisp + c2.getCenterX())) <=
+                                                cG.halfSquareLength + cG2.halfSquareLength &&
+                                        Math.abs((cG.yDisp + c.getCenterY()) - (cG2.yDisp + c2.getCenterY())) <=
+                                                cG.halfSquareLength + cG2.halfSquareLength)
+                                    {
+                                        for (Pixel p : cG.pixels)
+                                        {
+                                            //if (p.live && p.outside)
+                                            if(p.state >= 2)
+                                            {
+                                                for (Pixel p2 : cG2.pixels)
+                                                {
+                                                    //if (p2.live && p2.outside)
+                                                    if(p2.state >= 2)
+                                                    {
+                                                        if (Math.abs((p.xDisp + c.getCenterX()) - (p2.xDisp + c2.getCenterX())) <=
+                                                                Constants.PIXEL_SIZE + .012 &&
+                                                            Math.abs((p.yDisp + c.getCenterY()) - (p2.yDisp + c2.getCenterY())) <=
+                                                                Constants.PIXEL_SIZE + .012)
+                                                        {
+                                                            return true;
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return false;
+    }
    /* public void removeOrphanChunks(Collidable c)
     {
         int groupNumberIterator = 0;

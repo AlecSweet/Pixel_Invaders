@@ -57,7 +57,7 @@ public class Enemy extends Drawable
         dropFactory = dF;
     }
 
-    public void move(float mX, float mY, long curFrame, float slow)
+    public void move(float mX, float mY, GlobalInfo gI)
     {
         System.out.println("IN HERE");
         /*float angle = (float)Math.atan2(mY, mX);

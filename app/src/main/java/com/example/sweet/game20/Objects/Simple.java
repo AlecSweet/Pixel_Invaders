@@ -60,7 +60,8 @@ public class Simple extends Enemy
         enemyBody.setEdgeColor(.5f, 0f, .5f);
     }
 
-    public void move(float pX, float pY, long curFrame, float slow)
+    //public void move(float pX, float pY, long curFrame, float slow)
+    public void move(float pX, float pY, GlobalInfo gI)
     {
         float distanceToPlayer = VectorFunctions.getMagnitude(pX - enemyBody.centerX, pY - enemyBody.centerY);
         float angleMoving = 0f;
@@ -83,8 +84,8 @@ public class Simple extends Enemy
             angleMoving = -(float)(Math.atan2(enemyBody.centerY - pY, enemyBody.centerX - pX));
 
 
-        rotate(angleMoving , .06f, slow);
-        float distance = baseSpeed * thrusters[0].thrustPower * slow;
+        rotate(angleMoving , .06f, gI.timeSlow);
+        float distance = baseSpeed * thrusters[0].thrustPower * gI.timeSlow;
         float tempDistX = -(float)(distance * Math.cos(enemyBody.angle));
         float tempDistY = (float)(distance * Math.sin(enemyBody.angle));
 
@@ -95,11 +96,15 @@ public class Simple extends Enemy
             ratio = 0f;
             if(guns[0] != null)
             {
-                boolean t = guns[0].gun.shoot(guns[0].x + enemyBody.centerX,
+                /*boolean t = guns[0].gun.shoot(guns[0].x + enemyBody.centerX,
                         guns[0].y + enemyBody.centerY,
                         (float) enemyBody.angle + (float) Math.PI,
                         curFrame,
-                        slow);
+                        slow);*/
+                boolean t = guns[0].gun.shoot(guns[0].x + enemyBody.centerX,
+                        guns[0].y + enemyBody.centerY,
+                        (float) enemyBody.angle + (float) Math.PI,
+                        gI);
             }
         }
 
@@ -108,7 +113,7 @@ public class Simple extends Enemy
         enemyBody.move(-tempDistX, -tempDistY);
         if(guns[0] != null)
         {
-            guns[0].gun.move(slow);
+            guns[0].gun.move(gI.timeSlow);
         }
         addThrustParticles(thrusterPixels, ratio, .03f, enemyBody);
 

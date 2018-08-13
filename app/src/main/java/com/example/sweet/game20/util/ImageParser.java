@@ -30,6 +30,9 @@ public class ImageParser
 {
     public static PixelGroup parseImage(Context context, int resourceID, int lightingID, int sL)
     {
+        float cmX = 0;
+        float cmY = 0;
+        int numOutside = 0;
         PixelGroup pixelGroup;
         ArrayList<Pixel> p = new ArrayList<>();
         Bitmap bm = BitmapFactory.decodeResource(context.getResources(), resourceID);
@@ -53,10 +56,18 @@ public class ImageParser
             for (int c = 0; c < numZonesWidth; c++)
             {
                 int tempZ = c + numZonesWidth * r;
-                tempZones[tempZ] = new Zone(c * Constants.ZONE_SIZE + Constants.ZONE_SIZE / 2 - Constants.ZONE_SIZE * numZonesWidth / 2 + Constants.PIXEL_SIZE,
+                tempZones[tempZ] = new Zone(
+                        c * Constants.ZONE_SIZE + Constants.ZONE_SIZE / 2 - Constants.ZONE_SIZE * numZonesWidth / 2 + Constants.PIXEL_SIZE,
                         r * Constants.ZONE_SIZE + Constants.ZONE_SIZE / 2 - Constants.ZONE_SIZE * numZonesHeight / 2 + Constants.PIXEL_SIZE,
                         Constants.ZONE_SIZE / 2,
-                        new ArrayList<CollidableGroup>());
+                        new ArrayList<CollidableGroup>()
+                );
+                /*tempZones[tempZ] = new Zone(
+                        c * Constants.ZONE_SIZE + Constants.ZONE_SIZE / 2 - Constants.ZONE_SIZE * numZonesWidth / 2,
+                        r * Constants.ZONE_SIZE + Constants.ZONE_SIZE / 2 - Constants.ZONE_SIZE * numZonesHeight / 2,
+                        Constants.ZONE_SIZE / 2,
+                        new ArrayList<CollidableGroup>()
+                );*/
             }
         }
 
@@ -67,10 +78,18 @@ public class ImageParser
                 int tempG = c + numGroupsWidth * r;
                 int tempZ = (c / Constants.ZONE_LENGTH) + (r / Constants.ZONE_LENGTH) * numZonesWidth;
 
-                tempGroups[tempG] = new CollidableGroup(c * Constants.CELL_SIZE + Constants.CELL_SIZE / 2 - Constants.CELL_SIZE * numGroupsWidth / 2 + Constants.PIXEL_SIZE,
+                tempGroups[tempG] = new CollidableGroup(
+                        c * Constants.CELL_SIZE + Constants.CELL_SIZE / 2 - Constants.CELL_SIZE * numGroupsWidth / 2 + Constants.PIXEL_SIZE,
                         r * Constants.CELL_SIZE + Constants.CELL_SIZE / 2 - Constants.CELL_SIZE * numGroupsHeight / 2 + Constants.PIXEL_SIZE,
                         Constants.CELL_SIZE / 2,
-                        new ArrayList<Pixel>());
+                        new ArrayList<Pixel>()
+                );
+                /*tempGroups[tempG] = new CollidableGroup(
+                        c * Constants.CELL_SIZE + Constants.CELL_SIZE / 2 - Constants.CELL_SIZE * numGroupsWidth / 2,
+                        r * Constants.CELL_SIZE + Constants.CELL_SIZE / 2 - Constants.CELL_SIZE * numGroupsHeight / 2,
+                        Constants.CELL_SIZE / 2,
+                        new ArrayList<Pixel>()
+                );*/
                 tempZones[tempZ].c.add(tempGroups[tempG]);
             }
         }
@@ -161,11 +180,21 @@ public class ImageParser
                 //pix.outside = true;
                 pix.state = 2;
             }
+
+            /*if(pix.state == 2)
+            {
+                cmX += infoMapT[pix.row][pix.col].xOriginal;
+                cmY += infoMapT[pix.row][pix.col].yOriginal;
+                numOutside++;
+            }*/
             locationVA[iter] = infoMapT[pix.row][pix.col].xOriginal;
             locationVA[iter + 1] = infoMapT[pix.row][pix.col].yOriginal;
             locationVA[iter + 2] = infoMapT[pix.row][pix.col].depth;
             iter += 3;
         }
+        /*cmX /= numOutside;
+        cmY /= numOutside;*/
+        System.out.println("Center Mass: " + cmX + ", " + cmY);
 
         int halfSquareLength;
         if (bmHeight > bmWidth)

@@ -176,7 +176,7 @@ public class Player extends Drawable
                         (float)playerBody.angle,
                         new BasicGun
                                 (
-                                        ImageParser.parseImage(context, R.drawable.bullet1, R.drawable.bullet1_light, sL),
+                                        ImageParser.parseImage(context, R.drawable.simple1, R.drawable.simple_light, sL),
                                         particleSystem,
                                         100,
                                         .05f
@@ -434,15 +434,37 @@ public class Player extends Drawable
                                 }
                                 break;
                         }
-
                     }
                     else
                     {
-                        float speed = .0001f / distSquared;
-                        float dist = (float) Math.sqrt(distSquared);
-                        d.move(speed * (dX / dist), speed * (dY / dist));
+                        d.inPullRange = true;
                     }
                 }
+                else
+                {
+                    d.inPullRange = false;
+                }
+            }
+        }
+    }
+
+    public void moveConsumables()
+    {
+        for(Drop d: consumableDrops)
+        {
+            if(d!= null && d.live && d.inPullRange)
+            {
+                d.checkAlive();
+                float dX = playerBody.centerX - d.x;
+                float dY = playerBody.centerY - d.y;
+                float distSquared = dX * dX + dY * dY;
+                if(distSquared >= .0025)
+                {
+                    float speed = .0004f / distSquared;
+                    float dist = (float) Math.sqrt(distSquared);
+                    d.move(speed * (dX / dist), speed * (dY / dist));
+                }
+
             }
         }
     }
@@ -660,12 +682,17 @@ public class Player extends Drawable
         {
             if (d != null && d.component != null)
             {
-                if(((GunComponent)d.component).gun.shoot(
+                /*if(((GunComponent)d.component).gun.shoot(
                         playerBody.centerX + gunOffsets[i].x,
                         playerBody.centerY + gunOffsets[i].y,
                         shootAngle + (float) Math.PI,
                         curFrame,
-                        gI.timeSlow))
+                        gI.timeSlow))*/
+                if(((GunComponent)d.component).gun.shoot(
+                        playerBody.centerX + gunOffsets[i].x,
+                        playerBody.centerY + gunOffsets[i].y,
+                        shootAngle + (float) Math.PI,
+                        gI))
                 {
                     /*screenShakeEventsX.add(new ScreenShake(((GunComponent)d.component).gun.shakeMod,
                             240,

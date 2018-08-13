@@ -1,5 +1,6 @@
 package com.example.sweet.game20.Objects;
 
+import com.example.sweet.game20.GlobalInfo;
 import com.example.sweet.game20.util.DropFactory;
 import com.example.sweet.game20.util.VectorFunctions;
 import com.example.sweet.game20.util.Constants;
@@ -40,7 +41,8 @@ public class Carrier extends Enemy
         enemyBody.setEdgeColor(.5f, 0f, .5f);
     }
 
-    public void move(float pX, float pY, long curFrame, float slow)
+    //public void move(float pX, float pY, long curFrame, float slow)
+    public void move(float pX, float pY, GlobalInfo gI)
     {
         float distanceToPlayer = VectorFunctions.getMagnitude(pX - enemyBody.centerX, pY - enemyBody.centerY);
         float angleMoving = 0f;
@@ -63,8 +65,8 @@ public class Carrier extends Enemy
             angleMoving = -(float)(Math.atan2(enemyBody.centerY - pY, enemyBody.centerX - pX));
 
 
-        rotate(angleMoving, .0002f, slow);
-        float distance = baseSpeed * thrusters[0].thrustPower * slow;
+        rotate(angleMoving, .002f, gI.timeSlow);
+        float distance = baseSpeed * thrusters[0].thrustPower * gI.timeSlow;
         float tempDistX = -(float)(distance * Math.cos(enemyBody.angle));
         float tempDistY = (float)(distance * Math.sin(enemyBody.angle));
 

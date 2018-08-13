@@ -1,5 +1,6 @@
 package com.example.sweet.game20.Objects;
 
+import com.example.sweet.game20.GlobalInfo;
 import com.example.sweet.game20.util.Constants;
 
 import java.util.Stack;
@@ -10,7 +11,7 @@ import java.util.Stack;
 
 public abstract class Gun
 {
-    protected Stack<Bullet> bulletPool;
+    //protected Stack<Bullet> bulletPool;
 
     protected Bullet[] bullets;
 
@@ -33,6 +34,18 @@ public abstract class Gun
                 x,
                 y;
 
+    /*protected ObjectNode
+            activeTail,
+            activeHead,
+            poolHead,
+            poolTail,
+            tempObj;*/
+
+    protected ObjectNode[] indexNodes;
+    protected ObjectNode
+            openIndexTail,
+            openIndexHead;
+
     protected int numShots = 1;
 
     protected float fireRateMod = 1;
@@ -44,21 +57,37 @@ public abstract class Gun
         pixelGroupTemplate = pG;
         pixelGroupTemplate.restorable = true;
         shakeMod = (float)Math.sqrt(pixelGroupTemplate.totalPixels) * .001f + .002f;
-        bulletPool = new Stack<>();
+        //bulletPool = new Stack<>();
         shootDelay = sD;
         shotFrameDelay = (int)(shootDelay / Constants.msPerFrame);
         speed = spd;
-        int num = ((int)Math.ceil((4/(speed * 60)) * (1000/shootDelay))+1)*numShots;
+        int num = ((int)Math.ceil((4/(speed * 60)) * (1000/shootDelay))+1)*numShots + numShots;
         bullets = new Bullet[num];
+        indexNodes = new ObjectNode[num];
+
         for(int i = 0; i < num; i++)
         {
             bullets[i] = new Bullet(0, 0, 0,
                     speed, 4f, pixelGroupTemplate.clone());
-            bullets[i].live = false;
-            bulletPool.add(bullets[i]);
+            //bullets[i].live = false;
+            //bulletPool.add(bullets[i]);
+
+            indexNodes[i] = new ObjectNode(new Integer(i), null);
+            if(i >= 1)
+            {
+                openIndexHead.nextObject = indexNodes[i];
+                openIndexHead = openIndexHead.nextObject;
+            }
+            else
+            {
+                openIndexTail = indexNodes[i];
+                openIndexHead = openIndexTail;
+            }
         }
-        lastShotTime = System.currentTimeMillis();
+
+        lastShotTime = 0;
         masterParticleSystem = ps;
+
     }
 
     public void draw(double interpolation)
@@ -82,25 +111,33 @@ public abstract class Gun
 
     public void updateBulletPool()
     {
-        int num = ((int)Math.ceil((4/(speed * 60)) * (1000/shootDelay))+1)*numShots;
+        int num = ((int)Math.ceil((4/(speed * 60)) * (1000/shootDelay))+1)*numShots + numShots;
         if(num > bullets.length)
         {
             Bullet[] newBullets = new Bullet[num];
+            ObjectNode[] newNodes = new ObjectNode[num];
+
             for (int i = 0; i < num; i++)
             {
                 if(i < bullets.length)
                 {
                     newBullets[i] = bullets[i];
+                    newNodes[i] = indexNodes[i];
                 }
                 else
                 {
                     newBullets[i] = new Bullet(0, 0, 0,
                             speed, 4f, pixelGroupTemplate.clone());
-                    newBullets[i].live = false;
-                    bulletPool.add(newBullets[i]);
+                    //newBullets[i].live = false;
+                    //bulletPool.add(newBullets[i]);
+
+                    newNodes[i] = new ObjectNode(new Integer(i), null);
+                    openIndexHead.nextObject = newNodes[i];
+                    openIndexHead = openIndexHead.nextObject;
                 }
             }
             bullets = newBullets;
+            indexNodes = newNodes;
         }
     }
 
@@ -114,18 +151,23 @@ public abstract class Gun
         return false;
     }*/
 
-   public void publishLocation(long frame)
-   {
+    public void publishLocation(long frame)
+    {
        for(Bullet b: bullets)
        {
            b.pixelGroup.publishLocation(frame);
        }
-   }
-    public boolean shoot(float x, float y, float angle, long f, float slow)
+    }
+
+    /*public boolean shoot(float x, float y, float angle, long f, float slow)
+    {
+        return false;
+    }*/
+
+    public boolean shoot(float x, float y, float angle, GlobalInfo gI)
     {
         return false;
     }
-
     public Bullet[] getBullets()
     {
         return bullets;

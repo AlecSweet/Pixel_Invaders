@@ -151,6 +151,7 @@ public class AIThread implements Runnable
         }*/
 
         player1.shoot(currentFrame, globalInfo);
+        player1.moveConsumables();
         player1.moveCamera();
         player1.handleScreenShake();
         enemyActions();
@@ -175,10 +176,14 @@ public class AIThread implements Runnable
                         }
                     }
 
-                    entities[i].move(player1.getPixelGroup().getCenterX(),
+                    /*entities[i].move(player1.getPixelGroup().getCenterX(),
                             player1.getPixelGroup().getCenterY(),
                             currentFrame,
                             globalInfo.timeSlow
+                    );*/
+                    entities[i].move(player1.getPixelGroup().getCenterX(),
+                            player1.getPixelGroup().getCenterY(),
+                            globalInfo
                     );
 
                     if (entities[i].getPixelGroup().getCollidableLive())

@@ -20,7 +20,9 @@ public class Zone
     public float
             xOriginal,
             yOriginal,
-            halfSquareLength;
+            halfSquareLength,
+            centerMassX,
+            centerMassY;
 
     public  volatile boolean live = true;
 
@@ -66,6 +68,11 @@ public class Zone
     {
         xDisp = xOriginal*c + yOriginal*s;
         yDisp = yOriginal*c - xOriginal*s;
+
+        /*float tempX = xOriginal + centerMassX;
+        float tempY = yOriginal + centerMassY;
+        xDisp =  tempX*c + tempY*s;
+        yDisp = tempY*c -  tempX*s;*/
     }
 
     public void setLoc(float mX, float mY)

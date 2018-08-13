@@ -68,7 +68,7 @@ public class ScreenShake
             int lowerIndex = (int)Math.floor(mid);
             int upperIndex = lowerIndex + 1;
             float decay =  (float)((duration - timeRunning) / duration);
-            if(upperIndex >= points.length)
+            if(upperIndex >= points.length || lowerIndex < 0)
             {
                 return 0;
             }
