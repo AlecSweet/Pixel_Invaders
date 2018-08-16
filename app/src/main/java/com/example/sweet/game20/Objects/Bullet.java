@@ -1,8 +1,5 @@
 package com.example.sweet.game20.Objects;
 
-import static android.opengl.GLES20.glGetUniformLocation;
-import static android.opengl.GLES20.glUniform1f;
-
 /**
  * Created by Sweet on 3/25/2018.
  */
@@ -32,6 +29,7 @@ public class Bullet
         pixelGroup.orphanChunkCheckDelay = 0;
         pixelGroup.knockable = false;
         speed = spd;
+        pixelGroup.speed = speed;
         angle = a;
         cosA = (float)Math.cos(angle);
         sinA = (float)Math.sin(angle);
@@ -39,7 +37,7 @@ public class Bullet
         pixelGroup.rotate(a);
         maxDistance = mD;
         distance = 0;
-        pixelGroup.livablePercentage = .4f;
+        pixelGroup.livablePercentage = .1f;
     }
 
     public void move(float slow)

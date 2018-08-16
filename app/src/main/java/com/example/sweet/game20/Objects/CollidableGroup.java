@@ -49,6 +49,17 @@ public class CollidableGroup
         this.halfSquareLength = halfSquareLength;
     }
 
+    public CollidableGroup(float x, float y, float halfSquareLength, Pixel[] tP)
+    {
+        pixels = tP;
+        this.xDisp = x;
+        this.yDisp = y;
+        xOriginal = x;
+        yOriginal = y;
+        live = true;
+        this.halfSquareLength = halfSquareLength;
+    }
+
     public CollidableGroup(float x, float y, float halfSquareLength)
     {
         //p = new ArrayList<>();
@@ -91,6 +102,11 @@ public class CollidableGroup
     @Override
     public CollidableGroup clone()
     {
-        return new CollidableGroup(xOriginal, yOriginal, halfSquareLength);
+        CollidableGroup temp = new CollidableGroup(xOriginal, yOriginal, halfSquareLength, new Pixel[pixels.length]);
+        for(int i = 0; i < pixels.length; i++)
+        {
+            temp.pixels[i] = pixels[i].clone();
+        }
+        return temp;
     }
 }

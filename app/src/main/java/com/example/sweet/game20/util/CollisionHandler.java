@@ -7,7 +7,6 @@ import com.example.sweet.game20.Objects.ParticleSystem;
 import com.example.sweet.game20.Objects.Pixel;
 import com.example.sweet.game20.Objects.Zone;
 
-import java.util.ArrayList;
 /**
  * Created by Sweet on 3/26/2018.
  */
@@ -21,18 +20,230 @@ public class CollisionHandler
         collisionParticles = pS;
     }
 
-    public int[] groupSizes =  new int[30];
+    public int[] groupSizes =  new int[100];
 
     public int checkCollisions(Collidable c, Collidable c2)
     {
         boolean collision = false;
+        //boolean lastItr = false;
         int numCheck = 0;
         int numKilled = 0;
         float tempX = 0;
         float tempY = 0;
         float tempX2 = 0;
         float tempY2 = 0;
+
+        float cCenterX = c.getCenterX();
+        float cCenterY = c.getCenterY();
+
+        //float cPCenterX = c.getPrevColCenterX();
+        //float cPCenterY = c.getPrevColCenterY();
+
+        float cPCenterX = c.getPrevCenterX();
+        float cPCenterY = c.getPrevCenterY();
+        /*float cPCenterX = cCenterX;
+        float cPCenterY = cCenterY;
+        if(c.getPrevLocation() != null)
+        {
+            cPCenterX = cCenterX + c.cosA * c.speed;
+            cPCenterY = cCenterY - c.sinA * c.speed;
+        }*/
+
+        float cDistX = cCenterX - cPCenterX;
+        float cDistY = cCenterY - cPCenterY;
+        /*float cDistX = cPCenterX - cCenterX;
+        float cDistY = cPCenterY - cCenterY;*/
+        //float cMaxDist = VectorFunctions.getMagnitude(cDistX, cDistY);
+
+        float c2CenterX = c2.getCenterX();
+        float c2CenterY = c2.getCenterY();
+
+        float c2PCenterX = c2.getPrevCenterX();
+        float c2PCenterY = c2.getPrevCenterY();
+        /*float c2PCenterX = c2CenterX;
+        float c2PCenterY = c2CenterY;
+        if(c2.getPrevLocation() != null)
+        {
+            c2PCenterX = c2CenterX + c2.cosA * c2.speed;
+            c2PCenterY = c2CenterY - c2.sinA * c2.speed;
+        }*/
+        float c2DistX = c2CenterX - c2PCenterX;
+        float c2DistY = c2CenterY - c2PCenterY;
+        /*float c2DistX = c2PCenterX - c2CenterX;
+        float c2DistY = c2PCenterY - c2CenterY;*/
+        //float c2MaxDist = VectorFunctions.getMagnitude(c2DistX, c2DistY);
+        /*float cCenterX = c.getColCenterX();
+        float cCenterY = c.getColCenterY();
+        float cPCenterX = c.getPrevColCenterX();
+        float cPCenterY = c.getPrevColCenterY();
+        float cDistX = cCenterX - cPCenterX;
+        float cDistY = cCenterY - cPCenterY;
+        float cMaxDist = VectorFunctions.getMagnitude(cDistX, cDistY);
+
+        float c2CenterX = c2.getColCenterX();
+        float c2CenterY = c2.getColCenterY();
+        float c2PCenterX = c2.getPrevColCenterX();
+        float c2PCenterY = c2.getPrevColCenterY();
+        float c2DistX = c2CenterX - c2PCenterX;
+        float c2DistY = c2CenterY - c2PCenterY;
+        float c2MaxDist = VectorFunctions.getMagnitude(c2DistX, c2DistY);*/
+
         numCheck++;
+        for(float cDistBtwn = 0; cDistBtwn <= c.speed; cDistBtwn += Constants.PIXEL_SIZE/2f)
+        {
+            if(c.speed > Constants.PIXEL_SIZE)
+            {
+                float percent;
+                if (c.speed > 0)
+                {
+                    percent = cDistBtwn / c.speed;
+                }
+                else
+                {
+                    percent = 0;
+                }
+                cCenterX = cPCenterX + cDistX * percent;
+                cCenterY = cPCenterY + cDistY * percent;
+            }
+
+            for(float c2DistBtwn = 0; c2DistBtwn <= c2.speed; c2DistBtwn += Constants.PIXEL_SIZE)
+            {
+                if(c2.speed > Constants.PIXEL_SIZE)
+                {
+                    float percent;
+                    if (c2.speed > 0)
+                    {
+                        percent = c2DistBtwn / c2.speed;
+                    }
+                    else
+                    {
+                        percent = 0;
+                    }
+                    c2CenterX = c2PCenterX + c2DistX * percent;
+                    c2CenterY = c2PCenterY + c2DistY * percent;
+                }
+
+                if (Math.abs(cCenterX - c2CenterX) <=
+                        c.getHalfSquareLength() + c2.getHalfSquareLength() &&
+                    Math.abs(cCenterY - c2CenterY) <=
+                        c.getHalfSquareLength() + c2.getHalfSquareLength())
+                {
+                    boolean stillNeedsChecks = true;
+                    while(stillNeedsChecks)
+                    {
+                        stillNeedsChecks = false;
+                        for (Zone z : c.zones)
+                        {
+                            if (z.live)
+                            {
+                                for (Zone z2 : c2.zones)
+                                {
+                                    numCheck++;
+                                    if (z2.live &&
+                                            Math.abs((z.xDisp + cCenterX) - (z2.xDisp + c2CenterX)) <=
+                                                    z.halfSquareLength + z2.halfSquareLength &&
+                                            Math.abs((z.yDisp + cCenterY) - (z2.yDisp + c2CenterY)) <=
+                                                    z.halfSquareLength + z2.halfSquareLength)
+                                    {
+                                        for (CollidableGroup cG : z.collidableGroups)
+                                        {
+                                            if (cG.live)
+                                            //if(true)
+                                            {
+                                                for (CollidableGroup cG2 : z2.collidableGroups)
+                                                {
+                                                    numCheck++;
+                                                    if (cG2.live &&
+                                                            Math.abs((cG.xDisp + cCenterX) - (cG2.xDisp + c2CenterX)) <=
+                                                                    cG.halfSquareLength + cG2.halfSquareLength &&
+                                                            Math.abs((cG.yDisp + cCenterY) - (cG2.yDisp + c2CenterY)) <=
+                                                                    cG.halfSquareLength + cG2.halfSquareLength)
+                                                    {
+                                                        for (Pixel p : cG.pixels)
+                                                        {
+                                                            //if (p.live && p.outside)
+                                                            if (p.state >= 2)
+                                                            {
+                                                                for (Pixel p2 : cG2.pixels)
+                                                                {
+                                                                    //if (p2.live && p2.outside)
+                                                                    if (p2.state >= 2)
+                                                                    {
+                                                                        numCheck++;
+                                                                        if (Math.abs((p.xDisp + cCenterX) - (p2.xDisp + c2CenterX)) <=
+                                                                                Constants.PIXEL_SIZE + .001 &&
+                                                                            Math.abs((p.yDisp + cCenterY) - (p2.yDisp + c2CenterY)) <=
+                                                                                Constants.PIXEL_SIZE + .001)
+                                                                        {
+                                                                            addParticleHelper(p, c, cCenterX, cCenterY);
+                                                                            //p.killPixel(c.cosA, c.sinA);
+                                                                            p.killPixel(c.pMap);
+                                                                            c.numLivePixels--;
+                                                                            c.lastPixelKilled = p;
+                                                                            tempX += p.xDisp;
+                                                                            tempY += p.yDisp;
+
+                                                                            addParticleHelper(p2, c2, c2CenterX, c2CenterY);
+                                                                            //p2.killPixel(c2.cosA, c2.sinA);
+                                                                            p2.killPixel(c2.pMap);
+                                                                            c2.numLivePixels--;
+                                                                            c2.lastPixelKilled = p2;
+                                                                            tempX2 += p2.xDisp;
+                                                                            tempY2 += p2.yDisp;
+
+                                                                            numKilled++;
+                                                                            collision = true;
+                                                                            stillNeedsChecks = true;
+                                                                            break;
+                                                                        }
+                                                                    }
+                                                                    //if (!p.live)
+                                                                    if (p.state == 0)
+                                                                    {
+                                                                        break;
+                                                                    }
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                /*if(lastItr)
+                {
+                    lastItr = false;
+                    break;
+                }
+
+                c2DistBtwn += Constants.MAX_DIST_JUMP;
+                if(c2DistBtwn > c2MaxDist)
+                {
+                    c2DistBtwn = c2MaxDist;
+                    lastItr = true;
+                }*/
+            }
+
+
+            /*if(lastItr)
+            {
+                break;
+            }
+
+            cDistBtwn += Constants.MAX_DIST_JUMP;
+            if(cDistBtwn > cMaxDist)
+            {
+                cDistBtwn = cMaxDist;
+                lastItr = true;
+            }*/
+        }
+        /*numCheck++;
         if (Math.abs(c.getCenterX() - c2.getCenterX()) <=
                 c.getHalfSquareLength() + c2.getHalfSquareLength() &&
             Math.abs(c.getCenterY() - c2.getCenterY()) <=
@@ -54,6 +265,7 @@ public class CollisionHandler
                             for (CollidableGroup cG : z.collidableGroups)
                             {
                                 if(cG.live)
+                                //if(true)
                                 {
                                     for (CollidableGroup cG2 : z2.collidableGroups)
                                     {
@@ -116,50 +328,74 @@ public class CollisionHandler
                         }
                     }
                 }
-            }
+            }*/
 
             if(numKilled > 0)
             {
                 if(c.knockable)
                 {
-                    float knockFactor = ((float)c2.totalPixels / (float)(c.totalPixels + c2.totalPixels));
-                    knockFactor *= .04;
+                    float knockFactor = ((float)c2.totalPixels / (float)(c.totalPixels + c2.totalPixels))* c2.speed;
                     c.posKnockbackX += -c2.cosA * knockFactor;
                     c.posKnockbackY += c2.sinA * knockFactor;
+                    c.pixelsKilled += numKilled;
 
                     float colPointX = tempX / numKilled;
                     float colPointY = tempY / numKilled;
+
                     float tX = colPointX - c.centerMassX;
                     float tY = colPointY - c.centerMassY;
+                    //float tX = c.centerMassX - colPointX;
+                    //float tY = c.centerMassY - colPointY;
 
                     float dist = (float)Math.sqrt(tX * tX + tY * tY);
-                    float torqueAng = (float)(Math.atan2(tY, tX) - c2.angle);
+                    float torqueAng = (float)Math.atan2(tY, tX);
+                    if(torqueAng < 0)
+                    {
+                        torqueAng += Constants.twoPI;
+                    }
+                    torqueAng -= c2.angle;
+                    //torqueAng = (float)((torqueAng + Math.PI) % (Math.PI * 2) - Math.PI);
+                    //System.out.println(torqueAng);
+                    torqueAng = (float)Math.sin(torqueAng);
 
-                    torqueAng *= knockFactor * dist ;
+                    torqueAng *= knockFactor * dist * 30f;
                     c.angleKnockback += torqueAng;
                 }
 
                 if(c2.knockable)
                 {
-                    float knockFactor = ((float)c.totalPixels / (float)(c.totalPixels + c2.totalPixels));
-                    knockFactor *= .04;
+                    float knockFactor = ((float)c.totalPixels / (float)(c.totalPixels + c2.totalPixels)) * c.speed;
                     c2.posKnockbackX += -c.cosA * knockFactor;
                     c2.posKnockbackY += c.sinA * knockFactor;
-
+                    c2.pixelsKilled += numKilled;
 
                     float colPointX = tempX2 / numKilled;
                     float colPointY = tempY2 / numKilled;
+
                     float tX = colPointX - c2.centerMassX;
                     float tY = colPointY - c2.centerMassY;
 
-                    float dist = (float)Math.sqrt(tX * tX + tY * tY);
-                    float torqueAng = (float)(Math.atan2(tY, tX) - c.angle);
+                    /*float tX = c2.centerMassX - colPointX;
+                    float tY = c2.centerMassY - colPointY;*/
 
-                    torqueAng *= knockFactor * dist;
+                    float dist = (float)Math.sqrt(tX * tX + tY * tY);
+                    float torqueAng = (float)Math.atan2(tY, tX);
+                    if(torqueAng < 0)
+                    {
+                        torqueAng += Constants.twoPI;
+                    }
+                    //System.out.println(torqueAng + " - " + c.angle + " = " + (torqueAng - c.angle));
+                    torqueAng -= c.angle;
+                    //torqueAng = (float)((torqueAng + Math.PI) % (Math.PI * 2) - Math.PI);
+                    //System.out.println(torqueAng);
+                    torqueAng = (float)Math.sin(torqueAng);
+
+                    torqueAng *= knockFactor * dist * 30f;
+                    System.out.println(torqueAng);
                     c2.angleKnockback += torqueAng;
                 }
             }
-        }
+        //}
 
         /*if(collision)
         {
@@ -272,7 +508,7 @@ public class CollisionHandler
                                         Math.abs((cG.yDisp + c.getCenterY()) - (cG2.yDisp + c2.getCenterY())) <=
                                                 cG.halfSquareLength + cG2.halfSquareLength)
                                     {
-                                        for (Pixel p : cG.pixels)
+                                        /*for (Pixel p : cG.pixels)
                                         {
                                             //if (p.live && p.outside)
                                             if(p.state >= 2)
@@ -292,7 +528,8 @@ public class CollisionHandler
                                                     }
                                                 }
                                             }
-                                        }
+                                        }*/
+                                        return true;
                                     }
                                 }
                             }
@@ -446,6 +683,7 @@ public class CollisionHandler
                 addParticleHelper(p, c);
                 p.killPixel(c.pMap);
                 c.numLivePixels--;
+                c.pixelsKilled++;
             }
         }
     }
@@ -494,6 +732,7 @@ public class CollisionHandler
                 if (p.groupFlag != -1 && groupSizes[p.groupFlag] < highestSize)
                 {
                     p.killPixel(c.pMap);
+                    c.pixelsKilled++;
                     c.numLivePixels--;
                     addParticleHelper(p, c);
                 }
@@ -508,6 +747,7 @@ public class CollisionHandler
                 if(p.state >= 1)
                 {
                     p.killPixel(c.pMap);
+                    c.pixelsKilled++;
                     c.numLivePixels--;
                     addParticleHelper(p, c);
                 }
@@ -555,6 +795,23 @@ public class CollisionHandler
         }
 
         return 1 + total;
+    }
+
+    private void addParticleHelper(Pixel p, Collidable c, float centerX, float centerY)
+    {
+        float angle = (float)(Math.atan2(p.yDisp, p.xDisp) + Math.random() * .2 - .1);
+        collisionParticles.addParticle(
+                p.xDisp + centerX,
+                p.yDisp + centerY,
+                angle,
+                c.infoMap[p.row][p.col].r,
+                c.infoMap[p.row][p.col].g,
+                c.infoMap[p.row][p.col].b,
+                2f,
+                (float)(Math.random())+.1f,
+                (float)(Math.random()*.5)+.01f,
+                (float)(Math.random()*40)-20
+        );
     }
 
     private void addParticleHelper(Pixel p, Collidable c)

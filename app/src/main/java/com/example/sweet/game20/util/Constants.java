@@ -10,6 +10,8 @@ public class Constants
 
     public static final float PIXEL_SIZE = .007f;
 
+    public static final float MAX_DIST_JUMP = PIXEL_SIZE * 1.4f;
+
     public static final float twoPI = (float)(2*Math.PI);
 
     public static final float CELL_SIZE = .028f;

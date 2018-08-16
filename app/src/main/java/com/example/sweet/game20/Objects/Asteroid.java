@@ -4,8 +4,6 @@ import com.example.sweet.game20.GlobalInfo;
 import com.example.sweet.game20.util.Constants;
 import com.example.sweet.game20.util.DropFactory;
 
-import static android.opengl.GLES20.glUniform1f;
-
 /**
  * Created by Sweet on 6/6/2018.
  */
@@ -28,7 +26,7 @@ public class Asteroid extends Enemy
         super(p, ps, dF);
         guns = null;
         thrusters = null;
-        enemyBody.angle = 3.14;
+        //enemyBody.angle = 3.14;
         enemyBody.rotate(enemyBody.angle);
         baseSpeed = .005f;
         p.speed = baseSpeed;
@@ -91,11 +89,18 @@ public class Asteroid extends Enemy
                     }
                     break;
         }
-        rotationSpeed = (float)(Math.random()*.06);
+        rotationSpeed = (float)(Math.random()*.009)-.0045f;
+
         distX = (float)(baseSpeed * Math.cos(travelAngle));
         distY = (float)(baseSpeed * Math.sin(travelAngle));
+
+        /*enemyBody.setLoc((float)(Math.random()*2-1),(float)(Math.random()*2-1));
+        distX = 0;
+        distY = 0;*/
+
         x = enemyBody.centerX;
         y = enemyBody.centerY;
+        enemyBody.speed = baseSpeed;
         //enemyBody.resetLocationHistory(x, y);
         //enemyBody.setLoc(0f,0f);
     }
@@ -106,7 +111,7 @@ public class Asteroid extends Enemy
     {
         float tempDistX = distX * gI.timeSlow;
         float tempDistY = distY * gI.timeSlow;
-       /* if(onScreen)
+        if(onScreen)
         {
             if(!screenEnterToggle)
             {
@@ -116,13 +121,13 @@ public class Asteroid extends Enemy
                 enemyBody.resetLocationHistory(x, y);
             }
             else
-            {*/
+            {
                 enemyBody.angle += rotationSpeed * gI.timeSlow;
-                rotate();
+                //rotate();
                 x += -tempDistX;
                 y += -tempDistY;
                 enemyBody.move(-tempDistX, -tempDistY);
-       /*     }
+            }
         }
         else
         {
@@ -130,10 +135,10 @@ public class Asteroid extends Enemy
             {
                 screenEnterToggle = false;
             }
-            enemyBody.angle += rotationSpeed * slow;
+            enemyBody.angle += rotationSpeed * gI.timeSlow;
             x += -tempDistX;
             y += -tempDistY;
-        }*/
+        }
 
         if (x > xbound + .02f ||
                 x < -xbound - .02f ||

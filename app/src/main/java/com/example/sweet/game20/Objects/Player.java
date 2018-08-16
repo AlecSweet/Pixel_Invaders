@@ -11,12 +11,10 @@ import com.example.sweet.game20.R;
 import com.example.sweet.game20.util.Constants;
 import com.example.sweet.game20.util.DropFactory;
 import com.example.sweet.game20.util.ImageParser;
-import com.example.sweet.game20.util.ScreenShake;
 import com.example.sweet.game20.util.VectorFunctions;
 
 import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.Iterator;
 
 public class Player extends Drawable
 {
@@ -176,10 +174,10 @@ public class Player extends Drawable
                         (float)playerBody.angle,
                         new BasicGun
                                 (
-                                        ImageParser.parseImage(context, R.drawable.simple1, R.drawable.simple_light, sL),
+                                        ImageParser.parseImage(context, R.drawable.bullet1, R.drawable.bullet1_light, sL),
                                         particleSystem,
                                         100,
-                                        .05f
+                                        .4f
                                 ),
                         particleSystem
                 )
@@ -677,6 +675,12 @@ public class Player extends Drawable
     public void shoot(float sX, float sY, long curFrame, GlobalInfo gI)
     {
         float shootAngle = (float) (Math.atan2(sY, sX));
+
+/*        if(shootAngle < 0)
+        {
+            shootAngle += Constants.twoPI;
+        }*/
+
         int i = 0;
         for(Drop d: gunDrops)
         {

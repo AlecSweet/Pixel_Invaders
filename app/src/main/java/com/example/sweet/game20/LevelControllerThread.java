@@ -116,17 +116,21 @@ public class LevelControllerThread implements Runnable
 
             switch((int)(Math.random()*5.99))
             {
-                case 0: enemiesToAdd.add((Asteroid)enemyFactory.getNewEnemy(ASTEROID_GREY_TINY)); break;
-                case 1: enemiesToAdd.add((Asteroid)enemyFactory.getNewEnemy(ASTEROID_GREY_SMALL)); break;
-                case 2: enemiesToAdd.add((Asteroid)enemyFactory.getNewEnemy(ASTEROID_GREY_TINY)); break;
-                case 3: enemiesToAdd.add((Asteroid)enemyFactory.getNewEnemy(ASTEROID_RED_SMALL)); break;
-                case 4: enemiesToAdd.add((Asteroid)enemyFactory.getNewEnemy(ASTEROID_RED_TINY)); break;
-                case 5: enemiesToAdd.add((Asteroid)enemyFactory.getNewEnemy(ASTEROID_RED_MEDIUM)); break;
+                case 0: enemiesToAdd.add(enemyFactory.getNewEnemy(ASTEROID_GREY_TINY)); break;
+                case 1: enemiesToAdd.add(enemyFactory.getNewEnemy(ASTEROID_GREY_SMALL)); break;
+                case 2: enemiesToAdd.add(enemyFactory.getNewEnemy(ASTEROID_GREY_TINY)); break;
+                case 3: enemiesToAdd.add(enemyFactory.getNewEnemy(ASTEROID_RED_SMALL)); break;
+                case 4: enemiesToAdd.add(enemyFactory.getNewEnemy(ASTEROID_RED_TINY)); break;
+                case 5: enemiesToAdd.add(enemyFactory.getNewEnemy(ASTEROID_RED_MEDIUM)); break;
             }
 
             if (!spawnonce)
             {
                 enemiesToAdd.add(enemyFactory.getNewEnemy(CARRIER));
+                /*enemiesToAdd.add(enemyFactory.getNewEnemy(ASTEROID_RED_MEDIUM));
+                enemiesToAdd.add(enemyFactory.getNewEnemy(ASTEROID_GREY_MEDIUM));
+                enemiesToAdd.add(enemyFactory.getNewEnemy(ASTEROID_RED_MEDIUM));
+                enemiesToAdd.add(enemyFactory.getNewEnemy(ASTEROID_RED_MEDIUM));*/
             }
             //distributeEnemy(a);
             //int index = openEntityIndices.pop();

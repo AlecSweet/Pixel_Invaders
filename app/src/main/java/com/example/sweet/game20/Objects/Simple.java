@@ -55,6 +55,7 @@ public class Simple extends Enemy
         enemyBody.rotate(enemyBody.angle);
 
         baseSpeed = .005f;
+        enemyBody.speed = baseSpeed;
         p.speed = baseSpeed;
 
         enemyBody.setEdgeColor(.5f, 0f, .5f);

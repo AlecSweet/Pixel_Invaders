@@ -189,9 +189,9 @@ public class AIThread implements Runnable
                     if (entities[i].getPixelGroup().getCollidableLive())
                     {
                         if (Math.abs(entities[i].getX() - player1.xScreenShift) * globalInfo.getScaleX() <=
-                                1 + entities[i].getPixelGroup().getHalfSquareLength() * 2 &&
+                                1 + entities[i].getPixelGroup().getHalfSquareLength() * 3 &&
                                 Math.abs(entities[i].getY() - player1.yScreenShift) * globalInfo.getScaleY() <=
-                                1 + entities[i].getPixelGroup().getHalfSquareLength() * 2)
+                                1 + entities[i].getPixelGroup().getHalfSquareLength() * 3)
                         {
                             entities[i].onScreen = true;
                         }
@@ -199,6 +199,21 @@ public class AIThread implements Runnable
                         {
                             entities[i].onScreen = false;
                         }
+                    }
+
+                    if(entities[i].getPixelGroup().readyToScreenShake && entities[i].getPixelGroup().pixelsKilled > 0)
+                    {
+                        player1.shakeEngine.addShake(
+                                (float)(.002f * Math.sqrt(entities[i].getPixelGroup().pixelsKilled)),
+                                120,
+                                500
+                        );
+                        entities[i].getPixelGroup().pixelsKilled = 0;
+                        entities[i].getPixelGroup().readyToScreenShake = false;
+                    }
+                    else
+                    {
+                        entities[i].getPixelGroup().readyToScreenShake = false;
                     }
                     //entities[i].move(0, 0);
                 }

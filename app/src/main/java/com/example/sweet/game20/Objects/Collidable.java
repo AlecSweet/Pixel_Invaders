@@ -20,6 +20,8 @@ public class Collidable
             posKnockbackX = 0,
             posKnockbackY = 0;
 
+    public volatile int pixelsKilled = 0;
+
     public float
             halfSquareLength,
             livablePercentage = .5f,
@@ -38,9 +40,8 @@ public class Collidable
     protected LocationHistory
             locationHead,
             locationDrawTail,
-            locationCollisionTail;
-            //locationPoolHead,
-            //locationPoolTail;
+            locationCollisionTail,
+            prevColLoc;
 
     protected boolean
             collidableLive,
@@ -66,7 +67,9 @@ public class Collidable
             restorable = false,
             knockable = true;
 
-    public volatile boolean readyToKnockback = false;
+    public volatile boolean
+            readyToKnockback = false,
+            readyToScreenShake = false;
 
     public Collidable(float x, float y, float hSL, Pixel[] p, boolean chunkDeletion, Zone[] z, CollidableGroup[] g, PixelInfo[][] iM)
     {
@@ -97,6 +100,36 @@ public class Collidable
         locationHead = locationDrawTail;
     }
 
+    public Collidable(float x, float y, float hSL, Pixel[] p, boolean chunkDeletion, Zone[] z, PixelInfo[][] iM, Pixel[][] pM)
+    {
+        centerX = x;
+        centerY = y;
+
+        halfSquareLength = hSL;
+        pixels = p;
+        pMap = pM;
+        infoMap = iM;
+        totalPixels = pixels.length;
+        numLivePixels = totalPixels;
+        enableOrphanChunkDeletion = chunkDeletion;
+        zones = z;
+        collidableLive = true;
+        needsUpdate = false;
+        lastOrphanChunkCheck = System.currentTimeMillis();
+
+        locationDrawTail = new LocationHistory(4f, 4f);
+        locationCollisionTail = locationDrawTail;
+        locationHead = locationDrawTail;
+        for(int i = 0; i < 9; i++)
+        {
+            locationHead.nextLocation = new LocationHistory(4f,4f);
+            locationHead = locationHead.nextLocation;
+        }
+
+        locationHead.nextLocation = locationDrawTail;
+        locationHead = locationDrawTail;
+    }
+
     public Collidable(float x, float y, float hSL, Pixel[] p, boolean chunkDeletion, Zone[] z, PixelInfo[][] iM)
     {
         centerX = x;
@@ -104,6 +137,7 @@ public class Collidable
 
         halfSquareLength = hSL;
         pixels = p;
+        //pMap = pM;
         infoMap = iM;
         totalPixels = pixels.length;
         numLivePixels = totalPixels;
@@ -128,9 +162,19 @@ public class Collidable
 
     public void resetLocationHistory(float x, float y)
     {
-        locationHead.x = x;
-        locationHead.y = y;
+        prevColLoc = locationHead;
+        do{
+            prevColLoc = prevColLoc.nextLocation;
+            prevColLoc.setLocation(x, y);
+            prevColLoc.setPrevLocation(x, y);
+        } while(prevColLoc != locationHead);
+
+        locationHead.setLocation(x, y);
+        locationHead.setPrevLocation(x, y);
+
         locationDrawTail = locationHead;
+        prevColLoc = locationHead;
+        locationCollisionTail = locationHead;
     }
 
     public void move(float mX, float mY)
@@ -348,17 +392,52 @@ public class Collidable
             return centerY;
         }
     }
-    
+
+    public float getPrevCenterX()
+    {
+        if(enableLocationChain)
+        {
+            return locationCollisionTail.prevX;
+        }
+        else
+        {
+            return centerX;
+        }
+    }
+
+    public float getPrevCenterY()
+    {
+        if(enableLocationChain)
+        {
+            return locationCollisionTail.prevY;
+        }
+        else
+        {
+            return centerY;
+        }
+    }
+
     public long consumeCollisionLocation(long currentFrame)
     {
         if(locationCollisionTail.nextLocation != null &&
                 locationCollisionTail.nextLocation.readyToBeConsumed &&
                 locationCollisionTail.frame < currentFrame)
         {
+            prevColLoc = locationCollisionTail;
+            //locationCollisionTail.collisionDone = true;
             locationCollisionTail = locationCollisionTail.nextLocation;
         }
 
         return locationCollisionTail.frame;
+
+        /*if(locationCollisionTail.nextLocation.nextLocation.readyToBeConsumed &&
+                locationCollisionTail.nextLocation.frame < currentFrame)
+        {
+            locationCollisionTail = locationCollisionTail.nextLocation;
+        }
+
+        return locationCollisionTail.frame;*/
+
         /*f(enableLocationChain)
         {
             if(locationCollisionTail.nextLocation != null && locationCollisionTail.nextLocation.readyToBeConsumed)
@@ -378,11 +457,17 @@ public class Collidable
         }*/
     }
 
+    public LocationHistory getPrevLocation()
+    {
+        return prevColLoc;
+    }
+
     public void publishLocation(long frame)
     {
         if(enableLocationChain)
         {
             locationHead.nextLocation.setLocation(centerX,centerY);
+            locationHead.nextLocation.setPrevLocation(locationHead.x, locationHead.y);
             locationHead.nextLocation.frame = frame;
             LocationHistory prev = locationHead;
             locationHead = locationHead.nextLocation;

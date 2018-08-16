@@ -57,8 +57,8 @@ public class ImageParser
             {
                 int tempZ = c + numZonesWidth * r;
                 tempZones[tempZ] = new Zone(
-                        c * Constants.ZONE_SIZE + Constants.ZONE_SIZE / 2 - Constants.ZONE_SIZE * numZonesWidth / 2 + Constants.PIXEL_SIZE,
-                        r * Constants.ZONE_SIZE + Constants.ZONE_SIZE / 2 - Constants.ZONE_SIZE * numZonesHeight / 2 + Constants.PIXEL_SIZE,
+                        c * Constants.ZONE_SIZE + Constants.ZONE_SIZE / 2 - Constants.ZONE_SIZE * (float)numZonesWidth / 2f + Constants.PIXEL_SIZE,
+                        r * Constants.ZONE_SIZE + Constants.ZONE_SIZE / 2 - Constants.ZONE_SIZE * (float)numZonesHeight / 2f + Constants.PIXEL_SIZE,
                         Constants.ZONE_SIZE / 2,
                         new ArrayList<CollidableGroup>()
                 );
@@ -79,8 +79,8 @@ public class ImageParser
                 int tempZ = (c / Constants.ZONE_LENGTH) + (r / Constants.ZONE_LENGTH) * numZonesWidth;
 
                 tempGroups[tempG] = new CollidableGroup(
-                        c * Constants.CELL_SIZE + Constants.CELL_SIZE / 2 - Constants.CELL_SIZE * numGroupsWidth / 2 + Constants.PIXEL_SIZE,
-                        r * Constants.CELL_SIZE + Constants.CELL_SIZE / 2 - Constants.CELL_SIZE * numGroupsHeight / 2 + Constants.PIXEL_SIZE,
+                        c * Constants.CELL_SIZE + Constants.CELL_SIZE / 2 - Constants.CELL_SIZE * (float)numGroupsWidth / 2f + Constants.PIXEL_SIZE,
+                        r * Constants.CELL_SIZE + Constants.CELL_SIZE / 2 - Constants.CELL_SIZE * (float)numGroupsHeight / 2f + Constants.PIXEL_SIZE,
                         Constants.CELL_SIZE / 2,
                         new ArrayList<Pixel>()
                 );
@@ -103,17 +103,12 @@ public class ImageParser
                 if (Color.alpha(pixelColor) > 0)
                 {
                     Pixel temp = new Pixel(r + 1, c + 1);
-                   /* temp.r = (float) Color.red(pixelColor) / 255f;
-                    temp.g = (float) Color.green(pixelColor) / 255f;
-                    temp.b = (float) Color.blue(pixelColor) / 255f;
-                    temp.a = (float) Color.alpha(pixelColor) / 255f;
-                    temp.depth = (float) Color.alpha(lightFactor) / 255f;*/
                     temp.row = r + 1;
                     temp.col = c + 1;
                     p.add(temp);
                     PixelInfo pI = new PixelInfo(
-                            ((c + 1) - (float)bmWidth / 2) * Constants.PIXEL_SIZE,
-                            ((r + 1) - (float)bmHeight / 2) * Constants.PIXEL_SIZE,
+                            ((c) - (float)bmWidth / 2f) * Constants.PIXEL_SIZE,
+                            ((r) - (float)bmHeight / 2f) * Constants.PIXEL_SIZE,
                             (float) Color.alpha(lightFactor) / 255f,
                             (float) Color.red(pixelColor) / 255f,
                             (float) Color.green(pixelColor) / 255f,
@@ -192,28 +187,28 @@ public class ImageParser
             locationVA[iter + 2] = infoMapT[pix.row][pix.col].depth;
             iter += 3;
         }
-        /*cmX /= numOutside;
-        cmY /= numOutside;*/
-        System.out.println("Center Mass: " + cmX + ", " + cmY);
 
-        int halfSquareLength;
+
+        float halfSquareLength;
         if (bmHeight > bmWidth)
         {
-            halfSquareLength = bmHeight / 2;
-        } else
-        {
-            halfSquareLength = bmWidth / 2;
+            halfSquareLength = (float)bmHeight / 2f * Constants.PIXEL_SIZE;
         }
+        else
+        {
+            halfSquareLength = (float)bmWidth / 2f * Constants.PIXEL_SIZE;
+        }
+        halfSquareLength *= 1.4;
 
         for(CollidableGroup cG: tempGroups)
         {
-            cG.halfSquareLength += Constants.PIXEL_SIZE;
+            cG.halfSquareLength *= 1.4;
             cG.initPixelArray();
         }
 
         for(Zone z: tempZones)
         {
-            z.halfSquareLength += Constants.PIXEL_SIZE * 3;
+            z.halfSquareLength *= 1.4;
             z.initCollidableGroupArray();
         }
 
@@ -233,7 +228,7 @@ public class ImageParser
 
         pixelGroup = new PixelGroup(
                 pixels,
-                (float) halfSquareLength * Constants.PIXEL_SIZE + Constants.PIXEL_SIZE,
+                halfSquareLength,
                 tempZones,
                 tempGroups,
                 sL,

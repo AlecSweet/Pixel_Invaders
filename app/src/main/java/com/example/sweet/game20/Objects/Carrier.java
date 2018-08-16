@@ -37,6 +37,7 @@ public class Carrier extends Enemy
         //enemyBody.angle = 3.14;
         enemyBody.rotate(enemyBody.angle);
         baseSpeed = .0002f;
+        enemyBody.speed = baseSpeed;
         hasGun = false;
         enemyBody.setEdgeColor(.5f, 0f, .5f);
     }

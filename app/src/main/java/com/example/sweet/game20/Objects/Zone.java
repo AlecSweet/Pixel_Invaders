@@ -47,6 +47,17 @@ public class Zone
         this.halfSquareLength = halfSquareLength;
     }
 
+    public Zone(float x, float y, float halfSquareLength, CollidableGroup[] c)
+    {
+        collidableGroups = c;
+        this.xDisp = x;
+        this.yDisp = y;
+        xOriginal = x;
+        yOriginal = y;
+        live = true;
+        this.halfSquareLength = halfSquareLength;
+    }
+
     public Zone(float x, float y, float halfSquareLength)
     {
         //c = new ArrayList<>();
@@ -90,6 +101,11 @@ public class Zone
     @Override
     public Zone clone()
     {
-        return new Zone(xOriginal, yOriginal, halfSquareLength);
+        Zone temp = new Zone(xOriginal, yOriginal, halfSquareLength, new CollidableGroup[collidableGroups.length]);
+        for(int i = 0; i < collidableGroups.length; i++)
+        {
+            temp.collidableGroups[i] = collidableGroups[i].clone();
+        }
+        return temp;
     }
 }

@@ -6,9 +6,6 @@ import com.example.sweet.game20.Objects.Enemy;
 import com.example.sweet.game20.Objects.GunComponent;
 import com.example.sweet.game20.Objects.Player;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-
 public class CollisionThread implements Runnable
 {
     public Player player1;
@@ -126,6 +123,7 @@ public class CollisionThread implements Runnable
                                 if (b.live)
                                 {
                                     collisionHandler.checkCollisions(b.pixelGroup, entities[i].getPixelGroup());
+                                    //collisionHandler.checkCollisions(entities[i].getPixelGroup(), b.pixelGroup);
                                 }
                             }
                         }
@@ -148,10 +146,6 @@ public class CollisionThread implements Runnable
                             }
                         }
                     }
-
-
-                    entities[i].getPixelGroup().readyToKnockback = true;
-
                 }
                 else if (!entities[i].getPixelGroup().getCollidableLive() || entities[i].aiRemoveConsensus)
                 {
@@ -190,6 +184,9 @@ public class CollisionThread implements Runnable
                     if (b.live)
                     {
                         checkLowestHelper(b.pixelGroup.consumeCollisionLocation(frameRequest));
+                        b.live = b.pixelGroup.getCollidableLive();
+                        /*b.pixelGroup.readyToKnockback = true;
+                        b.pixelGroup.readyToScreenShake = true;*/
                     }
                 }
             }
@@ -212,11 +209,16 @@ public class CollisionThread implements Runnable
                                 if (b.live)
                                 {
                                     checkLowestHelper(b.pixelGroup.consumeCollisionLocation(frameRequest));
+                                    b.live = b.pixelGroup.getCollidableLive();
+                                    /*b.pixelGroup.readyToKnockback = true;
+                                    b.pixelGroup.readyToScreenShake = true;*/
                                 }
                             }
                         }
                     }
                 }
+                e.getPixelGroup().readyToKnockback = true;
+                e.getPixelGroup().readyToScreenShake = true;
             }
         }
     }

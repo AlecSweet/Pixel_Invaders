@@ -6,12 +6,17 @@ package com.example.sweet.game20.Objects;
 
 public class LocationHistory
 {
-    public float x, y;
+    public float
+            x,
+            y,
+            prevX,
+            prevY;
 
     public long frame;
 
     public volatile boolean
             readyToBeConsumed = false;
+            //collisionDone = false;
 
     public LocationHistory nextLocation;
 
@@ -26,6 +31,15 @@ public class LocationHistory
         this.x = x;
         this.y = y;
         readyToBeConsumed = false;
+        //collisionDone = false;
+        //uiConsumed = false;
+        //collisionConsumed = false;
+    }
+
+    public void setPrevLocation(float x, float y)
+    {
+        prevX = x;
+        prevY = y;
         //uiConsumed = false;
         //collisionConsumed = false;
     }
