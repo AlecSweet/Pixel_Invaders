@@ -174,7 +174,8 @@ public class Player extends Drawable
                         (float)playerBody.angle,
                         new BasicGun
                                 (
-                                        ImageParser.parseImage(context, R.drawable.bullet1, R.drawable.bullet1_light, sL),
+                                        //ImageParser.parseImage(context, R.drawable.bullet1, R.drawable.bullet1_light, sL),
+                                        ImageParser.parseImage(context, R.drawable.sp, R.drawable.sp, sL),
                                         particleSystem,
                                         100,
                                         .4f

@@ -15,7 +15,11 @@ public class PixelInfo
             b,
             a;
 
-    public PixelInfo(float x, float y, float d, float r, float g, float b, float a)
+    public int
+            index,
+            originalState = 1;
+
+    public PixelInfo(float x, float y, float d, float r, float g, float b, float a, int i)
     {
         xOriginal = x;
         yOriginal = y;
@@ -24,5 +28,6 @@ public class PixelInfo
         this.g = g;
         this.b = b;
         this.a = a;
+        index = i;
     }
 }

@@ -519,6 +519,63 @@ public class  PixelGroup extends Collidable
         Pixel[] pArr = new Pixel[pixels.length];
         Pixel[][] cloneMap = new Pixel[pMap.length][pMap[0].length];
 
+        Zone[] tempZones = new Zone[zones.length];
+        for(int i = 0; i < zones.length; i++)
+        {
+            tempZones[i] = zones[i].clone();
+        }
+
+        for(Zone z: tempZones)
+        {
+            for(CollidableGroup cG: z.collidableGroups)
+            {
+                for(Pixel p: cG.pixels)
+                {
+                    cloneMap[p.row][p.col] = p;
+                    pArr[infoMap[p.row][p.col].index] = p;
+                    p.state = infoMap[p.row][p.col].originalState;
+                }
+            }
+        }
+
+       /* for(Pixel p: pArr)
+        {
+            if (cloneMap[p.row + 1][p.col] == null)
+            {
+                p.state = 2;
+            }
+            else if (cloneMap[p.row - 1][p.col] == null)
+            {
+                p.state = 2;
+            }
+            else if (cloneMap[p.row][p.col + 1] == null)
+            {
+                p.state = 2;
+            }
+            else if (cloneMap[p.row][p.col - 1] == null)
+            {
+                p.state = 2;
+            }
+        }*/
+
+        PixelGroup te = new PixelGroup(
+                pArr,
+                halfSquareLength,
+                tempZones,
+                shaderLocation,
+                vBuffer[0],
+                infoMap,
+                cloneMap
+        );
+        te.restorable = restorable;
+        return te;
+    }
+
+    /*public PixelGroup clone()
+    {
+        Pixel[] pArr = new Pixel[pixels.length];
+        Pixel[][] cloneMap = new Pixel[pMap.length][pMap[0].length];
+
         int halfSquareLength;
         if(pMap.length > pMap[0].length)
         {
@@ -542,9 +599,9 @@ public class  PixelGroup extends Collidable
             for (int c = 0; c < numZonesWidth; c++)
             {
                 int tempZ = c + numZonesWidth * r;
-                /*tempZones[tempZ] = new Zone(c * Constants.ZONE_SIZE + Constants.ZONE_SIZE / 2 - Constants.ZONE_SIZE * numZonesWidth / 2 + Constants.PIXEL_SIZE,
+                *//*tempZones[tempZ] = new Zone(c * Constants.ZONE_SIZE + Constants.ZONE_SIZE / 2 - Constants.ZONE_SIZE * numZonesWidth / 2 + Constants.PIXEL_SIZE,
                         r * Constants.ZONE_SIZE + Constants.ZONE_SIZE / 2 - Constants.ZONE_SIZE * numZonesHeight / 2 + Constants.PIXEL_SIZE,
-                        Constants.ZONE_SIZE / 2);*/
+                        Constants.ZONE_SIZE / 2);*//*
                 tempZones[tempZ] = new Zone(c * Constants.ZONE_SIZE + Constants.ZONE_SIZE / 2 - Constants.ZONE_SIZE * (float)numZonesWidth / 2f,
                         r * Constants.ZONE_SIZE + Constants.ZONE_SIZE / 2 - Constants.ZONE_SIZE * (float)numZonesHeight / 2f,
                         Constants.ZONE_SIZE / 2);
@@ -558,10 +615,10 @@ public class  PixelGroup extends Collidable
             {
                 int tempG = c + numGroupsWidth * r;
                 int tempZ = (c / Constants.ZONE_LENGTH) + (r / Constants.ZONE_LENGTH) * numZonesWidth;
-               /* tempGroups[tempG] = new CollidableGroup(c * Constants.CELL_SIZE + Constants.CELL_SIZE / 2 - Constants.CELL_SIZE * numGroupsWidth / 2 + Constants.PIXEL_SIZE,
+               *//* tempGroups[tempG] = new CollidableGroup(c * Constants.CELL_SIZE + Constants.CELL_SIZE / 2 - Constants.CELL_SIZE * numGroupsWidth / 2 + Constants.PIXEL_SIZE,
                         r * Constants.CELL_SIZE + Constants.CELL_SIZE / 2 - Constants.CELL_SIZE * numGroupsHeight / 2 + Constants.PIXEL_SIZE,
                         Constants.CELL_SIZE / 2
-                );*/
+                );*//*
                 tempGroups[tempG] = new CollidableGroup(c * Constants.CELL_SIZE + Constants.CELL_SIZE / 2 - Constants.CELL_SIZE * (float)numGroupsWidth / 2f,
                         r * Constants.CELL_SIZE + Constants.CELL_SIZE / 2 - Constants.CELL_SIZE * (float)numGroupsHeight / 2f,
                         Constants.CELL_SIZE / 2
@@ -632,7 +689,7 @@ public class  PixelGroup extends Collidable
             z.halfSquareLength *= 2f;
         }
 
-        for(Zone z: tempZones)
+        *//*for(Zone z: tempZones)
         {
             float fGLeft = 5;
             float fGRight = -5;
@@ -716,7 +773,7 @@ public class  PixelGroup extends Collidable
                 }
             }
         }
-        System.out.println("---------------------------------------------------------------------------------------------------------------------------end");
+        System.out.println("---------------------------------------------------------------------------------------------------------------------------end");*//*
         PixelGroup pixelGroup = new PixelGroup(
                 pArr,
                 (float)halfSquareLength * Constants.PIXEL_SIZE * 1.4f,
@@ -728,65 +785,5 @@ public class  PixelGroup extends Collidable
         pixelGroup.setpMap(cloneMap);
         pixelGroup.restorable = restorable;
         return pixelGroup;
-    }
-
-    /*public PixelGroup clone()
-    {
-        Pixel[] pArr = new Pixel[pixels.length];
-        Pixel[][] cloneMap = new Pixel[pMap.length][pMap[0].length];
-
-        Zone[] tempZones = new Zone[zones.length];
-        for(int i = 0; i < zones.length; i++)
-        {
-            tempZones[i] = zones[i].clone();
-        }
-
-        for(Zone z: tempZones)
-        {
-            for(CollidableGroup cG: z.collidableGroups)
-            {
-                for(Pixel p: cG.pixels)
-                {
-                    cloneMap[p.row][p.col] = p;
-                    int temp = (p.col - 1) + (pMap[0].length - 2) * (p.row - 1);
-                    pArr[temp] = p;
-                }
-            }
-        }
-
-        for(Pixel p: pArr)
-        {
-            if (cloneMap[p.row + 1][p.col] == null)
-            {
-                //p.outside = true;
-                p.state = 2;
-            }
-            else if (cloneMap[p.row - 1][p.col] == null)
-            {
-                //p.outside = true;
-                p.state = 2;
-            }
-            else if (cloneMap[p.row][p.col + 1] == null)
-            {
-                // p.outside = true;
-                p.state = 2;
-            }
-            else if (cloneMap[p.row][p.col - 1] == null)
-            {
-                //p.outside = true;
-                p.state = 2;
-            }
-        }
-        PixelGroup te = new PixelGroup(
-                pArr,
-                (float)halfSquareLength * Constants.PIXEL_SIZE,
-                tempZones,
-                shaderLocation,
-                vBuffer[0],
-                infoMap,
-                cloneMap
-        );
-        te.restorable = restorable;
-        return te;
     }*/
 }

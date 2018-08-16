@@ -101,10 +101,10 @@ public class Zone
     @Override
     public Zone clone()
     {
-        Zone temp = new Zone(xOriginal, yOriginal, halfSquareLength, new CollidableGroup[collidableGroups.length]);
-        for(int i = 0; i < collidableGroups.length; i++)
+        Zone temp = new Zone(this.xOriginal, this.yOriginal, this.halfSquareLength, new CollidableGroup[collidableGroups.length]);
+        for(int i = 0; i < this.collidableGroups.length; i++)
         {
-            temp.collidableGroups[i] = collidableGroups[i].clone();
+            temp.collidableGroups[i] = this.collidableGroups[i].clone();
         }
         return temp;
     }

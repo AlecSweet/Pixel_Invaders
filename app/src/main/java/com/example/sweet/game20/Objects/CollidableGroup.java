@@ -102,10 +102,10 @@ public class CollidableGroup
     @Override
     public CollidableGroup clone()
     {
-        CollidableGroup temp = new CollidableGroup(xOriginal, yOriginal, halfSquareLength, new Pixel[pixels.length]);
+        CollidableGroup temp = new CollidableGroup(this.xOriginal, this.yOriginal, this.halfSquareLength, new Pixel[pixels.length]);
         for(int i = 0; i < pixels.length; i++)
         {
-            temp.pixels[i] = pixels[i].clone();
+            temp.pixels[i] = this.pixels[i].clone();
         }
         return temp;
     }
