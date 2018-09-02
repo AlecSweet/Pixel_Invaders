@@ -15,7 +15,8 @@ public class Pixel
     public int
             row,
             col,
-            groupFlag = -1;
+            groupFlag = -1,
+            health = 1;
 
     public volatile int state = 1;
 
@@ -38,43 +39,75 @@ public class Pixel
             pMap[row + 1][col].insideEdge = true;
             pMap[row + 1][col].outside = true;
         }
-        
+
         if (pMap[row - 1][col] != null && !pMap[row - 1][col].outside)
         {
             pMap[row - 1][col].insideEdge = true;
             pMap[row - 1][col].outside = true;
         }
-        
+
         if (pMap[row][col + 1] != null && !pMap[row][col + 1].outside)
         {
             pMap[row][col + 1].insideEdge = true;
             pMap[row][col + 1].outside = true;
         }
-        
+
         if (pMap[row][col - 1] != null && !pMap[row][col - 1].outside)
         {
             pMap[row][col - 1].insideEdge = true;
             pMap[row][col - 1].outside = true;
         }*/
-        state = 0;
-        if (pMap[row + 1][col] != null && pMap[row + 1][col].state == 1)
+        health = 0;
+        if(health <= 0)
         {
-            pMap[row + 1][col].state = 3;
-        }
+            state = 0;
+            if (pMap[row + 1][col] != null && pMap[row + 1][col].state == 1)
+            {
+                pMap[row + 1][col].state = 3;
+            }
 
-        if (pMap[row - 1][col] != null && pMap[row - 1][col].state == 1)
-        {
-            pMap[row - 1][col].state = 3;
-        }
+            if (pMap[row - 1][col] != null && pMap[row - 1][col].state == 1)
+            {
+                pMap[row - 1][col].state = 3;
+            }
 
-        if (pMap[row][col + 1] != null && pMap[row][col + 1].state == 1)
-        {
-            pMap[row][col + 1].state = 3;
-        }
+            if (pMap[row][col + 1] != null && pMap[row][col + 1].state == 1)
+            {
+                pMap[row][col + 1].state = 3;
+            }
 
-        if (pMap[row][col - 1] != null && pMap[row][col - 1].state == 1)
+            if (pMap[row][col - 1] != null && pMap[row][col - 1].state == 1)
+            {
+                pMap[row][col - 1].state = 3;
+            }
+        }
+    }
+
+    public void hitPixel(Pixel[][] pMap)
+    {
+        health--;
+        if(health <= 0)
         {
-            pMap[row][col - 1].state = 3;
+            state = 0;
+            if (pMap[row + 1][col] != null && pMap[row + 1][col].state == 1)
+            {
+                pMap[row + 1][col].state = 3;
+            }
+
+            if (pMap[row - 1][col] != null && pMap[row - 1][col].state == 1)
+            {
+                pMap[row - 1][col].state = 3;
+            }
+
+            if (pMap[row][col + 1] != null && pMap[row][col + 1].state == 1)
+            {
+                pMap[row][col + 1].state = 3;
+            }
+
+            if (pMap[row][col - 1] != null && pMap[row][col - 1].state == 1)
+            {
+                pMap[row][col - 1].state = 3;
+            }
         }
     }
 

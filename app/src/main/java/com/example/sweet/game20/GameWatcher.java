@@ -12,6 +12,8 @@ import android.view.Display;
 import android.view.MotionEvent;
 import android.view.View;
 
+import com.example.sweet.game20.util.Constants;
+
 import static android.view.View.SYSTEM_UI_FLAG_FULLSCREEN;
 import static android.view.View.SYSTEM_UI_FLAG_HIDE_NAVIGATION;
 import static android.view.View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY;
@@ -33,8 +35,8 @@ public class GameWatcher extends Activity
 
     private boolean
             movementDown = false,
-            shootingDown = false,
-            pause = false;
+            shootingDown = false;
+            //pause = false;
 
     private long lastTapShooting = 0;
     private long lastTapMoving = 0;
@@ -109,7 +111,7 @@ public class GameWatcher extends Activity
             @Override
             public boolean onTouch(View v, MotionEvent event)
             {
-
+                //System.out.println("LISTENER WORKING");
                 final int action = event.getAction();
                 final int pointerIndex = (action & MotionEvent.ACTION_POINTER_INDEX_MASK)
                         >> MotionEvent.ACTION_POINTER_INDEX_SHIFT;
@@ -119,14 +121,17 @@ public class GameWatcher extends Activity
                 {
                     case MotionEvent.ACTION_DOWN:
                     {
-                        if (System.currentTimeMillis() - pauseCoolDownStart > pauseCoolDownLength)
+                        if (gameRender.globalInfo.gameSettings.doubleTapPause &&
+                                System.currentTimeMillis() - pauseCoolDownStart > pauseCoolDownLength)
                         {
                             if (System.currentTimeMillis() - lastTapMoving < doubleTapLength)
                             {
-                                if (!pause)
+                                if (gameRender.ui.gameState == Constants.GameState.IN_GAME)
                                 {
-                                    pause = true;
+                                   // pause = true;
                                     gameRender.inGamePause();
+                                    shootingDown = false;
+                                    movementDown = false;
                                     pauseCoolDownStart = System.currentTimeMillis();
                                 }
                             }
@@ -140,20 +145,22 @@ public class GameWatcher extends Activity
                             final float normX = ((event.getX(event.findPointerIndex(movementPointerId)) / v.getWidth()) * 2 - 1) / gameRender.xScale;
                             final float normY = ((event.getY(event.findPointerIndex(movementPointerId)) / v.getHeight()) * 2 - 1) / gameRender.yScale;
 
-                            if (!pause)
+                            if (gameRender.ui.gameState == Constants.GameState.IN_GAME)
                             {
                                 movementDown = true;
 
                                 gameRender.ui.setMovementDown(true);
-                                gameRender.player1.movementDown = true;
-
                                 gameRender.ui.movementOnDown.set(normX, normY);
                                 gameRender.ui.movementOnMove.set(normX, normY);
+
+                                gameRender.player1.movementDown = true;
                                 gameRender.player1.movementOnDownX = normX;
                                 gameRender.player1.movementOnDownY = normY;
                                 gameRender.player1.movementOnMoveX = normX;
                                 gameRender.player1.movementOnMoveY = normY;
-                            } else
+                                gameRender.ui.pointerDown();
+                            }
+                            else
                             {
                                 gameRender.ui.menuPointerDown = true;
                                 gameRender.ui.menuOnDown.set(normX, normY);
@@ -166,7 +173,7 @@ public class GameWatcher extends Activity
                     }
                     case MotionEvent.ACTION_UP:
                     {
-                        if(!pause)
+                        if(gameRender.ui.gameState == Constants.GameState.IN_GAME)
                         {
                             if(movementDown)
                             {
@@ -182,19 +189,19 @@ public class GameWatcher extends Activity
                                 gameRender.ui.setShootingDown(false);
                                 gameRender.player1.shootingDown = false;
                             }
+                            gameRender.ui.pointerUp();
                         }
-                        else
+                        if(gameRender.ui.gameState != Constants.GameState.IN_GAME)
                         {
                             if(gameRender.ui.menuPointerDown)
                             {
-                                final float normX = ((event.getX() / v.getWidth()) * 2 - 1) / gameRender.xScale;
-                                final float normY = ((event.getY() / v.getHeight()) * 2 - 1) / gameRender.yScale;
+                                /*final float normX = ((event.getX() / v.getWidth()) * 2 - 1) / gameRender.xScale;
+                                final float normY = ((event.getY() / v.getHeight()) * 2 - 1) / gameRender.yScale;*/
                                 gameRender.ui.menuPointerDown = false;
                                 gameRender.ui.pointerUp();
                                 if (System.currentTimeMillis() - pauseCoolDownStart > pauseCoolDownLength)
                                 {
-                                    pause = gameRender.ui.checkPause();
-                                    if(!pause)
+                                    if(!gameRender.ui.checkPause())
                                     {
                                         gameRender.inGameUnpause();
                                         pauseCoolDownStart = System.currentTimeMillis();
@@ -206,23 +213,26 @@ public class GameWatcher extends Activity
                     }
                     case MotionEvent.ACTION_POINTER_DOWN:
                     {
-                        if(!pause)
+                        if(gameRender.ui.gameState == Constants.GameState.IN_GAME)
                         {
                             if (movementDown && !shootingDown)
                             {
-                                if (System.currentTimeMillis() - pauseCoolDownStart > pauseCoolDownLength)
+                                if (gameRender.globalInfo.gameSettings.doubleTapPause &&
+                                        System.currentTimeMillis() - pauseCoolDownStart > pauseCoolDownLength)
                                 {
                                     if (System.currentTimeMillis() - lastTapShooting < doubleTapLength)
                                     {
-                                        if (!pause)
+                                        if (gameRender.ui.gameState == Constants.GameState.IN_GAME)
                                         {
-                                            pause = true;
                                             gameRender.inGamePause();
+                                            shootingDown = false;
+                                            movementDown = false;
                                             pauseCoolDownStart = System.currentTimeMillis();
                                         }
                                     }
                                     lastTapShooting = System.currentTimeMillis();
                                 }
+
 
                                 shootingPointerId = pointerId;
                                 shootingDown = true;
@@ -242,18 +252,22 @@ public class GameWatcher extends Activity
                             }
                             else if (shootingDown && !movementDown)
                             {
-                                if (System.currentTimeMillis() - pauseCoolDownStart > pauseCoolDownLength)
+
+                                if (gameRender.globalInfo.gameSettings.doubleTapPause &&
+                                        System.currentTimeMillis() - pauseCoolDownStart > pauseCoolDownLength)
                                 {
                                     if (System.currentTimeMillis() - lastTapMoving < doubleTapLength)
                                     {
-                                        if (!pause)
+                                        if (gameRender.ui.gameState == Constants.GameState.IN_GAME)
                                         {
-                                            pause = true;
                                             gameRender.inGamePause();
+                                            shootingDown = false;
+                                            movementDown = false;
                                             pauseCoolDownStart = System.currentTimeMillis();
                                         }
                                     }
                                 }
+
                                 lastTapMoving = System.currentTimeMillis();
 
                                 movementPointerId = pointerId;
@@ -272,6 +286,7 @@ public class GameWatcher extends Activity
                                 gameRender.player1.movementOnMoveX = normX;
                                 gameRender.player1.movementOnMoveY = normY;
                             }
+                            gameRender.ui.pointerDown();
                         }
                         break;
                     }
@@ -292,12 +307,13 @@ public class GameWatcher extends Activity
                             gameRender.ui.setMovementDown(false);
                             gameRender.player1.movementDown = false;
                         }
+                        gameRender.ui.pointerUp();
                         break;
                     }
                     case MotionEvent.ACTION_MOVE:
                     {
                         // Find the index of the active pointer and fetch its position
-                        if(!pause)
+                        if(gameRender.ui.gameState == Constants.GameState.IN_GAME)
                         {
                             if (shootingDown)
                             {
@@ -341,7 +357,7 @@ public class GameWatcher extends Activity
     protected void onPause()
     {
         super.onPause();
-        System.out.println("PAUSED");
+        //System.out.println("PAUSED");
         gameRender.pauseThreads();
         glSurfaceView.setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
 

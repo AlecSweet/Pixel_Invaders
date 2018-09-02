@@ -103,7 +103,8 @@ public class  PixelGroup extends Collidable
         }
         if(enableLocationChain)
         {
-            while(locationDrawTail.nextLocation != null && locationDrawTail.nextLocation.readyToBeConsumed)
+            //while(locationDrawTail.nextLocation != null && locationDrawTail.nextLocation.readyToBeConsumed)
+            while(locationDrawTail.nextLocation != null && locationDrawTail.nextLocation.collisionDone)
             {
                 locationDrawTail = locationDrawTail.nextLocation;
             }
@@ -387,26 +388,19 @@ public class  PixelGroup extends Collidable
         for (int i = 0; i < tSize; i++)
         {
             //if (pixels[i].live && !pixels[i].insideEdge)
-            if(pixels[i].state == 1)
+            if(pixels[i].state == 1 || pixels[i].state == 2)
             {
                 cbuf.put((i + 1) * 4 - 4, infoMap[pixels[i].row][pixels[i].col].r);
                 cbuf.put((i + 1) * 4 - 3, infoMap[pixels[i].row][pixels[i].col].g);
                 cbuf.put((i + 1) * 4 - 2, infoMap[pixels[i].row][pixels[i].col].b);
                 cbuf.put((i + 1) * 4 - 1, infoMap[pixels[i].row][pixels[i].col].a);
             }
-            else if(pixels[i].state >= 2 )
-            {
-                cbuf.put((i + 1) * 4 - 4, 1f);
-                cbuf.put((i + 1) * 4 - 3, 1f);
-                cbuf.put((i + 1) * 4 - 2, 1f);
-                cbuf.put((i + 1) * 4 - 1, 1f);
-            }
             //else if(pixels[i].insideEdge)
             else if(pixels[i].state == 3)
             {
-                cbuf.put((i + 1) * 4 - 4, edgeColorR);
-                cbuf.put((i + 1) * 4 - 3, edgeColorG);
-                cbuf.put((i + 1) * 4 - 2, edgeColorB);
+                cbuf.put((i + 1) * 4 - 4, edgeColorR * (float)(Math.random()*.4f + .6f));
+                cbuf.put((i + 1) * 4 - 3, edgeColorG * (float)(Math.random()*.4f + .6f));
+                cbuf.put((i + 1) * 4 - 2, edgeColorB * (float)(Math.random()*.4f + .6f));
                 cbuf.put((i + 1) * 4 - 1, infoMap[pixels[i].row][pixels[i].col].a);
             }
             //else if (!pixels[i].live)

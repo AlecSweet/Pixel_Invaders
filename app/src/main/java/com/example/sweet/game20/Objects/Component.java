@@ -19,6 +19,8 @@ public class Component
     public Constants.DropType type;
 
     public float
+            origanalX,
+            originalY,
             x,
             y,
             angle;
@@ -45,6 +47,19 @@ public class Component
         this.x = x;
         this.y = y;
         angle = a;
+    }
+
+    public void checkAlive()
+    {
+        for(Pixel p: attachmentPixels)
+        {
+            live = false;
+            if(p != null && p.state > 0)
+            {
+                live = true;
+                break;
+            }
+        }
     }
 
     public void draw()

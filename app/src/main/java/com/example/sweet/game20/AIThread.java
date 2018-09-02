@@ -34,16 +34,19 @@ public class AIThread implements Runnable
 
     public volatile float averageFrameTime = 0;
 
-    private GlobalInfo globalInfo;
+    private volatile GlobalInfo globalInfo;
     //private ArrayList<TimeSlowEvent> timeSlowEvents;
 
     public volatile Enemy[] entities;
-
+    public volatile Enemy[] target;
     public volatile boolean
             running = true,
-            pause = false;
+            //pause = false,
+            block = false,
+            inBlock = false;
 
     private boolean saveTime = false;
+    private float oldTime = 1;
 
     private CollisionHandler collisionHandler;
 
@@ -61,6 +64,8 @@ public class AIThread implements Runnable
     //private float slowTime = 1;
     private static final int INVALID_POINTER_ID = -1;
 
+    public final Object lock = new Object();
+
     public AIThread(Enemy[] e, GlobalInfo gI, CollisionHandler cH)
     {
         collisionHandler = cH;
@@ -73,19 +78,21 @@ public class AIThread implements Runnable
     {
         while(running)
         {
-            if(!pause)
+            checkBlock();
+            if(!globalInfo.getPause())
             {
-                if(!saveTime)
+                if (!saveTime)
                 {
-                    double pauseLength = System.currentTimeMillis() - pauseTime;
+                    /*double pauseLength = System.currentTimeMillis() - pauseTime;
                     player1.applyPauseLength(pauseLength);
-                    for(Enemy e: entities)
+                    for (Enemy e : entities)
                     {
-                        if(e != null)
+                        if (e != null)
                         {
                             e.applyPauseLength(pauseLength);
                         }
-                    }
+                    }*/
+                    globalInfo.setTimeSlow(oldTime);
                     saveTime = true;
                 }
 
@@ -94,7 +101,7 @@ public class AIThread implements Runnable
                     currentFrame++;
                     long startTime = System.currentTimeMillis();
                     update();
-                    if(averageFrameTime == 0)
+                    if (averageFrameTime == 0)
                     {
                         averageFrameTime = startTime - System.currentTimeMillis();
                     }
@@ -104,26 +111,26 @@ public class AIThread implements Runnable
                     }
                 }
 
-                /*double currentTime = System.currentTimeMillis() - globalStartTime;
-                double elapsedTime = currentTime - pastTime;
-                pastTime = currentTime;
-                lag += elapsedTime;
+            /*double currentTime = System.currentTimeMillis() - globalStartTime;
+            double elapsedTime = currentTime - pastTime;
+            pastTime = currentTime;
+            lag += elapsedTime;
 
-                while (lag >= mSPU)
-                {
-                    //if(!pause)
-                    update();
-                    currentFrame++;
-                    //glSurfaceView.requestRender();
-                    lag -= mSPU;
-                }*/
+            while (lag >= mSPU)
+            {
+                //if(!pause)
+                update();
+                currentFrame++;
+                //glSurfaceView.requestRender();
+                lag -= mSPU;
+            }*/
             }
             else
             {
                 if(saveTime)
                 {
-                    pauseTime = System.currentTimeMillis();
-                    //globalInfo.setTimeSlow(globalInfo.timeSlow*.5f);
+                    oldTime = globalInfo.getTimeSlow();
+                    globalInfo.setTimeSlow(0);
                     saveTime = false;
                 }
             }
@@ -135,6 +142,10 @@ public class AIThread implements Runnable
         /*float s = (float)(Math.cos(tempInc))*.25f + .75f;
         globalInfo.setTimeSlow(s);
         tempInc += .1;*/
+        /*if(target != null){
+            entities = target;
+            target = null;
+        }*/
         timeEngine.runEngine();
         /*Iterator<TimeSlowEvent> itrT = player1.timeSlowEvents.iterator();
         while(itrT.hasNext())
@@ -153,7 +164,8 @@ public class AIThread implements Runnable
         player1.shoot(currentFrame, globalInfo);
         player1.moveConsumables();
         player1.moveCamera();
-        player1.handleScreenShake();
+        player1.handleScreenShake(globalInfo.gameSettings.screenShakePercent);
+        //player1.movePlayer(globalInfo.timeSlow);
         enemyActions();
     }
 
@@ -165,13 +177,16 @@ public class AIThread implements Runnable
             {
                 if (entities[i].getPixelGroup().getCollidableLive())
                 {
-                    for (Enemy e2 : entities)
+                    if(entities[i].checkOverlap)
                     {
-                        if(e2 != null && !e2.aiRemoveConsensus)
+                        for (Enemy e2 : entities)
                         {
-                            if (e2.getPixelGroup().getCollidableLive() && entities[i] != e2)
+                            if (e2 != null && !e2.aiRemoveConsensus)
                             {
-                                CollisionHandler.preventOverlap(entities[i], e2);
+                                if (e2.getPixelGroup().getCollidableLive() && entities[i] != e2)
+                                {
+                                    CollisionHandler.preventOverlap(entities[i], e2);
+                                }
                             }
                         }
                     }
@@ -182,18 +197,25 @@ public class AIThread implements Runnable
                             globalInfo.timeSlow
                     );*/
                     entities[i].move(player1.getPixelGroup().getCenterX(),
-                            player1.getPixelGroup().getCenterY(),
-                            globalInfo
+                            player1.getPixelGroup().getCenterY()
                     );
 
                     if (entities[i].getPixelGroup().getCollidableLive())
                     {
-                        if (Math.abs(entities[i].getX() - player1.xScreenShift) * globalInfo.getScaleX() <=
-                                1 + entities[i].getPixelGroup().getHalfSquareLength() * 3 &&
-                                Math.abs(entities[i].getY() - player1.yScreenShift) * globalInfo.getScaleY() <=
-                                1 + entities[i].getPixelGroup().getHalfSquareLength() * 3)
+                        float difX = Math.abs(entities[i].getX() - player1.xScreenShift) * globalInfo.getScaleX();
+                        float difY = Math.abs(entities[i].getY() - player1.yScreenShift) * globalInfo.getScaleY();
+                        if (difX <= (1 + entities[i].getPixelGroup().getHalfSquareLength()) &&
+                                difY <= (1 + entities[i].getPixelGroup().getHalfSquareLength()))
                         {
                             entities[i].onScreen = true;
+                            if(difX <= 1 && difY <= 1)
+                            {
+                                entities[i].inRange = true;
+                            }
+                            else
+                            {
+                                entities[i].inRange = false;
+                            }
                         }
                         else
                         {
@@ -237,7 +259,10 @@ public class AIThread implements Runnable
                             1000
                     );
                     //player1.timeSlowEvents.add(new TimeSlowEvent(.7f, 400));
-                    timeEngine.addSlow(.7f, 400);
+                    if(globalInfo.gameSettings.slowOnKill)
+                    {
+                        timeEngine.addSlow(.7f, 400);
+                    }
                     entities[i].aiRemoveConsensus = true;
                 }
             }
@@ -260,5 +285,34 @@ public class AIThread implements Runnable
     public synchronized void setPlayer(Player p)
     {
         player1 = p;
+    }
+
+    public void setInfo(Player p, Enemy[] e, GlobalInfo gI)
+    {
+        player1 = p;
+        entities = e;
+        globalInfo = gI;
+        currentFrame = 0;
+        frameRequest = 0;
+    }
+
+    private void checkBlock()
+    {
+        if(block)
+        {
+            inBlock = true;
+            synchronized (lock)
+            {
+                try
+                {
+                    lock.wait();
+                }
+                catch(InterruptedException e)
+                {
+                }
+            }
+            block = false;
+            inBlock = false;
+        }
     }
 }

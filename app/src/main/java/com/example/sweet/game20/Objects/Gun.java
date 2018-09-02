@@ -26,11 +26,10 @@ public abstract class Gun
 
     protected float
             spread,
-            speed;
-
-    protected float
-                x,
-                y;
+            speed,
+            x,
+            y,
+            shockSize;
 
     /*protected ObjectNode
             activeTail,
@@ -46,6 +45,8 @@ public abstract class Gun
 
     protected int numShots = 1;
 
+    public int totalBullets;
+
     protected float fireRateMod = 1;
 
     protected ParticleSystem masterParticleSystem;
@@ -53,6 +54,7 @@ public abstract class Gun
     public Gun(double sD, PixelGroup pG, ParticleSystem ps, float spd)
     {
         pixelGroupTemplate = pG;
+
         pixelGroupTemplate.restorable = true;
         shakeMod = (float)Math.sqrt(pixelGroupTemplate.totalPixels) * .001f + .002f;
         //bulletPool = new Stack<>();
@@ -60,6 +62,7 @@ public abstract class Gun
         shotFrameDelay = (int)(shootDelay / Constants.msPerFrame);
         speed = spd;
         int num = ((int)Math.ceil((4/(speed * 60)) * (1000/shootDelay))+1)*numShots + numShots;
+        totalBullets = num;
         bullets = new Bullet[num];
         indexNodes = new ObjectNode[num];
 
@@ -85,9 +88,48 @@ public abstract class Gun
 
         lastShotTime = 0;
         masterParticleSystem = ps;
+        shockSize = (float)Math.sqrt(pixelGroupTemplate.totalPixels) * speed * 10;
 
     }
+    
+    public Gun(double sD, PixelGroup pG, ParticleSystem ps, float spd, int num)
+    {
+        pixelGroupTemplate = pG;
+        pixelGroupTemplate.restorable = true;
+        shakeMod = (float)Math.sqrt(pixelGroupTemplate.totalPixels) * .001f + .002f;
+        //bulletPool = new Stack<>();
+        shootDelay = sD;
+        shotFrameDelay = (int)(shootDelay / Constants.msPerFrame);
+        speed = spd;
+        bullets = new Bullet[num];
+        indexNodes = new ObjectNode[num];
+        totalBullets = num;
 
+        for(int i = 0; i < num; i++)
+        {
+            bullets[i] = new Bullet(0, 0, 0,
+                    speed, 4f, pixelGroupTemplate.clone());
+            //bullets[i].live = false;
+            //bulletPool.add(bullets[i]);
+
+            indexNodes[i] = new ObjectNode(new Integer(i), null);
+            if(i >= 1)
+            {
+                openIndexHead.nextObject = indexNodes[i];
+                openIndexHead = openIndexHead.nextObject;
+            }
+            else
+            {
+                openIndexTail = indexNodes[i];
+                openIndexHead = openIndexTail;
+            }
+        }
+
+        lastShotTime = 0;
+        masterParticleSystem = ps;
+        shockSize = (float)Math.sqrt(pixelGroupTemplate.totalPixels) * speed * 10;
+    }
+    
     public void draw(double interpolation)
     {
         for(Bullet b: bullets)
@@ -139,15 +181,15 @@ public abstract class Gun
         }
     }
 
-    public void applyPauseLength(double p)
+    public float getPercentTimeRemaining(GlobalInfo gI)
     {
-        lastShotTime += p;
+        return (float)((gI.getAugmentedTimeMillis() - lastShotTime) / (shootDelay * fireRateMod));
     }
 
-   /* public boolean shoot(float x, float y, float angle)
+    public boolean canShoot(GlobalInfo gI)
     {
-        return false;
-    }*/
+        return getPercentTimeRemaining(gI) > .94f;
+    }
 
     public void publishLocation(long frame)
     {
@@ -161,6 +203,11 @@ public abstract class Gun
     {
         return false;
     }*/
+
+    public boolean shoot(float x, float y, float angle, GlobalInfo gI, float cosA, float sinA)
+    {
+        return false;
+    }
 
     public boolean shoot(float x, float y, float angle, GlobalInfo gI)
     {
@@ -189,4 +236,21 @@ public abstract class Gun
     {
         pixelGroupTemplate.freeMemory();
     }
+
+    public void addMaxHealth(int h)
+    {
+        for(Bullet b: bullets)
+        {
+            b.pixelGroup.addMaxHealth(h);
+        }
+    }
+
+    public void reduceMaxHealth(int h)
+    {
+        for(Bullet b: bullets)
+        {
+            b.pixelGroup.reduceMaxHealth(h);
+        }
+    }
+
 }

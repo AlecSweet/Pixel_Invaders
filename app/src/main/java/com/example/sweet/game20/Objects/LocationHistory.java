@@ -15,8 +15,8 @@ public class LocationHistory
     public long frame;
 
     public volatile boolean
-            readyToBeConsumed = false;
-            //collisionDone = false;
+            readyToBeConsumed = false,
+            collisionDone = false;
 
     public LocationHistory nextLocation;
 
@@ -31,7 +31,7 @@ public class LocationHistory
         this.x = x;
         this.y = y;
         readyToBeConsumed = false;
-        //collisionDone = false;
+        collisionDone = false;
         //uiConsumed = false;
         //collisionConsumed = false;
     }

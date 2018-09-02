@@ -1,22 +1,18 @@
 package com.example.sweet.game20.Objects;
 
-import android.content.Context;
-
 import com.example.sweet.game20.GlobalInfo;
-import com.example.sweet.game20.R;
 import com.example.sweet.game20.util.Constants;
-import com.example.sweet.game20.util.ImageParser;
 
 /**
- * Created by Sweet on 3/27/2018.
+ * Created by Sweet on 8/31/2018.
  */
 
-public class BasicGun extends Gun
+public class MineGun extends Gun
 {
-    public BasicGun(PixelGroup pG, ParticleSystem ps, double delay, float spd)
+    public MineGun(PixelGroup pG, ParticleSystem ps, double delay, int num)
     {
-        super(delay, pG, ps, spd);
-        spread = .04f;
+        super(delay, pG, ps, 0, num);
+        spread = 0f;
     }
 
     /*public BasicGun(ParticleSystem ps)
@@ -105,7 +101,6 @@ public class BasicGun extends Gun
                         }
                     }
                 }
-                addShotParticles(shockSize, tX, tY);
             }
             lastShotTime = gI.getAugmentedTimeMillis();
             return true;
@@ -147,19 +142,15 @@ public class BasicGun extends Gun
                         {
                             oN.nextObject = null;
                             openIndexTail = oN;
-                            break;
                         }
                     }
                 }
-                addShotParticles(shockSize, tX, tY);
             }
             lastShotTime = gI.getAugmentedTimeMillis();
             return true;
         }
         else
-        {
             return false;
-        }
     }
 
     @Override
@@ -227,22 +218,22 @@ public class BasicGun extends Gun
         }
     }
 
-    public void addShotParticles(float size, float x, float y)
+    public void addShotParticles(float angle, float x, float y)
     {
         for (float t = 0; t < Constants.twoPI; t += .04)
         {
             masterParticleSystem.addParticle(
                     x, y,
                     t,
-                    .2f, .2f, .2f, 1f,
-                    .3f * size, .08f * size, 10f
+                    0f, 0f, 0f, .1f,
+                    .4f, .1f, 10f
             );
         }
     }
 
     @Override
-    public BasicGun clone()
+    public MineGun clone()
     {
-        return new BasicGun(pixelGroupTemplate, masterParticleSystem, shootDelay, speed);
+        return new MineGun(pixelGroupTemplate, masterParticleSystem, shootDelay, totalBullets);
     }
 }

@@ -18,6 +18,8 @@ public class Button
 
     public Constants.DropType type;
 
+    public boolean touchedOnDown = false;
+
     public Button(ImageContainer r, ImageContainer h, Constants.DropType dT)
     {
         regular = r;
@@ -40,6 +42,28 @@ public class Button
         }
     }
 
+    public void draw(float x, float y, float x2, float y2)
+    {
+        if((Math.abs(x - regular.x) <= regular.halfLength &&
+            Math.abs(-y - regular.y) <= regular.halfWidth) ||
+            (Math.abs(x2 - regular.x) <= regular.halfLength &&
+            Math.abs(-y2 - regular.y) <= regular.halfWidth))
+        {
+            hoveredOver.draw();
+            cursorOnButton = true;
+        }
+        else
+        {
+            regular.draw();
+            cursorOnButton = false;
+        }
+    }
+
+    public void drawHighlight()
+    {
+        hoveredOver.draw();
+    }
+
     public boolean pointOnButton(float x, float y)
     {
         if(Math.abs(x - regular.x) <= regular.halfLength &&
@@ -59,6 +83,44 @@ public class Button
         regular.y = y;
         hoveredOver.x = x;
         hoveredOver.y = y;
+    }
+
+    public void setX(float x)
+    {
+        regular.x = x;
+        hoveredOver.x = x;
+    }
+
+    public void setY(float y)
+    {
+        regular.y = y;
+        hoveredOver.y = y;
+    }
+
+    public void checkOnDown(float x, float y)
+    {
+        if(Math.abs(x - regular.x) <= regular.halfLength &&
+                Math.abs(-y - regular.y) <= regular.halfWidth)
+        {
+            touchedOnDown = true;
+        }
+        else
+        {
+            touchedOnDown = false;
+        }
+    }
+
+    public void checkOnMove(float x, float y)
+    {
+        if(Math.abs(x - regular.x) <= regular.halfLength &&
+                Math.abs(-y - regular.y) <= regular.halfWidth)
+        {
+            cursorOnButton = true;
+        }
+        else
+        {
+            cursorOnButton = false;
+        }
     }
 
     public void applyScale(float xS, float yS)

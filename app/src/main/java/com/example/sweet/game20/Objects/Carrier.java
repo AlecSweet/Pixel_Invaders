@@ -22,9 +22,9 @@ public class Carrier extends Enemy
     private boolean track = false;
     private boolean retreat = false;
 
-    public Carrier(PixelGroup p, ParticleSystem ps, DropFactory dF)
+    public Carrier(PixelGroup p, ParticleSystem ps, DropFactory dF, float xb, float yb, GlobalInfo gI)
     {
-        super(p, ps, dF);
+        super(p, ps, dF, xb, yb, gI);
 
         for (int i = 0; i < thusterPixelCoordinates.length; i += 2)
             thrusterPixels[i / 2] = enemyBody.getpMap()[thusterPixelCoordinates[i + 1]][thusterPixelCoordinates[i]];
@@ -32,6 +32,28 @@ public class Carrier extends Enemy
         for (int i = 0; i < gunPixelCoordinates.length; i += 2)
             gun1Pixels[i / 2] = enemyBody.getpMap()[gunPixelCoordinates[i + 1]][gunPixelCoordinates[i]];
 
+        checkOverlap = false;
+        thrusters = new ThrustComponent[1];
+        thrusters[0] = new ThrustComponent(thrusterPixels, 0, 0, 0, 0, 2, ps);
+        //enemyBody.angle = 3.14;
+        enemyBody.rotate(enemyBody.angle);
+        baseSpeed = .0002f;
+        enemyBody.speed = baseSpeed;
+        hasGun = false;
+        enemyBody.setEdgeColor(.5f, 0f, .5f);
+    }
+
+    public Carrier(PixelGroup p, ParticleSystem ps, DropFactory dF, float xb, float yb, float difficulty, float delay, GlobalInfo gI)
+    {
+        super(p, ps, dF, xb, yb, gI);
+
+        for (int i = 0; i < thusterPixelCoordinates.length; i += 2)
+            thrusterPixels[i / 2] = enemyBody.getpMap()[thusterPixelCoordinates[i + 1]][thusterPixelCoordinates[i]];
+
+        for (int i = 0; i < gunPixelCoordinates.length; i += 2)
+            gun1Pixels[i / 2] = enemyBody.getpMap()[gunPixelCoordinates[i + 1]][gunPixelCoordinates[i]];
+
+        checkOverlap = false;
         thrusters = new ThrustComponent[1];
         thrusters[0] = new ThrustComponent(thrusterPixels, 0, 0, 0, 0, 2, ps);
         //enemyBody.angle = 3.14;
@@ -43,82 +65,93 @@ public class Carrier extends Enemy
     }
 
     //public void move(float pX, float pY, long curFrame, float slow)
-    public void move(float pX, float pY, GlobalInfo gI)
+    @Override
+    public void move(float pX, float pY)
     {
-        float distanceToPlayer = VectorFunctions.getMagnitude(pX - enemyBody.centerX, pY - enemyBody.centerY);
-        float angleMoving = 0f;
-        float ratio = 1;
-        if(distanceToPlayer > trackDistance)
+        if(spawned)
         {
-            track = true;
-            retreat = false;
-        }
-        else if(distanceToPlayer < retreatDistance)
-        {
-            retreat = true;
-            track = false;
-        }
+            float distanceToPlayer = VectorFunctions.getMagnitude(pX - enemyBody.centerX, pY - enemyBody.centerY);
+            float angleMoving = 0f;
+            float ratio = 1;
+            if(distanceToPlayer > trackDistance)
+            {
+                track = true;
+                retreat = false;
+            }
+            else if(distanceToPlayer < retreatDistance)
+            {
+                retreat = true;
+                track = false;
+            }
 
-        if(track)
-            angleMoving = -(float)(Math.atan2(pY - enemyBody.centerY, pX - enemyBody.centerX));
+            if(track)
+                angleMoving = -(float)(Math.atan2(pY - enemyBody.centerY, pX - enemyBody.centerX));
 
-        if(retreat)
-            angleMoving = -(float)(Math.atan2(enemyBody.centerY - pY, enemyBody.centerX - pX));
+            if(retreat)
+                angleMoving = -(float)(Math.atan2(enemyBody.centerY - pY, enemyBody.centerX - pX));
 
 
-        rotate(angleMoving, .002f, gI.timeSlow);
-        float distance = baseSpeed * thrusters[0].thrustPower * gI.timeSlow;
-        float tempDistX = -(float)(distance * Math.cos(enemyBody.angle));
-        float tempDistY = (float)(distance * Math.sin(enemyBody.angle));
+            rotate(angleMoving, .002f, globalInfo.timeSlow);
+            float distance = baseSpeed * thrusters[0].getThrustPower() * globalInfo.timeSlow;
+            float tempDistX = -(float)(distance * Math.cos(enemyBody.angle));
+            float tempDistY = (float)(distance * Math.sin(enemyBody.angle));
 
-        if(distanceToPlayer < engageDistance && distanceToPlayer > retreatDistance && track)
-        {
-            tempDistX *= .6;
-            tempDistY *= .6;
-            ratio = 0f;
+            if(distanceToPlayer < engageDistance && distanceToPlayer > retreatDistance && track)
+            {
+                tempDistX *= .6;
+                tempDistY *= .6;
+                ratio = 0f;
+                /*if(guns[0] != null)
+                {
+                    boolean t = guns[0].gun.shoot(guns[0].x + enemyBody.centerX,
+                            guns[0].y + enemyBody.centerY,
+                            (float) enemyBody.angle + (float) Math.PI,
+                            curFrame,
+                            slow);
+                }*/
+            }
+
+            x += -tempDistX;
+            y += -tempDistY;
+            enemyBody.move(-tempDistX, -tempDistY);
             /*if(guns[0] != null)
             {
-                boolean t = guns[0].gun.shoot(guns[0].x + enemyBody.centerX,
-                        guns[0].y + enemyBody.centerY,
-                        (float) enemyBody.angle + (float) Math.PI,
-                        curFrame,
-                        slow);
+                guns[0].gun.move(slow);
             }*/
+            //addThrustParticles(thrusterPixels, ratio, .03f);
+
+            /*if(!dropAdded && enemyBody.numLivePixels <= .5 * enemyBody.totalPixels)
+            {
+                dropsToAdd.add(
+                        dropFactory.getNewDrop(
+                                Constants.DropType.GUN,
+                                x,
+                                y,
+                                guns[0]
+                        )
+                );
+                dropsToAdd.add(
+                        dropFactory.getNewDrop(
+                                Constants.DropType.MOD,
+                                x,
+                                y,
+                                new ModComponent(null,x,y,0, Constants.ModType.EXTRASHOTS, 3, null)
+                        )
+                );
+                //dropsToAdd.add(dropFactory.getNewDrop(Constants.DropType.EXTRA_GUN, x, y));
+                guns[0] = null;
+                dropAdded = true;
+            }*/
+
+            // public Drop(PixelGroup p, float x, float y, int t, double lT, Component c)
         }
-
-        x += -tempDistX;
-        y += -tempDistY;
-        enemyBody.move(-tempDistX, -tempDistY);
-        /*if(guns[0] != null)
+        else
         {
-            guns[0].gun.move(slow);
-        }*/
-        //addThrustParticles(thrusterPixels, ratio, .03f);
-
-        /*if(!dropAdded && enemyBody.numLivePixels <= .5 * enemyBody.totalPixels)
-        {
-            dropsToAdd.add(
-                    dropFactory.getNewDrop(
-                            Constants.DropType.GUN,
-                            x,
-                            y,
-                            guns[0]
-                    )
-            );
-            dropsToAdd.add(
-                    dropFactory.getNewDrop(
-                            Constants.DropType.MOD,
-                            x,
-                            y,
-                            new ModComponent(null,x,y,0, Constants.ModType.EXTRASHOTS, 3, null)
-                    )
-            );
-            //dropsToAdd.add(dropFactory.getNewDrop(Constants.DropType.EXTRA_GUN, x, y));
-            guns[0] = null;
-            dropAdded = true;
-        }*/
-
-        // public Drop(PixelGroup p, float x, float y, int t, double lT, Component c)
+            if(globalInfo.getAugmentedTimeMillis() - levelStartTime > spawnDelay)
+            {
+                spawned = true;
+            }
+        }
     }
 
     public void rotate(float angleMoving, float rotateSpeed, float slow)
@@ -153,9 +186,17 @@ public class Carrier extends Enemy
 
     }
 
-    @Override
-    public Carrier clone()
+    public Carrier clone(float difficulty, float delay)
     {
-        return new Carrier(enemyBody.clone(), particleSystem, dropFactory);
+        return new Carrier(
+                enemyBody.clone(),
+                particleSystem,
+                dropFactory,
+                xbound,
+                ybound,
+                difficulty,
+                delay,
+                globalInfo
+                );
     }
 }

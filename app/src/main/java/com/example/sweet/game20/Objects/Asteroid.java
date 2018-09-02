@@ -15,17 +15,24 @@ public class Asteroid extends Enemy
             distX,
             distY;
 
-    private boolean screenEnterToggle = true;
+    private boolean
+            screenEnterToggle = true,
+            inBackground = false;
+
+    private float
+            backgroundX,
+            backgorundY;
 
     private int
             healthDropGoal,
             healthDropRarity;
 
-    public Asteroid(PixelGroup p, ParticleSystem ps, float xb, float yb, DropFactory dF)
+    public Asteroid(PixelGroup p, ParticleSystem ps, float xb, float yb, DropFactory dF, GlobalInfo gI)
     {
-        super(p, ps, dF);
+        super(p, ps, dF, xb, yb, gI);
         guns = null;
         thrusters = null;
+        checkOverlap = false;
         //enemyBody.angle = 3.14;
         enemyBody.rotate(enemyBody.angle);
         baseSpeed = .005f;
@@ -44,7 +51,7 @@ public class Asteroid extends Enemy
         float travelAngle = 0;
         switch((int)(Math.random()*3.99))
         {
-            case 0: enemyBody.setLoc((float)(Math.random()*xbound*2)-xbound, ybound);
+            case 0: setLoc((float)(Math.random()*xbound*2)-xbound, ybound);
                     switch((int)(Math.random()*2.99))
                     {
                         case 0: travelAngle = (float)Math.atan2(enemyBody.centerY - (-ybound), enemyBody.centerX - (Math.random() * xbound * 2 - xbound));
@@ -55,7 +62,7 @@ public class Asteroid extends Enemy
                                 break;
                     }
                     break;
-            case 1: enemyBody.setLoc((float)(Math.random()*xbound*2)-xbound, -ybound);
+            case 1: setLoc((float)(Math.random()*xbound*2)-xbound, -ybound);
                     switch((int)(Math.random()*2.99))
                     {
                         case 0: travelAngle = (float)Math.atan2(enemyBody.centerY - ybound, enemyBody.centerX - (Math.random() * xbound * 2- xbound));
@@ -66,7 +73,7 @@ public class Asteroid extends Enemy
                                 break;
                     }
                     break;
-            case 2: enemyBody.setLoc(xbound, (float)(Math.random()*ybound*2)-ybound);
+            case 2: setLoc(xbound, (float)(Math.random()*ybound*2)-ybound);
                     switch((int)(Math.random()*2.99))
                     {
                         case 0: travelAngle = (float)Math.atan2(enemyBody.centerY - (-ybound), enemyBody.centerX - (Math.random() * xbound * 2- xbound));
@@ -77,7 +84,7 @@ public class Asteroid extends Enemy
                                 break;
                     }
                     break;
-            case 3: enemyBody.setLoc(-xbound, (float)(Math.random()*xbound*2)-xbound);
+            case 3: setLoc(-xbound, (float)(Math.random()*xbound*2)-xbound);
                     switch((int)(Math.random()*2.99))
                     {
                         case 0: travelAngle = (float)Math.atan2(enemyBody.centerY - (-ybound), enemyBody.centerX - (Math.random() * xbound * 2 - xbound));
@@ -98,8 +105,6 @@ public class Asteroid extends Enemy
         distX = 0;
         distY = 0;*/
 
-        x = enemyBody.centerX;
-        y = enemyBody.centerY;
         enemyBody.speed = baseSpeed;
         //enemyBody.resetLocationHistory(x, y);
         //enemyBody.setLoc(0f,0f);
@@ -107,11 +112,11 @@ public class Asteroid extends Enemy
 
     @Override
     //public void move(float unused, float unused1, long curFrame, float slow)
-    public void move(float unused, float unused1, GlobalInfo gI)
+    public void move(float unused, float unused1)
     {
-        float tempDistX = distX * gI.timeSlow;
-        float tempDistY = distY * gI.timeSlow;
-        if(onScreen)
+        float tempDistX = distX * globalInfo.timeSlow;
+        float tempDistY = distY * globalInfo.timeSlow;
+        /*if(onScreen)
         {
             if(!screenEnterToggle)
             {
@@ -121,13 +126,13 @@ public class Asteroid extends Enemy
                 enemyBody.resetLocationHistory(x, y);
             }
             else
-            {
-                enemyBody.angle += rotationSpeed * gI.timeSlow;
+            {*/
+                enemyBody.angle += rotationSpeed * globalInfo.timeSlow;
                 //rotate();
                 x += -tempDistX;
                 y += -tempDistY;
                 enemyBody.move(-tempDistX, -tempDistY);
-            }
+        /*    }
         }
         else
         {
@@ -138,7 +143,7 @@ public class Asteroid extends Enemy
             enemyBody.angle += rotationSpeed * gI.timeSlow;
             x += -tempDistX;
             y += -tempDistY;
-        }
+        }*/
 
         if (x > xbound + .02f ||
                 x < -xbound - .02f ||
@@ -183,9 +188,14 @@ public class Asteroid extends Enemy
         ybound = yb + enemyBody.halfSquareLength;
     }
 
-    @Override
-    public Asteroid clone()
+    public Asteroid clone(float dif, float delay)
     {
-        return new Asteroid(enemyBody.clone(), particleSystem, xbound, ybound, dropFactory);
+        return new Asteroid(
+                enemyBody.clone(),
+                particleSystem,
+                xbound,
+                ybound,
+                dropFactory,
+                globalInfo);
     }
 }

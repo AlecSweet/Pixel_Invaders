@@ -13,15 +13,9 @@ import static android.opengl.GLES20.glUniform1f;
 
 public class Simple extends Enemy
 {
-    private int[]
-            //gunPixelCoordinates = {19, 8, 20, 8, 21, 8, 19, 11, 20, 11, 21, 11},
-            gunPixelCoordinates = {19, 8, 20, 8, 21, 8, 19, 11, 20, 11, 21, 11},
-            //thusterPixelCoordinates = {0, 7, 1, 8, 2, 9, 2, 10, 1, 11, 0, 12, 1, 9, 1, 10};
-            thusterPixelCoordinates = {0, 8, 0, 9, 0, 10, 0, 11, 1, 9, 1, 10};
-
     private Pixel[]
-            gun1Pixels = new Pixel[gunPixelCoordinates.length/2],
-            thrusterPixels = new Pixel[thusterPixelCoordinates.length/2];
+            gun1Pixels = new Pixel[Constants.simpleGunCoor.length/2],
+            thrusterPixels = new Pixel[Constants.simpleMThrustCoor.length/2];
 
     private float trackDistance = 1.2f;
     private float engageDistance = 1f;
@@ -30,22 +24,53 @@ public class Simple extends Enemy
     private boolean retreat = false;
     private boolean dropAdded = false;
 
-    public Simple(PixelGroup p, Gun g, ParticleSystem ps, DropFactory dF)
+    public Simple(PixelGroup p, Gun g, ParticleSystem ps, DropFactory dF, float xb, float yb, GlobalInfo gI)
     {
-        super(p, ps, dF);
+        super(p, ps, dF, xb, yb, gI);
 
-        for(int i = 0; i < thusterPixelCoordinates.length; i += 2)
+        for(int i = 0; i < Constants.simpleMThrustCoor.length; i += 2)
         {
-            thrusterPixels[i / 2] = enemyBody.getpMap()[thusterPixelCoordinates[i + 1] + 1][thusterPixelCoordinates[i] + 1];
+            thrusterPixels[i / 2] = enemyBody.getpMap()[Constants.simpleMThrustCoor[i + 1] + 1][Constants.simpleMThrustCoor[i] + 1];
         }
 
-        for(int i = 0; i < gunPixelCoordinates.length; i += 2)
+        for(int i = 0; i < Constants.simpleGunCoor.length; i += 2)
         {
-            gun1Pixels[i / 2] = enemyBody.getpMap()[gunPixelCoordinates[i + 1] + 1][gunPixelCoordinates[i] + 1];
+            gun1Pixels[i / 2] = enemyBody.getpMap()[Constants.simpleGunCoor[i + 1] + 1][Constants.simpleGunCoor[i] + 1];
         }
 
         guns = new GunComponent[1];
-        guns[0] = new GunComponent(gun1Pixels, 0, 0, 0, g, ps);
+        guns[0] = new GunComponent(gun1Pixels, Constants.simpleGunOffset[0], Constants.simpleGunOffset[1], 0, g, ps);
+        hasGun = true;
+
+        thrusters = new ThrustComponent[1];
+        thrusters[0] = new ThrustComponent(thrusterPixels, 0, 0, 0,0, 2, ps);
+
+        enemyBody.angle = 3.14;
+        enemyBody.rotate(enemyBody.angle);
+
+        baseSpeed = .005f;
+        enemyBody.speed = baseSpeed;
+        p.speed = baseSpeed;
+
+        enemyBody.setEdgeColor(.5f, 0f, .5f);
+    }
+
+    public Simple(PixelGroup p, Gun g, ParticleSystem ps, DropFactory dF, float xb, float yb, float difficulty, float delay, GlobalInfo gI)
+    {
+        super(p, ps, dF, xb, yb, delay, gI);
+
+        for(int i = 0; i < Constants.simpleMThrustCoor.length; i += 2)
+        {
+            thrusterPixels[i / 2] = enemyBody.getpMap()[Constants.simpleMThrustCoor[i + 1] + 1][Constants.simpleMThrustCoor[i] + 1];
+        }
+
+        for(int i = 0; i < Constants.simpleGunCoor.length; i += 2)
+        {
+            gun1Pixels[i / 2] = enemyBody.getpMap()[Constants.simpleGunCoor[i + 1] + 1][Constants.simpleGunCoor[i] + 1];
+        }
+
+        guns = new GunComponent[1];
+        guns[0] = new GunComponent(gun1Pixels, Constants.simpleGunOffset[0], Constants.simpleGunOffset[1], 0, g, ps);
         hasGun = true;
 
         thrusters = new ThrustComponent[1];
@@ -62,85 +87,100 @@ public class Simple extends Enemy
     }
 
     //public void move(float pX, float pY, long curFrame, float slow)
-    public void move(float pX, float pY, GlobalInfo gI)
+    @Override
+    public void move(float pX, float pY)
     {
-        float distanceToPlayer = VectorFunctions.getMagnitude(pX - enemyBody.centerX, pY - enemyBody.centerY);
-        float angleMoving = 0f;
-        float ratio = 1;
-        if(distanceToPlayer > trackDistance)
+        if(spawned)
         {
-            track = true;
-            retreat = false;
-        }
-        else if(distanceToPlayer < retreatDistance)
-        {
-            retreat = true;
-            track = false;
-        }
-
-        if(track)
-            angleMoving = -(float)(Math.atan2(pY - enemyBody.centerY, pX - enemyBody.centerX));
-
-        if(retreat)
-            angleMoving = -(float)(Math.atan2(enemyBody.centerY - pY, enemyBody.centerX - pX));
-
-
-        rotate(angleMoving , .06f, gI.timeSlow);
-        float distance = baseSpeed * thrusters[0].thrustPower * gI.timeSlow;
-        float tempDistX = -(float)(distance * Math.cos(enemyBody.angle));
-        float tempDistY = (float)(distance * Math.sin(enemyBody.angle));
-
-        if(distanceToPlayer < engageDistance && distanceToPlayer > retreatDistance && track)
-        {
-            tempDistX *= .6;
-            tempDistY *= .6;
-            ratio = 0f;
-            if(guns[0] != null)
+            float distanceToPlayer = VectorFunctions.getMagnitude(pX - enemyBody.centerX, pY - enemyBody.centerY);
+            float angleMoving = 0f;
+            float ratio = 1;
+            if (distanceToPlayer > trackDistance)
             {
+                track = true;
+                retreat = false;
+            } else if (distanceToPlayer < retreatDistance)
+            {
+                retreat = true;
+                track = false;
+            }
+
+            if (track)
+            {
+                angleMoving = -(float) (Math.atan2(pY - enemyBody.centerY, pX - enemyBody.centerX));
+            }
+
+            if (retreat)
+            {
+                angleMoving = -(float) (Math.atan2(enemyBody.centerY - pY, enemyBody.centerX - pX));
+            }
+
+
+            rotate(angleMoving, .06f, globalInfo.timeSlow);
+            float distance = baseSpeed * thrusters[0].getThrustPower() * globalInfo.timeSlow;
+            float tempDistX = -(float) (distance * Math.cos(enemyBody.angle));
+            float tempDistY = (float) (distance * Math.sin(enemyBody.angle));
+
+            if (distanceToPlayer < engageDistance && distanceToPlayer > retreatDistance && track)
+            {
+                tempDistX *= .6;
+                tempDistY *= .6;
+                ratio = 0f;
+                if (guns[0] != null)
+                {
                 /*boolean t = guns[0].gun.shoot(guns[0].x + enemyBody.centerX,
                         guns[0].y + enemyBody.centerY,
                         (float) enemyBody.angle + (float) Math.PI,
                         curFrame,
                         slow);*/
-                boolean t = guns[0].gun.shoot(guns[0].x + enemyBody.centerX,
-                        guns[0].y + enemyBody.centerY,
-                        (float) enemyBody.angle + (float) Math.PI,
-                        gI);
+                    guns[0].shoot(guns[0].x + enemyBody.centerX,
+                            guns[0].y + enemyBody.centerY,
+                            (float) enemyBody.angle + (float) Math.PI,
+                            globalInfo,
+                            enemyBody.cosA,
+                            enemyBody.sinA);
+                }
+            }
+
+            x += -tempDistX;
+            y += -tempDistY;
+            enemyBody.move(-tempDistX, -tempDistY);
+            if (guns[0] != null)
+            {
+                guns[0].gun.move(globalInfo.timeSlow);
+            }
+            addThrustParticles(thrusterPixels, ratio, .03f, enemyBody);
+
+            /*if (!dropAdded && enemyBody.numLivePixels <= .5 * enemyBody.totalPixels)
+            {
+                dropsToAdd.add(
+                        dropFactory.getNewDrop(
+                                Constants.DropType.GUN,
+                                x,
+                                y,
+                                guns[0]
+                        )
+                );
+                dropsToAdd.add(
+                        dropFactory.getNewDrop(
+                                Constants.DropType.MOD,
+                                x,
+                                y,
+                                new ModComponent(null, x, y, 0, Constants.ModType.EXTRASHOTS, 3, null)
+                        )
+                );
+                //dropsToAdd.add(dropFactory.getNewDrop(Constants.DropType.EXTRA_GUN, x, y));
+                guns[0] = null;
+                dropAdded = true;
+            }*/
+        }
+        else
+        {
+            if(globalInfo.getAugmentedTimeMillis() - levelStartTime > spawnDelay)
+            {
+                spawned = true;
             }
         }
-
-        x += -tempDistX;
-        y += -tempDistY;
-        enemyBody.move(-tempDistX, -tempDistY);
-        if(guns[0] != null)
-        {
-            guns[0].gun.move(gI.timeSlow);
-        }
-        addThrustParticles(thrusterPixels, ratio, .03f, enemyBody);
-
-        if(!dropAdded && enemyBody.numLivePixels <= .5 * enemyBody.totalPixels)
-        {
-            dropsToAdd.add(
-                    dropFactory.getNewDrop(
-                            Constants.DropType.GUN,
-                            x,
-                            y,
-                            guns[0]
-                    )
-            );
-            dropsToAdd.add(
-                    dropFactory.getNewDrop(
-                            Constants.DropType.MOD,
-                            x,
-                            y,
-                            new ModComponent(null,x,y,0, Constants.ModType.EXTRASHOTS, 3, null)
-                    )
-            );
-            //dropsToAdd.add(dropFactory.getNewDrop(Constants.DropType.EXTRA_GUN, x, y));
-            guns[0] = null;
-            dropAdded = true;
-        }
-
         // public Drop(PixelGroup p, float x, float y, int t, double lT, Component c)
     }
 
@@ -171,7 +211,7 @@ public class Simple extends Enemy
 
         rotate(angleMoving , .06f, framesPast);
 
-        float distance = baseSpeed * thrusters[0].thrustPower * framesPast;
+        float distance = baseSpeed * thrusters[0].getThrustPower() * framesPast;
         float tempDistX = -(float)(distance * Math.cos(enemyBody.angle));
         float tempDistY = (float)(distance * Math.sin(enemyBody.angle));
 
@@ -294,7 +334,7 @@ public class Simple extends Enemy
                             c.infoMap[p.row][p.col].g,
                             c.infoMap[p.row][p.col].b,
                             .7f,
-                            (baseSpeed * thrusters[0].thrustPower * (float)(Math.random()*70+20)) * ratio,
+                            (baseSpeed * thrusters[0].getThrustPower() * (float)(Math.random()*70+20)) * ratio,
                             dist * ratio * (float)Math.random()*2,
                             (float)(Math.random()*20)
                     );
@@ -307,7 +347,6 @@ public class Simple extends Enemy
     {
         if(guns[0] != null)
         {
-            guns[0].gun.applyPauseLength(p);
         }
     }
 
@@ -326,9 +365,18 @@ public class Simple extends Enemy
 
     }
 
-    @Override
-    public Simple clone()
+    public Simple clone(float difficulty, float delay)
     {
-        return new Simple(enemyBody.clone(), guns[0].gun.clone(), particleSystem, dropFactory);
+        return new Simple(
+                enemyBody.clone(),
+                guns[0].gun.clone(),
+                particleSystem,
+                dropFactory,
+                xbound,
+                ybound,
+                difficulty,
+                delay,
+                globalInfo
+        );
     }
 }

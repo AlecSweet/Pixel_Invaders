@@ -13,18 +13,13 @@ import static android.opengl.GLES20.GL_FLOAT;
 import static android.opengl.GLES20.GL_POINTS;
 import static android.opengl.GLES20.glBindBuffer;
 import static android.opengl.GLES20.glBufferData;
+import static android.opengl.GLES20.glBufferSubData;
 import static android.opengl.GLES20.glDrawArrays;
 import static android.opengl.GLES20.glEnableVertexAttribArray;
 import static android.opengl.GLES20.glGenBuffers;
 import static android.opengl.GLES20.glGetAttribLocation;
-import static android.opengl.GLES20.glGetUniformLocation;
-import static android.opengl.GLES20.glUniform1f;
+
 import static android.opengl.GLES20.glVertexAttribPointer;
-import static android.opengl.GLES20.glActiveTexture;
-import static android.opengl.GLES20.GL_TEXTURE0;
-import static android.opengl.GLES20.GL_TEXTURE_2D;
-import static android.opengl.GLES20.glUniform1i;
-import static android.opengl.GLES20.glBindTexture;
 /**
  * Created by Sweet on 3/18/2018.
  */
@@ -83,6 +78,7 @@ public class ParticleSystem
     private GlobalInfo globalInfo;
 
     private final int maxParticleCount;
+    private volatile int curMaxParticleCount;
 
     private int
             currentParticleCount,
@@ -96,6 +92,7 @@ public class ParticleSystem
     {
         globalStartTime = gst;
         this.maxParticleCount = maxParticleCount;
+        curMaxParticleCount = maxParticleCount;
         shaderLocation = sL;
         particles = new float[maxParticleCount * TOTAL_COMPONENT_COUNT];
         globalInfo = gI;
@@ -136,12 +133,21 @@ public class ParticleSystem
         int currentOffset = particleOffset;
         nextParticle++;
 
-        if (currentParticleCount < maxParticleCount)
+       /* if (currentParticleCount < maxParticleCount)
         {
             currentParticleCount++;
         }
 
-        if (nextParticle == maxParticleCount)
+        if (nextParticle >= maxParticleCount)
+        {
+            nextParticle = 0;
+        }*/
+        if (currentParticleCount < curMaxParticleCount)
+        {
+            currentParticleCount++;
+        }
+
+        if (nextParticle >= curMaxParticleCount)
         {
             nextParticle = 0;
         }
@@ -164,6 +170,53 @@ public class ParticleSystem
         needsUpdate = true;
     }
 
+    public void addParticle(float x, float y,
+                            float angle,
+                            float r, float g, float b, float a,
+                            float speed, float maxDistance, float rotationSpeed, boolean realtime)
+    {
+        final int particleOffset = nextParticle * TOTAL_COMPONENT_COUNT;
+
+        int currentOffset = particleOffset;
+        nextParticle++;
+
+       /* if (currentParticleCount < maxParticleCount)
+        {
+            currentParticleCount++;
+        }
+
+        if (nextParticle >= maxParticleCount)
+        {
+            nextParticle = 0;
+        }*/
+        if (currentParticleCount < curMaxParticleCount)
+        {
+            currentParticleCount++;
+        }
+
+        if (nextParticle >= curMaxParticleCount)
+        {
+            nextParticle = 0;
+        }
+
+        particles[currentOffset++] = x;
+        particles[currentOffset++] = y;
+
+        particles[currentOffset++] = r;
+        particles[currentOffset++] = g;
+        particles[currentOffset++] = b;
+        particles[currentOffset++] = a;
+
+        particles[currentOffset++] = angle;
+
+        particles[currentOffset++] = (float)(System.currentTimeMillis() - globalStartTime)/1000;
+        particles[currentOffset++] = speed;
+        particles[currentOffset++] = maxDistance;
+        particles[currentOffset++] = rotationSpeed;
+
+        needsUpdate = true;
+    }
+
     public void draw()
     {
         if(needsUpdate)
@@ -172,13 +225,14 @@ public class ParticleSystem
             particleBuf.position(0);
             particleBuf.put(particles);
             particleBuf.position(0);
-            glBufferData(GL_ARRAY_BUFFER, particleBuf.capacity() * Constants.BYTES_PER_FLOAT, particleBuf, GL_DYNAMIC_DRAW);
+            glBufferSubData(GL_ARRAY_BUFFER, 0, particleBuf.capacity() * Constants.BYTES_PER_FLOAT, particleBuf);
             needsUpdate = false;
         }
 
         bindAttributes();
 
-        glDrawArrays(GL_POINTS, 0, maxParticleCount);
+        //glDrawArrays(GL_POINTS, 0, maxParticleCount);
+        glDrawArrays(GL_POINTS, 0, curMaxParticleCount);
     }
 
 
@@ -239,5 +293,10 @@ public class ParticleSystem
     public ParticleSystem clone()
     {
         return new ParticleSystem(maxParticleCount, shaderLocation, textureID[0], globalStartTime, globalInfo);
+    }
+
+    public void setCurMax(float percent)
+    {
+        curMaxParticleCount = (int)(maxParticleCount * percent);
     }
 }

@@ -25,7 +25,8 @@ public class Collidable
     public float
             halfSquareLength,
             livablePercentage = .5f,
-            knockBackFactor = .006f;
+            knockBackFactor = .006f,
+            regenDelay = 3000;
 
     public double
             orphanChunkCheckDelay = 100,
@@ -55,17 +56,21 @@ public class Collidable
 
     public Zone[] zones;
 
+    public boolean gotHit = false;
+
     protected CollidableGroup[] totalGroups;
 
     public int
             totalPixels,
-            numLivePixels;
+            numLivePixels,
+            health = 1;
 
     public Pixel lastPixelKilled;
 
     public boolean
             restorable = false,
-            knockable = true;
+            knockable = true,
+            regen = false;
 
     public volatile boolean
             readyToKnockback = false,
@@ -211,10 +216,10 @@ public class Collidable
                             //if(p.live)
                             if(p.state >= 1)
                             {
-                                p.xDisp = infoMap[p.row][p.col].xOriginal * cosA +
+                               /* p.xDisp = infoMap[p.row][p.col].xOriginal * cosA +
                                         infoMap[p.row][p.col].yOriginal * sinA;
                                 p.yDisp = infoMap[p.row][p.col].yOriginal * cosA -
-                                        infoMap[p.row][p.col].xOriginal * sinA;
+                                        infoMap[p.row][p.col].xOriginal * sinA;*/
                                 /*float tempX = infoMap[p.row][p.col].xOriginal + centerMassX;
                                 float tempY = infoMap[p.row][p.col].yOriginal + centerMassY;
                                 p.xDisp = tempX * cosA +
@@ -224,6 +229,10 @@ public class Collidable
                                 groupCheck = true;
                                 if(p.state >= 2)
                                 {
+                                    p.xDisp = infoMap[p.row][p.col].xOriginal * cosA +
+                                            infoMap[p.row][p.col].yOriginal * sinA;
+                                    p.yDisp = infoMap[p.row][p.col].yOriginal * cosA -
+                                            infoMap[p.row][p.col].xOriginal * sinA;
                                     tempCMX += infoMap[p.row][p.col].xOriginal;
                                     tempCMY += infoMap[p.row][p.col].yOriginal;
                                     numOutside++;
@@ -275,6 +284,152 @@ public class Collidable
         }
     }
 
+    public void killPixel(Pixel p)
+    {
+        /*live = false;
+        if (pMap[row + 1][col] != null && !pMap[row + 1][col].outside)
+        {
+            pMap[row + 1][col].insideEdge = true;
+            pMap[row + 1][col].outside = true;
+        }
+
+        if (pMap[row - 1][col] != null && !pMap[row - 1][col].outside)
+        {
+            pMap[row - 1][col].insideEdge = true;
+            pMap[row - 1][col].outside = true;
+        }
+
+        if (pMap[row][col + 1] != null && !pMap[row][col + 1].outside)
+        {
+            pMap[row][col + 1].insideEdge = true;
+            pMap[row][col + 1].outside = true;
+        }
+
+        if (pMap[row][col - 1] != null && !pMap[row][col - 1].outside)
+        {
+            pMap[row][col - 1].insideEdge = true;
+            pMap[row][col - 1].outside = true;
+        }*/
+        Pixel temp;
+        health = 0;
+        if(health <= 0)
+        {
+            p.state = 0;
+            temp = pMap[p.row + 1][p.col];
+            if (temp != null && temp.state == 1)
+            {
+                temp.xDisp = infoMap[temp.row][temp.col].xOriginal * cosA +
+                        infoMap[temp.row][temp.col].yOriginal * sinA;
+                temp.yDisp = infoMap[temp.row][temp.col].yOriginal * cosA -
+                        infoMap[temp.row][temp.col].xOriginal * sinA;
+                temp.state = 3;
+            }
+
+            temp = pMap[p.row - 1][p.col];
+            if (temp != null && temp.state == 1)
+            {
+                temp.xDisp = infoMap[temp.row][temp.col].xOriginal * cosA +
+                        infoMap[temp.row][temp.col].yOriginal * sinA;
+                temp.yDisp = infoMap[temp.row][temp.col].yOriginal * cosA -
+                        infoMap[temp.row][temp.col].xOriginal * sinA;
+                temp.state = 3;
+            }
+
+            temp = pMap[p.row][p.col + 1];
+            if (temp != null && temp.state == 1)
+            {
+                temp.xDisp = infoMap[temp.row][temp.col].xOriginal * cosA +
+                        infoMap[temp.row][temp.col].yOriginal * sinA;
+                temp.yDisp = infoMap[temp.row][temp.col].yOriginal * cosA -
+                        infoMap[temp.row][temp.col].xOriginal * sinA;
+                temp.state = 3;
+            }
+
+            temp = pMap[p.row][p.col - 1];
+            if (temp != null && temp.state == 1)
+            {
+                temp.xDisp = infoMap[temp.row][temp.col].xOriginal * cosA +
+                        infoMap[temp.row][temp.col].yOriginal * sinA;
+                temp.yDisp = infoMap[temp.row][temp.col].yOriginal * cosA -
+                        infoMap[temp.row][temp.col].xOriginal * sinA;
+                temp.state = 3;
+            }
+        }
+    }
+
+    public void hitPixel(Pixel p)
+    {
+        /*live = false;
+        if (pMap[row + 1][col] != null && !pMap[row + 1][col].outside)
+        {
+            pMap[row + 1][col].insideEdge = true;
+            pMap[row + 1][col].outside = true;
+        }
+
+        if (pMap[row - 1][col] != null && !pMap[row - 1][col].outside)
+        {
+            pMap[row - 1][col].insideEdge = true;
+            pMap[row - 1][col].outside = true;
+        }
+
+        if (pMap[row][col + 1] != null && !pMap[row][col + 1].outside)
+        {
+            pMap[row][col + 1].insideEdge = true;
+            pMap[row][col + 1].outside = true;
+        }
+
+        if (pMap[row][col - 1] != null && !pMap[row][col - 1].outside)
+        {
+            pMap[row][col - 1].insideEdge = true;
+            pMap[row][col - 1].outside = true;
+        }*/
+        Pixel temp;
+        health--;
+        if(health <= 0)
+        {
+            p.state = 0;
+            temp = pMap[p.row + 1][p.col];
+            if (temp != null && temp.state == 1)
+            {
+                temp.xDisp = infoMap[temp.row][temp.col].xOriginal * cosA +
+                        infoMap[temp.row][temp.col].yOriginal * sinA;
+                temp.yDisp = infoMap[temp.row][temp.col].yOriginal * cosA -
+                        infoMap[temp.row][temp.col].xOriginal * sinA;
+                temp.state = 3;
+            }
+
+            temp = pMap[p.row - 1][p.col];
+            if (temp != null && temp.state == 1)
+            {
+                temp.xDisp = infoMap[temp.row][temp.col].xOriginal * cosA +
+                        infoMap[temp.row][temp.col].yOriginal * sinA;
+                temp.yDisp = infoMap[temp.row][temp.col].yOriginal * cosA -
+                        infoMap[temp.row][temp.col].xOriginal * sinA;
+                temp.state = 3;
+            }
+
+            temp = pMap[p.row][p.col + 1];
+            if (temp != null && temp.state == 1)
+            {
+                temp.xDisp = infoMap[temp.row][temp.col].xOriginal * cosA +
+                        infoMap[temp.row][temp.col].yOriginal * sinA;
+                temp.yDisp = infoMap[temp.row][temp.col].yOriginal * cosA -
+                        infoMap[temp.row][temp.col].xOriginal * sinA;
+                temp.state = 3;
+            }
+
+            temp = pMap[p.row][p.col - 1];
+            if (temp != null && temp.state == 1)
+            {
+                temp.xDisp = infoMap[temp.row][temp.col].xOriginal * cosA +
+                        infoMap[temp.row][temp.col].yOriginal * sinA;
+                temp.yDisp = infoMap[temp.row][temp.col].yOriginal * cosA -
+                        infoMap[temp.row][temp.col].xOriginal * sinA;
+                temp.state = 3;
+            }
+        }
+    }
+
     public void setLoc(float mX, float mY)
     {
         centerX = mX;
@@ -290,6 +445,7 @@ public class Collidable
             p.outside = false;
             p.insideEdge = false;*/
             p.state = 1;
+            p.health = health;
             p.groupFlag = -1;
             if (pMap[p.row + 1][p.col] == null)
             {
@@ -424,7 +580,7 @@ public class Collidable
                 locationCollisionTail.frame < currentFrame)
         {
             prevColLoc = locationCollisionTail;
-            //locationCollisionTail.collisionDone = true;
+            locationCollisionTail.collisionDone = true;
             locationCollisionTail = locationCollisionTail.nextLocation;
         }
 
@@ -486,6 +642,134 @@ public class Collidable
 
         }
     }
+    public void revivePixels()
+    {
+        int resNum = 24;
+        for(Pixel p: pixels)
+        {
+            if(p.state > 0)
+            {
+                if (pMap[p.row + 1][p.col] != null &&
+                        pMap[p.row + 1][p.col].state == 0 &&
+                        resNum > 0)
+                {
+                    resNum = revivePixelHelper(pMap[p.row + 1][p.col], resNum);
+                }
+                else if (pMap[p.row - 1][p.col] != null &&
+                        pMap[p.row - 1][p.col].state == 0 &&
+                        resNum > 0)
+                {
+                    resNum = revivePixelHelper(pMap[p.row - 1][p.col], resNum);
+                }
+                else if (pMap[p.row][p.col + 1] != null &&
+                        pMap[p.row][p.col + 1].state == 0 &&
+                        resNum > 0)
+                {
+                    resNum = revivePixelHelper(pMap[p.row][p.col + 1], resNum);
+                }
+                else if (pMap[p.row][p.col - 1] != null &&
+                        pMap[p.row][p.col - 1].state == 0 &&
+                        resNum > 0)
+                {
+                    resNum = revivePixelHelper(pMap[p.row][p.col - 1], resNum);
+                }
+            }
+            if(resNum <= 0)
+            {
+                break;
+            }
+        }
+
+        for(Pixel p: pixels)
+        {
+            if(p.state > 0)
+            {
+                p.state = 1;
+                if (pMap[p.row + 1][p.col] == null)
+                {
+                    if (p.state < 3)
+                    {
+                        p.state = 2;
+                    }
+                } else if (pMap[p.row + 1][p.col].state == 0)
+                {
+                    p.state = 3;
+                }
+
+                if (pMap[p.row - 1][p.col] == null)
+                {
+                    if (p.state < 3)
+                    {
+                        p.state = 2;
+                    }
+                } else if (pMap[p.row - 1][p.col].state == 0)
+                {
+                    p.state = 3;
+                }
+
+                if (pMap[p.row][p.col + 1] == null)
+                {
+                    if (p.state < 3)
+                    {
+                        p.state = 2;
+                    }
+                }
+                else if (pMap[p.row][p.col + 1].state == 0)
+                {
+                    p.state = 3;
+                }
+
+                if (pMap[p.row][p.col - 1] == null)
+                {
+                    if (p.state < 3)
+                    {
+                        p.state = 2;
+                    }
+                }
+                else if (pMap[p.row][p.col - 1].state == 0)
+                {
+                    p.state = 3;
+                }
+            }
+        }
+        needsUpdate = true;
+    }
+
+    private int revivePixelHelper(Pixel p, int rN)
+    {
+        int resNum = rN;
+        p.state = 1;
+        p.health = health;
+        numLivePixels++;
+        resNum--;
+
+        if (pMap[p.row + 1][p.col] != null &&
+                pMap[p.row + 1][p.col].state == 0 &&
+                resNum > 0)
+        {
+            resNum = revivePixelHelper(pMap[p.row + 1][p.col], resNum);
+        }
+        else if (pMap[p.row - 1][p.col] != null &&
+                pMap[p.row - 1][p.col].state == 0 &&
+                resNum > 0)
+        {
+            resNum = revivePixelHelper(pMap[p.row - 1][p.col], resNum);
+        }
+        else if (pMap[p.row][p.col + 1] != null &&
+                pMap[p.row][p.col + 1].state == 0 &&
+                resNum > 0)
+        {
+            resNum = revivePixelHelper(pMap[p.row][p.col + 1], resNum);
+        }
+        else if (pMap[p.row][p.col - 1] != null &&
+                pMap[p.row][p.col - 1].state == 0 &&
+                resNum > 0)
+        {
+            resNum = revivePixelHelper(pMap[p.row][p.col - 1], resNum);
+        }
+
+        return resNum;
+    }
 
     public float getHalfSquareLength()
     {
@@ -520,5 +804,36 @@ public class Collidable
     public void setRestorable(boolean b)
     {
         restorable = b;
+    }
+
+    public void addMaxHealth(int h)
+    {
+        health += h;
+        for(Pixel p: pixels)
+        {
+            if(p.state > 0)
+            {
+                p.health += h;
+            }
+        }
+    }
+
+    public void reduceMaxHealth(int h)
+    {
+        health -= h;
+        for(Pixel p: pixels)
+        {
+            if(p.state > 0)
+            {
+                if(p.health - h > 0)
+                {
+                    p.health -= h;
+                }
+                else
+                {
+                    p.health = 1;
+                }
+            }
+        }
     }
 }

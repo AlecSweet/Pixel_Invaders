@@ -2,6 +2,7 @@ package com.example.sweet.game20;
 
 import android.content.Context;
 import android.graphics.PointF;
+import android.provider.Settings;
 
 
 import com.example.sweet.game20.Objects.Button;
@@ -11,6 +12,7 @@ import com.example.sweet.game20.Objects.Drop;
 import com.example.sweet.game20.Objects.GunComponent;
 import com.example.sweet.game20.Objects.ImageContainer;
 import com.example.sweet.game20.Objects.ModComponent;
+import com.example.sweet.game20.Objects.ParticleSystem;
 import com.example.sweet.game20.Objects.Player;
 import com.example.sweet.game20.util.Constants;
 import com.example.sweet.game20.util.TextPresenter;
@@ -44,7 +46,8 @@ public class UI extends Drawable
             shootingOnDown = new PointF(0, 0),
             shootingOnMove = new PointF(0, 0);
 
-    public float uiAvgFrame,
+    public float
+            uiAvgFrame,
             collisionAvgFrame,
             aiAvgFrame;
 
@@ -63,13 +66,15 @@ public class UI extends Drawable
     public int
             uiShaderProgram,
             pixelShaderProgram,
+            particleShaderProgram,
             whiteTexture,
             uTextureLocation;
 
     private Button heldDropButton;
     private Button selectedButton = null;
 
-    public GameState gameState = GameState.MAIN_MENU;
+    public volatile GameState gameState = GameState.MAIN_MENU;
+    public GameState prevGameState = GameState.MAIN_MENU;
 
     private ImageContainer
             joyBaseMove,
@@ -80,12 +85,25 @@ public class UI extends Drawable
             allInfoBox,
             modPanel,
             gunPanel,
-            thrusterPanel;
+            thrusterPanel,
+            optionsMenu,
+            shadeBar;
 
     private Button
             resumeButton,
             optionsButton,
-            exitButton;
+            optionsButton2,
+            exitButton,
+            playButton,
+            backButton,
+            mainMenuButton,
+            pauseButton,
+            readyButton;
+
+    private Button[][] componentPanel = new Button[4][2];
+
+    private Button[] slideButtons = new Button[4];
+    private Button[] checkButtons = new Button[3];
 
     private float
             playerModelX = 0.16f,
@@ -97,12 +115,17 @@ public class UI extends Drawable
 
     private int score = 0;
 
-    public boolean exitFlag = false;
+    public boolean
+            exitFlag = false,
+            newGameFlag = false,
+            changeParticlesFlag = false,
+            pauseFlag = false,
+            readyFlag = false,
+            displayReady = false;
 
-    private Button[][] componentPanel = new Button[4][2];
 
-    private Button[] playerGuns = new Button[3];
     float u = .024f;
+    private Button[] playerGuns = new Button[3];
     private PointF[] gunOffsets = new PointF[]{
             //new PointF(-.06f * mag + u, -.072f * mag),
             //new PointF(-.06f * mag + u, .056f * mag),
@@ -130,8 +153,14 @@ public class UI extends Drawable
 
     private TextPresenter textPresenter;
 
-    public UI(Context context, int shaderLocation)
+    private GlobalInfo globalInfo;
+
+    private ParticleSystem uiParticles;
+
+    public UI(Context context, int shaderLocation, GlobalInfo globalInfo, ParticleSystem ps)
     {
+        this.globalInfo = globalInfo;
+        uiParticles = ps;
         int[] glVarLocations = new int[5];
         glVarLocations[0] = glGetUniformLocation(shaderLocation, "x_displacement");
         glVarLocations[1] = glGetUniformLocation(shaderLocation, "y_displacement");
@@ -186,6 +215,17 @@ public class UI extends Drawable
                         glVarLocations,
                         -1, -1
                 );
+
+        shadeBar = new ImageContainer
+                (
+                        TextureLoader.loadTexture(context, R.drawable.shade),
+                        shadeBarVa,
+                        0, .85f,
+                        "screenShade",
+                        glVarLocations,
+                        -1, -1
+                );
+
         modPanel = new ImageContainer
                 (
                         TextureLoader.loadTexture(context, R.drawable.modpanel),
@@ -222,6 +262,16 @@ public class UI extends Drawable
                         glVarLocations,
                         -1, -1
                 );
+        optionsMenu = new ImageContainer
+                (
+                        TextureLoader.loadTexture(context, R.drawable.optionsmenu),
+                        allInfoBoxVA,
+                        -.024f - .144f + .02f, 0,
+                        "largeBox",
+                        glVarLocations,
+                        -1, -1
+                );
+
 
         resumeButton = new Button
                 (
@@ -246,11 +296,13 @@ public class UI extends Drawable
                         null
                 );
 
+        int optionsText = TextureLoader.loadTexture(context, R.drawable.options);
+        int optionsText2 = TextureLoader.loadTexture(context, R.drawable.options);
         optionsButton = new Button
                 (
                         new ImageContainer
                                 (
-                                        TextureLoader.loadTexture(context, R.drawable.options),
+                                        optionsText,
                                         resumeButtonVA,
                                         .82f + .02f, 0,
                                         "optionsButton",
@@ -259,10 +311,102 @@ public class UI extends Drawable
                                 ),
                         new ImageContainer
                                 (
-                                        TextureLoader.loadTexture(context, R.drawable.options2),
+                                        optionsText2,
                                         resumeButtonHoveredVA,
                                         .82f + .02f, 0,
                                         "optionsButtonHover",
+                                        glVarLocations,
+                                        rbL, rbW
+                                ),
+                        null
+                );
+
+        readyButton = new Button
+                (
+                        new ImageContainer
+                                (
+                                        TextureLoader.loadTexture(context, R.drawable.ready),
+                                        resumeButtonVA,
+                                        .82f + .02f, 0,
+                                        "optionsButton",
+                                        glVarLocations,
+                                        rbL, rbW
+                                ),
+                        new ImageContainer
+                                (
+                                        TextureLoader.loadTexture(context, R.drawable.ready2),
+                                        resumeButtonHoveredVA,
+                                        .82f + .02f, 0,
+                                        "optionsButtonHover",
+                                        glVarLocations,
+                                        rbL, rbW
+                                ),
+                        null
+                );
+
+        optionsButton2 = new Button
+                (
+                        new ImageContainer
+                                (
+                                        optionsText,
+                                        resumeButtonVA,
+                                        0f, .9f,
+                                        "optionsButton",
+                                        glVarLocations,
+                                        rbL, rbW
+                                ),
+                        new ImageContainer
+                                (
+                                        optionsText2,
+                                        resumeButtonHoveredVA,
+                                        0f, .9f,
+                                        "optionsButtonHover",
+                                        glVarLocations,
+                                        rbL, rbW
+                                ),
+                        null
+                );
+
+        mainMenuButton = new Button
+                (
+                        new ImageContainer
+                                (
+                                        TextureLoader.loadTexture(context, R.drawable.mainmenu),
+                                        resumeButtonVA,
+                                        .82f + .02f, -.55f,
+                                        "exitButton",
+                                        glVarLocations,
+                                        rbL, rbW
+                                ),
+                        new ImageContainer
+                                (
+                                        TextureLoader.loadTexture(context, R.drawable.mainmenu2),
+                                        resumeButtonHoveredVA,
+                                        .82f + .02f, -.55f,
+                                        "exitButtonHover",
+                                        glVarLocations,
+                                        rbL, rbW
+                                ),
+                        null
+                );
+
+        backButton = new Button
+                (
+                        new ImageContainer
+                                (
+                                        TextureLoader.loadTexture(context, R.drawable.back),
+                                        resumeButtonVA,
+                                        .82f + .02f, -.55f,
+                                        "exitButton",
+                                        glVarLocations,
+                                        rbL, rbW
+                                ),
+                        new ImageContainer
+                                (
+                                        TextureLoader.loadTexture(context, R.drawable.back2),
+                                        resumeButtonHoveredVA,
+                                        .82f + .02f, -.55f,
+                                        "exitButtonHover",
                                         glVarLocations,
                                         rbL, rbW
                                 ),
@@ -275,8 +419,8 @@ public class UI extends Drawable
                                 (
                                         TextureLoader.loadTexture(context, R.drawable.exit),
                                         resumeButtonVA,
-                                        .82f + .02f, -.55f,
-                                        "exitButton",
+                                        -.4f, .8f,
+                                        "optionsButton",
                                         glVarLocations,
                                         rbL, rbW
                                 ),
@@ -284,13 +428,115 @@ public class UI extends Drawable
                                 (
                                         TextureLoader.loadTexture(context, R.drawable.exit2),
                                         resumeButtonHoveredVA,
-                                        .82f + .02f, -.55f,
-                                        "exitButtonHover",
+                                        -.4f, .8f,
+                                        "optionsButtonHover",
                                         glVarLocations,
                                         rbL, rbW
                                 ),
                         null
                 );
+
+        playButton = new Button
+                (
+                        new ImageContainer
+                                (
+                                        TextureLoader.loadTexture(context, R.drawable.play),
+                                        resumeButtonVA,
+                                        .4f, .8f,
+                                        "optionsButton",
+                                        glVarLocations,
+                                        rbL, rbW
+                                ),
+                        new ImageContainer
+                                (
+                                        TextureLoader.loadTexture(context, R.drawable.play2),
+                                        resumeButtonHoveredVA,
+                                        .4f, .8f,
+                                        "optionsButtonHover",
+                                        glVarLocations,
+                                        rbL, rbW
+                                ),
+                        null
+                );
+
+        pauseButton = new Button
+                (
+                        new ImageContainer
+                                (
+                                        TextureLoader.loadTexture(context, R.drawable.pause),
+                                        pauseVA,
+                                        .8f, 1f,
+                                        "optionsButton",
+                                        glVarLocations,
+                                        paL, paW
+                                ),
+                        new ImageContainer
+                                (
+                                        TextureLoader.loadTexture(context, R.drawable.pause2),
+                                        pauseVA,
+                                        .8f, 1f,
+                                        "optionsButtonHover",
+                                        glVarLocations,
+                                        paL, paW
+                                ),
+                        null
+                );
+
+        int slideTexture = TextureLoader.loadTexture(context, R.drawable.slidebutton);
+        int slideTexture2 = TextureLoader.loadTexture(context, R.drawable.slidebutton2);
+
+        for(int i = 0; i < slideButtons.length; i++)
+        {
+            slideButtons[i] = new Button
+                    (
+                            new ImageContainer
+                                    (
+                                            slideTexture,
+                                            slideButtonVA,
+                                            .332f + .02f - .392f * i, -.992f,
+                                            "optionsButton",
+                                            glVarLocations,
+                                            sldBR, sldBR
+                                    ),
+                            new ImageContainer
+                                    (
+                                            slideTexture2,
+                                            slideButtonVA,
+                                            .332f + .02f - .392f * i, -.992f,
+                                            "optionsButtonHover",
+                                            glVarLocations,
+                                            sldBR, sldBR
+                                    ),
+                            null
+                    );
+        }
+
+        int checkTexture = TextureLoader.loadTexture(context, R.drawable.check);
+        for(int i = 0; i < checkButtons.length; i++)
+        {
+            checkButtons[i] = new Button
+                    (
+                            new ImageContainer
+                                    (
+                                            checkTexture,
+                                            checkVA,
+                                            .53f - .192f * i, .16f,
+                                            "optionsButton",
+                                            glVarLocations,
+                                            chckR, chckR
+                                    ),
+                            new ImageContainer
+                                    (
+                                            checkTexture,
+                                            checkVA,
+                                            .53f - .192f * i, .16f,
+                                            "optionsButtonHover",
+                                            glVarLocations,
+                                            chckR, chckR
+                                    ),
+                            null
+                    );
+        }
 
         int itrAllCompButtons = 0;
         int squareTexture = TextureLoader.loadTexture(context, R.drawable.square);
@@ -476,7 +722,15 @@ public class UI extends Drawable
                 joyBaseShoot.draw();
                 joyStickShoot.draw();
             }
-            textPresenter.drawInt(score++, -.9f, 0f, true);
+            if(!globalInfo.gameSettings.doubleTapPause)
+            {
+                pauseButton.draw(movementOnMove.x, movementOnMove.y, shootingOnMove.x, shootingOnMove.y);
+            }
+            if(displayReady)
+            {
+                readyButton.draw(movementOnMove.x, movementOnMove.y, shootingOnMove.x, shootingOnMove.y);
+            }
+            textPresenter.drawInt(player.score, -.9f, 0f, true);
         }
         else if (gameState == GameState.PAUSE_MENU)
         {
@@ -494,9 +748,9 @@ public class UI extends Drawable
                     mag,
                     pointSize * mag);
 
-            for(int g = 0; g < player.getMaxGuns(); g++)
+            for (int g = 0; g < player.getMaxGuns(); g++)
             {
-                if(playerGuns[g].drop != null && playerGuns[g] != heldDropButton)
+                if (playerGuns[g].drop != null && playerGuns[g] != heldDropButton)
                 {
                     playerGuns[g].drop.menuDraw(
                             playerGuns[g].regular.x,
@@ -507,9 +761,9 @@ public class UI extends Drawable
                 }
             }
 
-            for(int m = 0; m < player.getMaxMods(); m++)
+            for (int m = 0; m < player.getMaxMods(); m++)
             {
-                if(playerMods[m].drop != null && playerMods[m] != heldDropButton)
+                if (playerMods[m].drop != null && playerMods[m] != heldDropButton)
                 {
                     playerMods[m].drop.menuDraw(
                             playerMods[m].regular.x,
@@ -520,9 +774,9 @@ public class UI extends Drawable
                 }
             }
 
-            for(int t = 0; t < player.thrusters.length; t++)
+            for (int t = 0; t < player.thrusters.length; t++)
             {
-                if(playerThrusters[t].drop != null && playerThrusters[t] != heldDropButton)
+                if (playerThrusters[t].drop != null && playerThrusters[t] != heldDropButton)
                 {
                     playerThrusters[t].drop.menuDraw(
                             playerThrusters[t].regular.x,
@@ -533,7 +787,7 @@ public class UI extends Drawable
                 }
             }
 
-            if(heldDropButton != null)
+            if (heldDropButton != null)
             {
                 heldDropButton.drop.menuDraw(menuOnMove.x, -menuOnMove.y, 2f, pointSize * 2f);
             }
@@ -549,16 +803,16 @@ public class UI extends Drawable
                 }
             }
 
-            if(selectedButton != null)
+            if (selectedButton != null)
             {
-                if(selectedButton.drop != null)
+                if (selectedButton.drop != null)
                 {
-                    if(selectedButton.drop.component.type == DropType.GUN)
+                    if (selectedButton.drop.component.type == DropType.GUN)
                     {
-                        ((GunComponent)selectedButton.drop.component).gun.getTemplate().softDraw(
+                        ((GunComponent) selectedButton.drop.component).gun.getTemplate().softDraw(
                                 Constants.gpBulletX,
                                 Constants.gpBulletY,
-                                0,0
+                                0, 0
                         );
                     }
                 }
@@ -569,37 +823,40 @@ public class UI extends Drawable
             //playerBox.draw();
             resumeButton.draw(menuOnMove.x, menuOnMove.y);
             optionsButton.draw(menuOnMove.x, menuOnMove.y);
-            exitButton.draw(menuOnMove.x, menuOnMove.y);
+            mainMenuButton.draw(menuOnMove.x, menuOnMove.y);
 
 
-            if(selectedButton != null &&
+            if (selectedButton != null &&
                     selectedButton.drop != null &&
                     selectedButton.drop.component != null)
             {
                 switch (selectedButton.drop.component.type)
                 {
-                    case THRUSTER: thrusterPanel.draw();
-                            break;
-                    case GUN: gunPanel.draw();
-                            textPresenter.drawInt(
-                                    (int)((GunComponent)selectedButton.drop.component).gun.getShotDelay(),
-                                    Constants.iPnum1X, Constants.infoPanelY,
-                                    false
-                            );
-                            textPresenter.drawInt(
-                                    ((GunComponent)selectedButton.drop.component).gun.getTemplate().totalPixels,
-                                    Constants.iPnum2X, Constants.infoPanelY,
-                                    false
-                            );
-                            textPresenter.drawInt(
-                                    (int)(((GunComponent)selectedButton.drop.component).gun.getTemplate().totalPixels *
-                                            (1000 / ((GunComponent)selectedButton.drop.component).gun.getShotDelay())),
-                                    Constants.iPnum3X, Constants.infoPanelY,
-                                    false
-                            );
-                            break;
-                    case MOD: modPanel.draw();
-                            break;
+                    case THRUSTER:
+                        thrusterPanel.draw();
+                        break;
+                    case GUN:
+                        gunPanel.draw();
+                        textPresenter.drawInt(
+                                (int) ((GunComponent) selectedButton.drop.component).gun.getShotDelay(),
+                                Constants.iPnum1X, Constants.infoPanelY,
+                                false
+                        );
+                        textPresenter.drawInt(
+                                ((GunComponent) selectedButton.drop.component).gun.getTemplate().totalPixels,
+                                Constants.iPnum2X, Constants.infoPanelY,
+                                false
+                        );
+                        textPresenter.drawInt(
+                                (int) (((GunComponent) selectedButton.drop.component).gun.getTemplate().totalPixels *
+                                        (1000 / ((GunComponent) selectedButton.drop.component).gun.getShotDelay())),
+                                Constants.iPnum3X, Constants.infoPanelY,
+                                false
+                        );
+                        break;
+                    case MOD:
+                        modPanel.draw();
+                        break;
                 }
             }
             for (Button[] bA : componentPanel)
@@ -620,17 +877,119 @@ public class UI extends Drawable
                 b.draw(menuOnMove.x, menuOnMove.y);
             }
 
-            for(int m = 0; m < player.getMaxMods(); m++)
+            for (int m = 0; m < player.getMaxMods(); m++)
             {
                 playerMods[m].draw(menuOnMove.x, menuOnMove.y);
             }
 
             textPresenter.drawInt(score, -.86f, -.07f, false);
         }
-        //System.out.println(uiAvgFrame + "   " + aiAvgFrame +  "   " + collisionAvgFrame);
-        textPresenter.drawInt((int)uiAvgFrame, .9f, .5f, false);
-        textPresenter.drawInt((int)aiAvgFrame, .9f, 0f, false);
-        textPresenter.drawInt((int)collisionAvgFrame, .9f, -.5f, false);
+        else if (gameState == GameState.MAIN_MENU)
+        {
+            glUseProgram(uiShaderProgram);
+            shadeBar.draw();
+            playButton.draw(menuOnMove.x, menuOnMove.y);
+            optionsButton2.draw(menuOnMove.x, menuOnMove.y);
+            exitButton.draw(menuOnMove.x, menuOnMove.y);
+        }
+        else if (gameState == GameState.OPTIONS)
+        {
+            glUseProgram(uiShaderProgram);
+            screenShade.draw();
+            optionsMenu.draw();
+            backButton.draw(menuOnMove.x, menuOnMove.y);
+            if (menuPointerDown)
+            {
+                int index = 0;
+                for (Button b : slideButtons)
+                {
+                    if (b.touchedOnDown)
+                    {
+                        b.drawHighlight();
+                        if (menuOnMove.y > slideMax)
+                        {
+                            b.setY(-slideMax);
+                        }
+                        else if (menuOnMove.y < slideMin)
+                        {
+                            b.setY(-slideMin);
+                        }
+                        else
+                        {
+                            b.setY(-menuOnMove.y);
+                        }
+                        float percent = (-b.regular.y - slideMin) / (slideMax - slideMin);
+                        globalInfo.gameSettings.setSlideSetting(index, percent);
+                        changeParticlesFlag = true;
+                    }
+                    else
+                    {
+                        b.draw(menuOnMove.x, menuOnMove.y);
+                    }
+                    index++;
+                }
+            }
+            else
+            {
+                for (Button b : slideButtons)
+                {
+                    b.draw(menuOnMove.x, menuOnMove.y);
+                }
+            }
+
+            for (int i = 0; i < checkButtons.length; i++)
+            {
+                if (globalInfo.gameSettings.getToggleSetting(i))
+                {
+                    checkButtons[i].draw(menuOnMove.x, menuOnMove.y);
+                }
+                else
+                {
+                    checkButtons[i].checkOnMove(menuOnMove.x, menuOnMove.y);
+                }
+            }
+
+           /* slideTexture,
+                    slideButtonVA,
+                    .332f + .02f - .392f * i, -.992f,
+                    "optionsButton",
+                    glVarLocations,
+                    sldBR, sldBR*/
+            textPresenter.drawInt((int) (globalInfo.gameSettings.particlePercent * 100), .348f, -1.224f, false);
+            textPresenter.drawInt((int) (globalInfo.gameSettings.screenShakePercent * 100), -.044f, -1.224f, false);
+            textPresenter.drawInt((int) (globalInfo.gameSettings.musicPercent * 100), -.436f, -1.224f, false);
+            textPresenter.drawInt((int) (globalInfo.gameSettings.soundPercent * 100), -.828f, -1.224f, false);
+        }
+        if(gameState != GameState.IN_GAME)
+        {
+            if(menuPointerDown)
+            {
+                int len = (int)(Math.random()*5) + 1;
+                for(int i = 0; i < len; i++)
+                {
+                    uiParticles.addParticle(
+                            menuOnMove.x,
+                            -menuOnMove.y,
+                            (float)Math.random()*Constants.twoPI,
+                            0,
+                            0,
+                            1,
+                            1,
+                            (float)(Math.random())+.1f,
+                            (float)(Math.random()*.3)+.01f,
+                            (float)(Math.random()*40)-20,
+                            true
+                    );
+                }
+            }
+        }
+
+        if (globalInfo.gameSettings.showFps)
+        {
+            textPresenter.drawInt((int) uiAvgFrame, .9f, .5f, false);
+            textPresenter.drawInt((int) aiAvgFrame, .9f, 0f, false);
+            textPresenter.drawInt((int) collisionAvgFrame, .9f, -.5f, false);
+        }
     }
 
     public void pointerDown()
@@ -646,66 +1005,143 @@ public class UI extends Drawable
                 }
             }
         }
+        else if(gameState == GameState.OPTIONS)
+        {
+            for(Button b: slideButtons)
+            {
+                b.checkOnDown(menuOnDown.x, menuOnDown.y);
+            }
+
+            for(Button b: checkButtons)
+            {
+                b.checkOnDown(menuOnDown.x, menuOnDown.y);
+            }
+        }
     }
 
     public void pointerUp()
     {
-        for(Button b: allComponentButtons)
+        if(gameState == GameState.IN_GAME)
         {
-            if(b.cursorOnButton)
+            if(!globalInfo.gameSettings.doubleTapPause)
             {
-                selectedButton = b;
-                break;
-            }
-        }
-
-        if( heldDropButton != null &&
-            heldDropButton.drop != null &&
-            heldDropButton.drop.component != null)
-        {
-            if( selectedButton.type == DropType.ANY ||
-                selectedButton.type == heldDropButton.drop.component.type)
-            {
-                if( selectedButton.drop != null)
+                if(pauseButton.cursorOnButton)
                 {
-                    Component t = selectedButton.drop.component;
-
-                    selectedButton.drop.component = heldDropButton.drop.component;
-                    if (selectedButton.drop.component != null)
-                    {
-                        selectedButton.drop.creationTime = System.currentTimeMillis();
-                        selectedButton.drop.pixelGroup.setWhiteToColor(
-                                selectedButton.drop.component.r,
-                                selectedButton.drop.component.g,
-                                selectedButton.drop.component.b
-                        );
-                    }
-
-                    heldDropButton.drop.component = t;
-                    if(heldDropButton.drop.component != null)
-                    {
-                        heldDropButton.drop.creationTime = System.currentTimeMillis();
-                        heldDropButton.drop.pixelGroup.setWhiteToColor(
-                                heldDropButton.drop.component.r,
-                                heldDropButton.drop.component.g,
-                                heldDropButton.drop.component.b
-                        );
-                    }
+                    pauseFlag = true;
                 }
-                else
+            }
+            if(displayReady)
+            {
+                if(readyButton.cursorOnButton)
                 {
-                    selectedButton.drop = heldDropButton.drop;
-
-                    heldDropButton.drop = null;
+                    readyFlag = true;
                 }
             }
         }
-
-        heldDropButton = null;
-
-        if (exitButton.cursorOnButton)
+        else if(gameState == GameState.PAUSE_MENU)
         {
-            exitFlag = true;
+            for (Button b : allComponentButtons)
+            {
+                if (b.cursorOnButton)
+                {
+                    selectedButton = b;
+                    break;
+                }
+            }
+
+            if (heldDropButton != null &&
+                    heldDropButton.drop != null &&
+                    heldDropButton.drop.component != null)
+            {
+                if (selectedButton.type == DropType.ANY ||
+                        selectedButton.type == heldDropButton.drop.component.type)
+                {
+                    if (selectedButton.drop != null)
+                    {
+                        Component t = selectedButton.drop.component;
+
+                        selectedButton.drop.component = heldDropButton.drop.component;
+                        if (selectedButton.drop.component != null)
+                        {
+                            selectedButton.drop.creationTime = System.currentTimeMillis();
+                            selectedButton.drop.pixelGroup.setWhiteToColor(
+                                    selectedButton.drop.component.r,
+                                    selectedButton.drop.component.g,
+                                    selectedButton.drop.component.b
+                            );
+                        }
+
+                        heldDropButton.drop.component = t;
+                        if (heldDropButton.drop.component != null)
+                        {
+                            heldDropButton.drop.creationTime = System.currentTimeMillis();
+                            heldDropButton.drop.pixelGroup.setWhiteToColor(
+                                    heldDropButton.drop.component.r,
+                                    heldDropButton.drop.component.g,
+                                    heldDropButton.drop.component.b
+                            );
+                        }
+                    }
+                    else
+                    {
+                        selectedButton.drop = heldDropButton.drop;
+
+                        heldDropButton.drop = null;
+                    }
+                }
+            }
+
+            heldDropButton = null;
+
+            if (mainMenuButton.cursorOnButton)
+            {
+                gameState = GameState.MAIN_MENU;
+                prevGameState = GameState.PAUSE_MENU;
+            }
+            else if (optionsButton.cursorOnButton)
+            {
+                prevGameState = GameState.PAUSE_MENU;
+                gameState = GameState.OPTIONS;
+            }
+        }
+        else if(gameState == GameState.OPTIONS)
+        {
+            if(backButton.cursorOnButton)
+            {
+                if(prevGameState == GameState.MAIN_MENU)
+                {
+                    gameState = GameState.MAIN_MENU;
+                }
+                else if(prevGameState == GameState.PAUSE_MENU)
+                {
+                    gameState = GameState.PAUSE_MENU;
+                }
+                prevGameState = GameState.OPTIONS;
+            }
+            for(int i = 0; i < checkButtons.length; i++)
+            {
+                if(checkButtons[i].cursorOnButton && checkButtons[i].touchedOnDown)
+                {
+                    globalInfo.gameSettings.toggleSetting(i);
+                }
+                checkButtons[i].touchedOnDown = false;
+            }
+        }
+        else if(gameState == GameState.MAIN_MENU)
+        {
+            if(exitButton.cursorOnButton)
+            {
+                exitFlag = true;
+            }
+            else if(playButton.cursorOnButton)
+            {
+                newGameFlag = true;
+            }
+            else if(optionsButton2.cursorOnButton)
+            {
+                prevGameState = GameState.MAIN_MENU;
+                gameState = GameState.OPTIONS;
+            }
         }
     }
 
@@ -713,7 +1149,6 @@ public class UI extends Drawable
     {
         if (resumeButton.cursorOnButton)
         {
-
             for(int g = 0; g < player.gunDrops.length; g++)
             {
                 player.gunDrops[g] = playerGuns[g].drop;
@@ -722,20 +1157,22 @@ public class UI extends Drawable
             for(int m = 0; m < player.getMaxMods(); m++)
             {
                 player.mods[m] = playerMods[m].drop;
-                if(player.mods[m] != null && player.mods[m].component != null)
+                /*if(player.mods[m] != null && player.mods[m].component != null)
                 {
                     for(int g = 0; g < player.gunDrops.length; g++)
                     {
                         player.gunDrops[g] = ((ModComponent)player.mods[m].component).modifyGun(player.gunDrops[g]);
                     }
-                }
+                }*/
             }
-            player.modUpdate = true;
+            //player.modUpdate = true;
 
             for(int t = 0; t < player.thrusters.length; t++)
             {
                 player.thrusters[t] = playerThrusters[t].drop;
             }
+
+            player.applyMods();
 
             for(Button[] row: componentPanel)
             {
@@ -747,6 +1184,9 @@ public class UI extends Drawable
                     }
                 }
             }
+
+            gameState = GameState.IN_GAME;
+            prevGameState = GameState.PAUSE_MENU;
             return false;
         }
         else
@@ -760,8 +1200,9 @@ public class UI extends Drawable
         xScale = xS;
         yScale = yS;
         resumeButton.applyScale(xS, yS);
-        exitButton.applyScale(xS, yS);
+        mainMenuButton.applyScale(xS, yS);
         optionsButton.applyScale(xS, yS);
+        backButton.applyScale(xS, yS);
     }
 
     public void setMovementDown(boolean b)

@@ -6,8 +6,10 @@ import com.example.sweet.game20.Objects.Carrier;
 import com.example.sweet.game20.Objects.Drop;
 import com.example.sweet.game20.Objects.Enemy;
 import com.example.sweet.game20.Objects.GunComponent;
+import com.example.sweet.game20.Objects.Kamikaze;
 import com.example.sweet.game20.Objects.ModComponent;
 import com.example.sweet.game20.Objects.Player;
+import com.example.sweet.game20.Objects.Pulser;
 import com.example.sweet.game20.Objects.Simple;
 import com.example.sweet.game20.util.CollisionThread;
 import com.example.sweet.game20.util.Constants;
@@ -31,13 +33,15 @@ public class LevelControllerThread implements Runnable
 
     private EnemyFactory enemyFactory;
 
-    private GlobalInfo globalInfo;
+    private volatile GlobalInfo globalInfo;
 
     private Stack<Integer> openEntityIndices = new Stack<>();
 
     public volatile boolean
             running = true,
-            pause = false;
+            //pause = false,
+            block = false,
+            inBlock = false;
 
     private boolean saveTime = false;
 
@@ -47,8 +51,10 @@ public class LevelControllerThread implements Runnable
 
     private double
             lastSpawn,
-            spawnDelay = 4000,
+            spawnDelay = 2000,
             pauseTime = 0;
+
+    public final Object lock = new Object();
 
     public LevelControllerThread(EnemyFactory eF, GlobalInfo gI)
     {
@@ -64,24 +70,24 @@ public class LevelControllerThread implements Runnable
     {
         while(running)
         {
-            if(!pause)
+            checkBlock();
+            if (!globalInfo.getPause())
             {
-                if(!saveTime)
+                /*if (!saveTime)
                 {
                     double pauseLength = System.currentTimeMillis() - pauseTime;
                     lastSpawn += pauseLength;
                     saveTime = true;
-                }
+                }*/
                 levelController();
-            }
-            else
+            } /*else
             {
-                if(saveTime)
+                if (saveTime)
                 {
                     pauseTime = System.currentTimeMillis();
                     saveTime = false;
                 }
-            }
+            }*/
         }
     }
 
@@ -108,25 +114,30 @@ public class LevelControllerThread implements Runnable
         }*/
 
 
-        if(System.currentTimeMillis() - spawnDelay > lastSpawn)
+        //if(System.currentTimeMillis() - spawnDelay > lastSpawn)
+        if(globalInfo.getAugmentedTimeMillis() - spawnDelay > lastSpawn)
         {
-            lastSpawn = System.currentTimeMillis();
+            lastSpawn = globalInfo.getAugmentedTimeMillis();
             System.out.println("Spawned");
             Asteroid a = null;
 
             switch((int)(Math.random()*5.99))
             {
-                case 0: enemiesToAdd.add(enemyFactory.getNewEnemy(ASTEROID_GREY_TINY)); break;
-                case 1: enemiesToAdd.add(enemyFactory.getNewEnemy(ASTEROID_GREY_SMALL)); break;
-                case 2: enemiesToAdd.add(enemyFactory.getNewEnemy(ASTEROID_GREY_TINY)); break;
-                case 3: enemiesToAdd.add(enemyFactory.getNewEnemy(ASTEROID_RED_SMALL)); break;
-                case 4: enemiesToAdd.add(enemyFactory.getNewEnemy(ASTEROID_RED_TINY)); break;
-                case 5: enemiesToAdd.add(enemyFactory.getNewEnemy(ASTEROID_RED_MEDIUM)); break;
+                case 0: enemiesToAdd.add(enemyFactory.getNewEnemy(ASTEROID_GREY_TINY, 1, 0)); break;
+                case 1: enemiesToAdd.add(enemyFactory.getNewEnemy(ASTEROID_GREY_SMALL, 1, 0)); break;
+                case 2: enemiesToAdd.add(enemyFactory.getNewEnemy(ASTEROID_GREY_TINY, 1, 0)); break;
+                case 3: enemiesToAdd.add(enemyFactory.getNewEnemy(ASTEROID_RED_SMALL, 1, 0)); break;
+                case 4: enemiesToAdd.add(enemyFactory.getNewEnemy(ASTEROID_RED_TINY, 1, 0)); break;
+                case 5: enemiesToAdd.add(enemyFactory.getNewEnemy(ASTEROID_RED_MEDIUM, 1, 0)); break;
             }
 
             if (!spawnonce)
             {
-                enemiesToAdd.add(enemyFactory.getNewEnemy(CARRIER));
+                //enemiesToAdd.add(enemyFactory.getNewEnemy(CARRIER));
+                enemiesToAdd.add(enemyFactory.getNewEnemy(PULSER, 1, 0));
+                enemiesToAdd.add(enemyFactory.getNewEnemy(PULSER, 1, 0));
+                enemiesToAdd.add(enemyFactory.getNewEnemy(PULSER, 1, 0));
+                enemiesToAdd.add(enemyFactory.getNewEnemy(PULSER, 1, 0));
                 /*enemiesToAdd.add(enemyFactory.getNewEnemy(ASTEROID_RED_MEDIUM));
                 enemiesToAdd.add(enemyFactory.getNewEnemy(ASTEROID_GREY_MEDIUM));
                 enemiesToAdd.add(enemyFactory.getNewEnemy(ASTEROID_RED_MEDIUM));
@@ -136,7 +147,8 @@ public class LevelControllerThread implements Runnable
             //int index = openEntityIndices.pop();
             //aiRunnable.entities[index] = a;
             //collisionRunnable.entities[index] = a;
-            enemiesToAdd.add(enemyFactory.getNewEnemy(SIMPLE));
+            /*enemiesToAdd.add(enemyFactory.getNewEnemy(SIMPLE));
+            enemiesToAdd.add(enemyFactory.getNewEnemy(KAMIKAZE));*/
             //enemiesToAdd.add(a);
             //uiEntities[index] = a;
             spawnonce = true;
@@ -183,5 +195,37 @@ public class LevelControllerThread implements Runnable
     public void setPlayer(Player p)
     {
         player1 = p;
+    }
+
+    public void setInfo(Player p, GlobalInfo gI)
+    {
+        player1 = p;
+        globalInfo = gI;
+        enemiesToAdd = new ConcurrentLinkedQueue<>();
+        openEntityIndices = new Stack<>();
+        for(int i = 0; i < Constants.ENTITIES_LENGTH; i++)
+        {
+            openEntityIndices.add(i);
+        }
+    }
+
+    private void checkBlock()
+    {
+        if(block)
+        {
+            inBlock = true;
+            synchronized (lock)
+            {
+                try
+                {
+                    lock.wait();
+                }
+                catch(InterruptedException e)
+                {
+                }
+            }
+            block = false;
+            inBlock = false;
+        }
     }
 }

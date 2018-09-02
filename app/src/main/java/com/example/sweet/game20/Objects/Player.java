@@ -13,8 +13,7 @@ import com.example.sweet.game20.util.DropFactory;
 import com.example.sweet.game20.util.ImageParser;
 import com.example.sweet.game20.util.VectorFunctions;
 
-import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.Arrays;
 
 public class Player extends Drawable
 {
@@ -46,6 +45,10 @@ public class Player extends Drawable
             screenShakeX = 0,
             screenShakeY = 0;
 
+    public int
+            bonus = 1,
+            score = 0;
+
     public volatile float
             movementOnDownX = 0f,
             movementOnMoveX = 0f,
@@ -61,7 +64,7 @@ public class Player extends Drawable
             shootingDown = false,
             modUpdate = false;
 
-    public ArrayList<TimeSlowEvent> timeSlowEvents = new ArrayList<>();
+    public float lastCollisionTime = 0;
 
     private int[] gravParticles = new int[]{
              6,  3,  7,  2,  8,  2,  9,  1, 10,  1, 11,  1, 12,  0, 13,  0, 14,  0, 15,  0, 16,  0, 17,
@@ -149,7 +152,11 @@ public class Player extends Drawable
             screenShakeEventsY = new ScreenShake[20],
             shotShakeX = new ScreenShake[8],
             shotShakeY = new ScreenShake[8];*/
+    private GlobalInfo globalInfo;
     public ScreenShakeEngine shakeEngine;
+
+    private int[] affectedPixels;
+
 
     public Player(DropFactory dF, Context context, float sp, int sL, ParticleSystem ps, PixelGroup body, GlobalInfo gI)
     {
@@ -159,6 +166,10 @@ public class Player extends Drawable
         playerBody.enableLocationChain = false;
         playerBody.knockBackFactor = .01f;
         playerBody.setRestorable(true);
+        affectedPixels = new int[250];
+        globalInfo = gI;
+        Arrays.fill(affectedPixels, -1);
+
         //playerBody.enableLocationChain = false;
         shakeEngine = new ScreenShakeEngine(gI, 200);
         initParticleAttachments();
@@ -174,11 +185,11 @@ public class Player extends Drawable
                         (float)playerBody.angle,
                         new BasicGun
                                 (
-                                        //ImageParser.parseImage(context, R.drawable.bullet1, R.drawable.bullet1_light, sL),
-                                        ImageParser.parseImage(context, R.drawable.sp, R.drawable.sp, sL),
+                                        ImageParser.parseImage(context, R.drawable.bullet1, R.drawable.bullet1_light, sL),
+                                        //ImageParser.parseImage(context, R.drawable.bullet, R.drawable.bullet, sL),
                                         particleSystem,
-                                        100,
-                                        .4f
+                                        200,
+                                        .04f
                                 ),
                         particleSystem
                 )
@@ -225,18 +236,25 @@ public class Player extends Drawable
         float pow = 1;
         if(thrusters[1] != null)
         {
-            pow = ((ThrustComponent) thrusters[1].component).thrustPower;
+            pow = ((ThrustComponent) thrusters[1].component).getThrustPower();
         }
         float distance = baseSpeed * pow * slow;
         float tempDistX = -(float)(distance * -Math.cos(angleMoving));
         float tempDistY = -(float)(distance * Math.sin(angleMoving));
 
+        /*float tempDistX = -(distance * -mX/tempMagnitude);
+        float tempDistY = -(distance * mY/tempMagnitude);*/
+
         if(tempMagnitude>.15)
         {
             if(playerBody.getCenterX() + tempDistX < -xBound  || playerBody.getCenterX() + tempDistX > xBound)
+            {
                 tempDistX = 0;
+            }
             if(playerBody.getCenterY() + tempDistY < -yBound || playerBody.getCenterY() + tempDistY > yBound)
+            {
                 tempDistY = 0;
+            }
             playerBody.move(tempDistX, tempDistY);
             addThrustParticles(mainBoostPixels,1, .05f);
             rotate(angleMoving,1, slow);
@@ -247,33 +265,35 @@ public class Player extends Drawable
             float tempX = tempDistX * tempRatio;
             float tempY = tempDistY * tempRatio;
             if(playerBody.getCenterX() + tempX < -xBound || playerBody.getCenterX() + tempX > xBound)
-                tempX = 0 ;
+            {
+                tempX = 0;
+            }
             if(playerBody.getCenterY() + tempY < -yBound || playerBody.getCenterY() + tempY > yBound)
-                tempY = 0 ;
+            {
+                tempY = 0;
+            }
             playerBody.move(tempX,tempY);
             addThrustParticles(mainBoostPixels,tempRatio,.054f);
             rotate(angleMoving, tempRatio, slow);
         }
     }
 
-
-
     public void rotate(float angleMoving, float ratio, float slow)
     {
         float delta = (float)playerBody.angle - angleMoving;
 
         float sideSpd, sideSpd2;
-        if(thrusters[0] != null)
+        if(thrusters[2] != null)
         {
-            sideSpd = rotateSpeed * ((ThrustComponent) thrusters[0].component).thrustPower * slow;
+            sideSpd = rotateSpeed * ((ThrustComponent) thrusters[2].component).getThrustPower() * slow;
         }
         else
         {
             sideSpd = rotateSpeed * slow;
         }
-        if(thrusters[2] != null)
+        if(thrusters[0] != null)
         {
-            sideSpd2 = -rotateSpeed * ((ThrustComponent)thrusters[2].component).thrustPower * slow;
+            sideSpd2 = -rotateSpeed * ((ThrustComponent)thrusters[0].component).getThrustPower() * slow;
         }
         else
         {
@@ -281,7 +301,7 @@ public class Player extends Drawable
         }
 
         if (delta > sideSpd || delta < sideSpd2)
-            {
+        {
             if (delta < -Math.PI || (delta > 0 && delta < Math.PI))
             {
                 playerBody.angle += sideSpd2;
@@ -292,7 +312,9 @@ public class Player extends Drawable
             }
         }
         else
-            playerBody.angle =  angleMoving;
+        {
+            playerBody.angle = angleMoving;
+        }
 
         if (delta > .01 || delta < -.01)
         {
@@ -309,9 +331,13 @@ public class Player extends Drawable
         playerBody.rotate(playerBody.angle);
 
         if (playerBody.angle > Math.PI)
+        {
             playerBody.angle -= Constants.twoPI;
+        }
         else if (playerBody.angle < -Math.PI)
+        {
             playerBody.angle += Constants.twoPI;
+        }
     }
 
     public void addThrustParticles(Pixel[] pixels, float ratio, float dist)
@@ -319,17 +345,21 @@ public class Player extends Drawable
         float pow = 1;
         if(thrusters[1] != null)
         {
-            pow = ((ThrustComponent) thrusters[1].component).thrustPower;
+            pow = ((ThrustComponent) thrusters[1].component).getThrustPower();
         }
         for(Pixel p: pixels)
         {
             //if(p.live)
             if(p.state >= 1)
             {
+                float tX = playerBody.infoMap[p.row][p.col].xOriginal * playerBody.cosA +
+                        playerBody.infoMap[p.row][p.col].yOriginal * playerBody.sinA;
+                float tY = playerBody.infoMap[p.row][p.col].yOriginal * playerBody.cosA -
+                        playerBody.infoMap[p.row][p.col].xOriginal * playerBody.sinA;
                 for (int t = 0; t < 4; t++)
                 {
-                    particleSystem.addParticle(p.xDisp + playerBody.centerX,
-                            p.yDisp+ playerBody.centerY,
+                    particleSystem.addParticle(tX + playerBody.centerX,
+                            tY + playerBody.centerY,
                             (float)(-playerBody.angle+Math.PI),
                             (float) (Math.random() * .2 + .8),
                             (float) (Math.random()),
@@ -354,7 +384,8 @@ public class Player extends Drawable
         if(driftCount <= -200)
         {
             driftDirection = 1;
-        }else if(driftCount >= 200)
+        }
+        else if(driftCount >= 200)
         {
             driftDirection = -1;
         }
@@ -398,7 +429,6 @@ public class Player extends Drawable
         {
             if(d!= null && d.live)
             {
-                d.checkAlive();
                 float dX = playerBody.centerX - d.x;
                 float dY = playerBody.centerY - d.y;
                 float distSquared = dX * dX + dY * dY;
@@ -410,7 +440,8 @@ public class Player extends Drawable
                         {
                             case HEALTH:
                                 d.live = false;
-                                revivePixels();
+                                playerBody.revivePixels();
+                                checkComponents();
                                 break;
                             case EXTRA_GUN:
                                 d.live = false;
@@ -418,18 +449,12 @@ public class Player extends Drawable
                                 {
                                     maxGuns++;
                                 }
-                                else
-                                {
-                                }
                                 break;
                             case EXTRA_MOD:
                                 d.live = false;
                                 if(maxMods < 5)
                                 {
                                     maxMods++;
-                                }
-                                else
-                                {
                                 }
                                 break;
                         }
@@ -463,8 +488,38 @@ public class Player extends Drawable
                     float dist = (float) Math.sqrt(distSquared);
                     d.move(speed * (dX / dist), speed * (dY / dist));
                 }
-
             }
+        }
+    }
+
+    public void checkComponents()
+    {
+        for (Drop gCD : gunDrops)
+        {
+            if (gCD != null && gCD.component != null)
+            {
+                gCD.component.checkAlive();
+            }
+        }
+
+        for (Drop tCD : thrusters)
+        {
+            if (tCD != null && tCD.component != null)
+            {
+                tCD.component.checkAlive();
+            }
+        }
+    }
+
+    public void collisionOccured(int numKilled)
+    {
+        score += numKilled * bonus;
+        if(playerBody.gotHit)
+        {
+            playerBody.gotHit = false;
+            checkComponents();
+            lastCollisionTime = globalInfo.getAugmentedTimeSeconds();
+            bonus = 1;
         }
     }
 
@@ -481,6 +536,7 @@ public class Player extends Drawable
                         float cX = d.x - d2.x;
                         float cY = d.y - d2.y;
                         float radius = Constants.COMPONENT_DROP_RADIUS * 2;
+                        float dist = (float)Math.hypot(cX,cY);
 
                         if (cX == 0 || cY == 0)
                         {
@@ -488,11 +544,10 @@ public class Player extends Drawable
                                     (float) Math.random() * Constants.COMPONENT_DROP_MOVESPEED);
                         }
 
-                        if (cX * cX + cY * cY < radius * radius)
+                        if (dist < radius)
                         {
-                            float angle = (float) Math.atan2(-cY, -cX);
-                            d.move((float) -Math.cos(angle) * Constants.COMPONENT_DROP_MOVESPEED,
-                                    (float) -Math.sin(angle) * Constants.COMPONENT_DROP_MOVESPEED);
+                            d.move(-(cX/dist) * Constants.COMPONENT_DROP_MOVESPEED,
+                                     (cY/dist) * Constants.COMPONENT_DROP_MOVESPEED);
                         }
                     }
                 }
@@ -524,16 +579,6 @@ public class Player extends Drawable
             }
         }
     }*/
-    public void applyPauseLength(double p)
-    {
-        for(Drop d: gunDrops)
-        {
-            if( d!= null && d.component != null)
-            {
-                //g.gun.applyPauseLength(p);
-            }
-        }
-    }
 
     public Drop[] getExchangableComponentDrops()
     {
@@ -572,22 +617,23 @@ public class Player extends Drawable
             {
                 d.x = playerBody.centerX;
                 d.y = playerBody.centerY;
-                if(d.component != null)
+                /*if(d.component != null)
                 {
                     for(Drop m: mods)
                     {
                         if(m != null && m.component != null)
                         {
-                            d = ((ModComponent)m.component).unmodifyGun(d);
+                            ((ModComponent)m.component).unmodifyGun(d);
                         }
                     }
-                }
+                }*/
             }
         }
         for(Drop d: mods)
         {
             if(d != null)
             {
+                ((ModComponent)d.component).unmodify(gunDrops, playerBody);
                 d.x = playerBody.centerX;
                 d.y = playerBody.centerY;
             }
@@ -602,75 +648,17 @@ public class Player extends Drawable
         }
     }
 
-    public void revivePixels()
+    public void applyMods()
     {
-        /*HashSet<Pixel> affectedPixels = new HashSet<>();
-        int resNum = 24;
-        for(Pixel p: playerBody.pixels)
+        for(Drop d: mods)
         {
-            if(p.outside && p.live)
+            if(d != null)
             {
-                for(Pixel n: p.neighbors)
-                {
-                    if(n != null)
-                    {
-                        if (!n.live)
-                        {
-                            affectedPixels.add(p);
-                            resNum = revivePixelHelper(n, resNum, affectedPixels);
-                        }
-                    }
-                    if (resNum <= 0)
-                    {
-                        break;
-                    }
-                }
-            }
-            if(resNum <= 0)
-            {
-                break;
+                ((ModComponent)d.component).modify(gunDrops, playerBody);
+                d.x = playerBody.centerX;
+                d.y = playerBody.centerY;
             }
         }
-
-        for(Pixel p: affectedPixels)
-        {
-            p.outside = false;
-            for(Pixel n: p.neighbors)
-            {
-                if((n != null && !n.live) || n == null)
-                {
-                    p.outside = true;
-                }
-            }
-        }
-        playerBody.needsUpdate = true;*/
-    }
-
-    private int revivePixelHelper(Pixel p, int rN, HashSet<Pixel> affectedPixels)
-    {
-        /*int resNum = rN;
-        p.live = true;
-        p.insideEdge = false;
-        playerBody.numLivePixels++;
-        affectedPixels.add(p);
-        resNum--;
-        for(Pixel n: p.neighbors)
-        {
-            if(n != null)
-            {
-                if (n.live && n.outside)
-                {
-                    affectedPixels.add(n);
-                }
-
-                if (!n.live && resNum > 0)
-                {
-                    resNum = revivePixelHelper(n, resNum, affectedPixels);
-                }
-            }
-        }
-        return resNum;*/
-        return 0;
     }
 
     public void shoot(float sX, float sY, long curFrame, GlobalInfo gI)
@@ -693,11 +681,13 @@ public class Player extends Drawable
                         shootAngle + (float) Math.PI,
                         curFrame,
                         gI.timeSlow))*/
-                if(((GunComponent)d.component).gun.shoot(
+                if(((GunComponent)d.component).shoot(
                         playerBody.centerX + gunOffsets[i].x,
                         playerBody.centerY + gunOffsets[i].y,
                         shootAngle + (float) Math.PI,
-                        gI))
+                        gI,
+                        playerBody.cosA,
+                        playerBody.sinA))
                 {
                     /*screenShakeEventsX.add(new ScreenShake(((GunComponent)d.component).gun.shakeMod,
                             240,
@@ -792,7 +782,7 @@ public class Player extends Drawable
                 stageDirection = 1;
             }
 
-            tiltAngle = (float) Math.sin(((double) stageCounter - 60) / 240);
+            tiltAngle = (float) Math.sin(((double) stageCounter - 60) / 200);
             drift();
 
             stageCounter += stageDirection;
@@ -863,11 +853,6 @@ public class Player extends Drawable
 
     public void movePlayer(float slow)
     {
-        if(movementOnDownX > .8f)
-        {
-            playerBody.resetPixels();
-        }
-
         if(movementDown)
         {
             move(movementOnMoveX - movementOnDownX, movementOnMoveY - movementOnDownY, slow);
@@ -995,10 +980,10 @@ public class Player extends Drawable
         //yScreenShift += screenShakeY;
     }*/
 
-    public void handleScreenShake()
+    public void handleScreenShake(float dampening)
     {
-        screenShakeX = shakeEngine.getShakeX();
-        screenShakeY = shakeEngine.getShakeY();
+        screenShakeX = shakeEngine.getShakeX() * dampening;
+        screenShakeY = shakeEngine.getShakeY() * dampening;
         //xScreenShift += screenShakeX;
         //yScreenShift += screenShakeY;
     }

@@ -89,7 +89,7 @@ public class CollisionHandler
         float c2MaxDist = VectorFunctions.getMagnitude(c2DistX, c2DistY);*/
 
         numCheck++;
-        for(float cDistBtwn = 0; cDistBtwn <= c.speed; cDistBtwn += Constants.PIXEL_SIZE/2f)
+        for(float cDistBtwn = 0; cDistBtwn <= c.speed; cDistBtwn += Constants.MAX_DIST_JUMP)
         {
             if(c.speed > Constants.PIXEL_SIZE)
             {
@@ -106,7 +106,7 @@ public class CollisionHandler
                 cCenterY = cPCenterY + cDistY * percent;
             }
 
-            for(float c2DistBtwn = 0; c2DistBtwn <= c2.speed; c2DistBtwn += Constants.PIXEL_SIZE)
+            for(float c2DistBtwn = 0; c2DistBtwn <= c2.speed; c2DistBtwn += Constants.MAX_DIST_JUMP)
             {
                 if(c2.speed > Constants.PIXEL_SIZE)
                 {
@@ -177,21 +177,28 @@ public class CollisionHandler
                                                                         {
                                                                             addParticleHelper(p, c, cCenterX, cCenterY);
                                                                             //p.killPixel(c.cosA, c.sinA);
-                                                                            p.killPixel(c.pMap);
+                                                                            //p.killPixel(c.pMap);
+                                                                            c.hitPixel(p);
                                                                             c.numLivePixels--;
                                                                             c.lastPixelKilled = p;
+                                                                            c.gotHit = true;
                                                                             tempX += p.xDisp;
                                                                             tempY += p.yDisp;
 
                                                                             addParticleHelper(p2, c2, c2CenterX, c2CenterY);
                                                                             //p2.killPixel(c2.cosA, c2.sinA);
-                                                                            p2.killPixel(c2.pMap);
+                                                                            //p2.killPixel(c2.pMap);
+                                                                            c2.hitPixel(p2);
+                                                                            c2.gotHit = true;
                                                                             c2.numLivePixels--;
                                                                             c2.lastPixelKilled = p2;
                                                                             tempX2 += p2.xDisp;
                                                                             tempY2 += p2.yDisp;
 
-                                                                            numKilled++;
+                                                                            if(p2.state == 0)
+                                                                            {
+                                                                                numKilled++;
+                                                                            }
                                                                             collision = true;
                                                                             stillNeedsChecks = true;
                                                                             break;
@@ -334,7 +341,9 @@ public class CollisionHandler
             {
                 if(c.knockable)
                 {
-                    float knockFactor = ((float)c2.totalPixels / (float)(c.totalPixels + c2.totalPixels))* c2.speed;
+                    float knockFactor = ((float)c2.totalPixels / (float)(c.totalPixels + c2.totalPixels))
+                            * c2.speed
+                            * numKilled / (float)c2.totalPixels;
                     c.posKnockbackX += -c2.cosA * knockFactor;
                     c.posKnockbackY += c2.sinA * knockFactor;
                     c.pixelsKilled += numKilled;
@@ -364,7 +373,9 @@ public class CollisionHandler
 
                 if(c2.knockable)
                 {
-                    float knockFactor = ((float)c.totalPixels / (float)(c.totalPixels + c2.totalPixels)) * c.speed;
+                    float knockFactor = ((float)c.totalPixels / (float)(c.totalPixels + c2.totalPixels))
+                            * c.speed
+                            * numKilled / (float)c.totalPixels;
                     c2.posKnockbackX += -c.cosA * knockFactor;
                     c2.posKnockbackY += c.sinA * knockFactor;
                     c2.pixelsKilled += numKilled;
@@ -391,7 +402,6 @@ public class CollisionHandler
                     torqueAng = (float)Math.sin(torqueAng);
 
                     torqueAng *= knockFactor * dist * 30f;
-                    System.out.println(torqueAng);
                     c2.angleKnockback += torqueAng;
                 }
             }
@@ -446,7 +456,7 @@ public class CollisionHandler
             {
                 if (System.currentTimeMillis() - c2.lastOrphanChunkCheck > c2.orphanChunkCheckDelay)
                 {
-                    removeOrphanChunksRecursive(c2);
+                    numKilled += removeOrphanChunksRecursive(c2);
                 }
             }
 
@@ -461,7 +471,7 @@ public class CollisionHandler
             }
             c.setNeedsUpdate(true);
         }
-        return numCheck;
+        return numKilled;
     }
 
     public static void preventOverlap(Enemy e, Enemy e2)
@@ -472,13 +482,10 @@ public class CollisionHandler
 
         if (cX * cX + cY * cY < radius * radius)
         {
-            if(e.getPixelGroup().totalPixels <= e2.getPixelGroup().totalPixels)
-            {
-                if(overlapHelper(e.getPixelGroup(), e2.getPixelGroup()))
-                {
-                    e.knockBack((float) Math.atan2(-cY, -cX), 1, .008f);
-                }
-            }
+            /*if(overlapHelper(e.getPixelGroup(), e2.getPixelGroup()))
+            {*/
+                e.knockBack((float) Math.atan2(-cY, -cX), 1, e.getPixelGroup().speed/2);
+            //}
         }
     }
 
@@ -681,17 +688,18 @@ public class CollisionHandler
                 p.xDisp = c.infoMap[p.row][p.col].xOriginal * c.cosA + c.infoMap[p.row][p.col].yOriginal * c.sinA;
                 p.yDisp = c.infoMap[p.row][p.col].yOriginal * c.cosA - c.infoMap[p.row][p.col].xOriginal * c.sinA;
                 addParticleHelper(p, c);
-                p.killPixel(c.pMap);
+                c.killPixel(p);
                 c.numLivePixels--;
                 c.pixelsKilled++;
             }
         }
     }
 
-    public void removeOrphanChunksRecursive(Collidable c)
+    public int removeOrphanChunksRecursive(Collidable c)
     {
         int groupNumberIterator = 0;
         int highestSize = 0;
+        int numKilled = 0;
 
         /*ArrayList<Integer> groupSizes = new ArrayList<>();
         for(Pixel p: c.getPixels())
@@ -731,7 +739,10 @@ public class CollisionHandler
             {
                 if (p.groupFlag != -1 && groupSizes[p.groupFlag] < highestSize)
                 {
-                    p.killPixel(c.pMap);
+                    p.xDisp = c.infoMap[p.row][p.col].xOriginal * c.cosA + c.infoMap[p.row][p.col].yOriginal * c.sinA;
+                    p.yDisp = c.infoMap[p.row][p.col].yOriginal * c.cosA - c.infoMap[p.row][p.col].xOriginal * c.sinA;
+                    c.killPixel(p);
+                    numKilled++;
                     c.pixelsKilled++;
                     c.numLivePixels--;
                     addParticleHelper(p, c);
@@ -746,7 +757,10 @@ public class CollisionHandler
                 //if(p.live)
                 if(p.state >= 1)
                 {
-                    p.killPixel(c.pMap);
+                    p.xDisp = c.infoMap[p.row][p.col].xOriginal * c.cosA + c.infoMap[p.row][p.col].yOriginal * c.sinA;
+                    p.yDisp = c.infoMap[p.row][p.col].yOriginal * c.cosA - c.infoMap[p.row][p.col].xOriginal * c.sinA;
+                    c.killPixel(p);
+                    numKilled++;
                     c.pixelsKilled++;
                     c.numLivePixels--;
                     addParticleHelper(p, c);
@@ -754,6 +768,8 @@ public class CollisionHandler
                 p.groupFlag = -1;
             }
         }
+
+        return numKilled;
     }
 
     private int orphanChunkHelper(Pixel p, int groupNum, int total, Pixel[][] pMap)
@@ -807,7 +823,7 @@ public class CollisionHandler
                 c.infoMap[p.row][p.col].r,
                 c.infoMap[p.row][p.col].g,
                 c.infoMap[p.row][p.col].b,
-                2f,
+                1.4f,
                 (float)(Math.random())+.1f,
                 (float)(Math.random()*.5)+.01f,
                 (float)(Math.random()*40)-20
@@ -824,7 +840,7 @@ public class CollisionHandler
                 c.infoMap[p.row][p.col].r,
                 c.infoMap[p.row][p.col].g,
                 c.infoMap[p.row][p.col].b,
-                2f,
+                1.4f,
                 (float)(Math.random())+.1f,
                 (float)(Math.random()*.5)+.01f,
                 (float)(Math.random()*40)-20

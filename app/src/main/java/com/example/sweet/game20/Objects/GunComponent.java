@@ -1,5 +1,6 @@
 package com.example.sweet.game20.Objects;
 
+import com.example.sweet.game20.GlobalInfo;
 import com.example.sweet.game20.util.Constants;
 
 /**
@@ -14,6 +15,8 @@ public class GunComponent extends Component
     {
         super(p, x, y, a, ps, Constants.DropType.GUN);
         gun = g;
+        gun.x = x;
+        gun.y = y;
         setColor();
     }
 
@@ -39,5 +42,41 @@ public class GunComponent extends Component
             g = 0;
             b = 0;
         }
+    }
+
+    public boolean shoot(float cX, float cY, float angle, GlobalInfo gI, float cosA, float sinA)
+    {
+        checkAlive();
+        if(live)
+        {
+            return gun.shoot(cX, cY, angle, gI, cosA, sinA);
+        }
+        else
+        {
+            return false;
+        }
+    }
+
+    public boolean shoot(float cX, float cY, float angle, GlobalInfo gI)
+    {
+        checkAlive();
+        if(live)
+        {
+            return gun.shoot(cX, cY, angle, gI);
+        }
+        else
+        {
+            return false;
+        }
+    }
+
+    public boolean canShoot(GlobalInfo gI)
+    {
+        return gun.canShoot(gI);
+    }
+
+    public void move(float slow)
+    {
+        gun.move(slow);
     }
 }

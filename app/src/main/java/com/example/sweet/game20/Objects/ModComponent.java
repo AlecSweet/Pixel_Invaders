@@ -16,76 +16,173 @@ public class ModComponent extends Component
         4: Extra Mods
         5: Shield
      */
-    public Constants.ModType modType;
+    public Constants.DropType modType;
 
     public int modLevel;
 
     private float modValue = 1;
 
-    public ModComponent(Pixel[] p, float x, float y, float a, Constants.ModType mType, int mLevel, ParticleSystem ps)
+    public ModComponent(Pixel[] p, float x, float y, float a, Constants.DropType mType, int mLevel, ParticleSystem ps)
     {
         super(p, x, y, a, ps, Constants.DropType.MOD);
         modType = mType;
         modLevel = mLevel;
+        if(modLevel > 4)
+        {
+            modLevel = 4;
+        }
         switch (modType)
         {
-            case FIRERATE: modValue += .25 * mLevel; break;
-            case EXTRASHOTS: modValue = mLevel + 1; break;
-            case PRECISION: modValue -= .25 * mLevel; break;
+            case FIRE_RATE:
+                modValue += .25 * mLevel;
+                break;
+            case EXTRA_SHOTS:
+                modValue = mLevel;
+                break;
+            case PRECISION:
+                modValue -= .25 * mLevel;
+                break;
+            case RESTORATION:
+                modValue += .18 * mLevel;
+                break;
+            case PIERCING:
+                if(modLevel > 3)
+                {
+                    modLevel = 3;
+                }
+                modValue = mLevel;
+                break;
+            case PLATING:
+                if(modLevel > 3)
+                {
+                    modLevel = 3;
+                }
+                modValue = mLevel;
+                break;
+            case TEMPORAL:
+                modValue += .25 * mLevel;
+                break;
+            case BULLET_SPEED:
+                modValue += .5 * mLevel;
+                break;
+
         }
-        r = 1;
-        g = 0;
-        b = 1;
     }
 
-    public Drop modifyGun(Drop drop)
+    public void modify(Drop[] drops, PixelGroup group)
+    {
+        if(modType == Constants.DropType.RESTORATION || modType == Constants.DropType.PLATING)
+        {
+            for(Drop d: drops)
+            {
+                modifyGun(d);
+            }
+        }
+        else
+        {
+            modifyGroup(group);
+        }
+    }
+
+    public void unmodify(Drop[] drops, PixelGroup group)
+    {
+        if(modType == Constants.DropType.RESTORATION || modType == Constants.DropType.PLATING)
+        {
+            for(Drop d: drops)
+            {
+                unmodifyGun(d);
+            }
+        }
+        else
+        {
+            unmodifyGroup(group);
+        }
+    }
+
+    public void modifyGun(Drop drop)
     {
         if(drop != null && drop.component != null)
         {
             Gun gun = ((GunComponent)drop.component).gun;
+            boolean bulletPoolUpdate = false;
             switch (modType)
             {
-                case FIRERATE:
+                case FIRE_RATE:
                     gun.shootDelay /= modValue;
+                    bulletPoolUpdate = true;
                     break;
-                case EXTRASHOTS:
-                    gun.numShots *= modValue;
+                case EXTRA_SHOTS:
+                    gun.numShots += modValue;
+                    bulletPoolUpdate = true;
                     break;
                 case PRECISION:
                     gun.spread *= modValue;
                     break;
+                case BULLET_SPEED:
+                    gun.speed *= modValue;
+                    break;
+                case PIERCING:
+                    gun.addMaxHealth((int)modValue);
+                    break;
             }
-            gun.updateBulletPool();
-            return drop;
-        }
-        else
-        {
-            return null;
+            if(bulletPoolUpdate)
+            {
+                gun.updateBulletPool();
+            }
         }
     }
 
-    public Drop unmodifyGun(Drop drop)
+    public void unmodifyGun(Drop drop)
     {
         if(drop != null && drop.component != null)
         {
             Gun gun = ((GunComponent)drop.component).gun;
             switch (modType)
             {
-                case FIRERATE:
+                case FIRE_RATE:
                     gun.shootDelay *= modValue;
                     break;
-                case EXTRASHOTS:
-                    gun.numShots /= modValue;
+                case EXTRA_SHOTS:
+                    gun.numShots -= modValue;
                     break;
                 case PRECISION:
                     gun.spread /= modValue;
                     break;
+                case BULLET_SPEED:
+                    gun.speed /= modValue;
+                    break;
+                case PIERCING:
+                    gun.reduceMaxHealth((int)modValue);
+                    break;
             }
-            return drop;
         }
-        else
+    }
+
+    public void modifyGroup(PixelGroup group)
+    {
+        switch (modType)
         {
-            return null;
+            case RESTORATION:
+                group.regen = true;
+                group.regenDelay /= modValue;
+                break;
+            case PLATING:
+                group.addMaxHealth((int)modValue);
+                break;
+        }
+    }
+
+    public void unmodifyGroup(PixelGroup group)
+    {
+        switch (modType)
+        {
+            case RESTORATION:
+                group.regen = false;
+                group.regenDelay *= modValue;
+                break;
+            case PLATING:
+                group.reduceMaxHealth((int)modValue);
+                break;
         }
     }
 }

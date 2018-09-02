@@ -1,5 +1,6 @@
 package com.example.sweet.game20.util;
 
+import com.example.sweet.game20.GlobalInfo;
 import com.example.sweet.game20.Objects.Bullet;
 import com.example.sweet.game20.Objects.Drop;
 import com.example.sweet.game20.Objects.Enemy;
@@ -11,32 +12,39 @@ public class CollisionThread implements Runnable
     public Player player1;
     public CollisionHandler collisionHandler;
     public volatile Enemy[] entities;
+    public volatile Enemy[] target;
     public volatile float averageFrameTime = 0;
     public volatile boolean
             running = true,
-            pause = false;
+            //pause = false,
+            block = false,
+            inBlock = false;
 
     private final long MILLIS_PER_SECOND = 1000;
     private final long UPS = 120;
 
     private final long mSPU = MILLIS_PER_SECOND / UPS;
 
-    private double
-            globalStartTime,
-            pastTime,
-            lag = 0.0;
+    private double globalStartTime;
+            //pastTime,
+            //lag = 0.0;
 
     public volatile long currentFrame = 0;
     public volatile long frameRequest = 0;
     public long lowestFrame;
 
-    private boolean saveTime = false;
+   // private boolean saveTime = false;
 
-    private double pauseTime = 0;
+    //private double pauseTime = 0;
 
-    public CollisionThread(Enemy[] e)
+    private volatile GlobalInfo globalInfo;
+
+    public final Object lock = new Object();
+
+    public CollisionThread(Enemy[] e, GlobalInfo globalInfo)
     {
         entities = e;
+        this.globalInfo = globalInfo;
         globalStartTime = System.currentTimeMillis();
     }
 
@@ -44,31 +52,32 @@ public class CollisionThread implements Runnable
     {
         while(running)
         {
-            if(!pause)
+            checkBlock();
+            if (!globalInfo.getPause())
             {
-                if(!saveTime)
+                /*if (!saveTime)
                 {
                     pastTime = System.currentTimeMillis() - globalStartTime;
                     saveTime = true;
-                }
-
-                /*double currentTime = System.currentTimeMillis() - globalStartTime;
-                double elapsedTime = currentTime - pastTime;
-                pastTime = currentTime;
-                lag += elapsedTime;
-
-                while (lag >= mSPU)
-                {
-                    //if(!pause)
-                    update();
-                    lag -= mSPU;
                 }*/
-                if(lowestFrame < frameRequest)
+
+            /*double currentTime = System.currentTimeMillis() - globalStartTime;
+            double elapsedTime = currentTime - pastTime;
+            pastTime = currentTime;
+            lag += elapsedTime;
+
+            while (lag >= mSPU)
+            {
+                //if(!pause)
+                update();
+                lag -= mSPU;
+            }*/
+                if (lowestFrame < frameRequest)
                 {
                     currentFrame++;
                     long startTime = System.currentTimeMillis();
                     update();
-                    if(averageFrameTime == 0)
+                    if (averageFrameTime == 0)
                     {
                         averageFrameTime = startTime - System.currentTimeMillis();
                     }
@@ -78,18 +87,22 @@ public class CollisionThread implements Runnable
                     }
                 }
             }
-            else
+            /*else
             {
-                if(saveTime)
+                if (saveTime)
                 {
                     saveTime = false;
                 }
-            }
+            }*/
         }
     }
 
     public void update()
     {
+        /*if(target != null){
+            entities = target;
+            target = null;
+        }*/
         checkCollisions();
     }
 
@@ -98,6 +111,7 @@ public class CollisionThread implements Runnable
     */
     public void checkCollisions()
     {
+        int totalKilled = 0;
         for(int i = 0; i < Constants.ENTITIES_LENGTH; i++)
         {
             if(entities[i] != null && !entities[i].collisionRemoveConsensus)
@@ -108,10 +122,15 @@ public class CollisionThread implements Runnable
                     entities[i].getPixelGroup().setCollidableLive(false);
                 }
 
-                if (entities[i].getPixelGroup().getCollidableLive() && entities[i].onScreen)
+                if (entities[i].getPixelGroup().getCollidableLive())
                 {
                     // Player -> Entity
-                    collisionHandler.checkCollisions(player1.getPixelGroup(), entities[i].getPixelGroup());
+                    int numKilled = 0;
+
+                    if(entities[i].inRange)
+                    {
+                        numKilled += collisionHandler.checkCollisions(player1.getPixelGroup(), entities[i].getPixelGroup());
+                    }
 
                     // Player Gun's Bullets -> Entity
                     for (Drop d : player1.getGuns())
@@ -122,7 +141,7 @@ public class CollisionThread implements Runnable
                             {
                                 if (b.live)
                                 {
-                                    collisionHandler.checkCollisions(b.pixelGroup, entities[i].getPixelGroup());
+                                    numKilled += collisionHandler.checkCollisions(b.pixelGroup, entities[i].getPixelGroup());
                                     //collisionHandler.checkCollisions(entities[i].getPixelGroup(), b.pixelGroup);
                                 }
                             }
@@ -140,11 +159,17 @@ public class CollisionThread implements Runnable
                                 {
                                     if (b.live)
                                     {
-                                        collisionHandler.checkCollisions(b.pixelGroup, player1.getPixelGroup());
+                                        numKilled += collisionHandler.checkCollisions(b.pixelGroup, player1.getPixelGroup());
                                     }
                                 }
                             }
                         }
+                    }
+
+                    if(numKilled > 0)
+                    {
+                        totalKilled += numKilled;
+                        entities[i].collisionOccured();
                     }
                 }
                 else if (!entities[i].getPixelGroup().getCollidableLive() || entities[i].aiRemoveConsensus)
@@ -162,6 +187,7 @@ public class CollisionThread implements Runnable
             }*/
         }
 
+        player1.collisionOccured(totalKilled);
         player1.consumableCollisionCheck();
 
         consumeCollisionLocations();
@@ -238,5 +264,33 @@ public class CollisionThread implements Runnable
     public synchronized void setCollisionHandler(CollisionHandler c)
     {
         collisionHandler = c;
+    }
+
+    public void setInfo(Player p, Enemy[] e)
+    {
+        player1 = p;
+        entities = e;
+        currentFrame = 0;
+        frameRequest = 0;
+    }
+
+    private void checkBlock()
+    {
+        if(block)
+        {
+            inBlock = true;
+            synchronized (lock)
+            {
+                try
+                {
+                    lock.wait();
+                }
+                catch(InterruptedException e)
+                {
+                }
+            }
+            block = false;
+            inBlock = false;
+        }
     }
 }

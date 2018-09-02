@@ -85,7 +85,7 @@ public class TextPresenter
         float disp = 0;
         if(center)
         {
-            disp = Constants.dSkipY * getNumDigitsInt(i);
+            disp = (Constants.dSkipY * getNumDigitsInt(i)) / 2;
         }
         int itr = 0;
         if(i > 0)
@@ -94,7 +94,6 @@ public class TextPresenter
             {
                 int digit = i % 10;
                 i /= 10;
-                itr++;
 
                 glActiveTexture(GL_TEXTURE0);
                 glBindTexture(GL_TEXTURE_2D, digitTextures[digit]);
@@ -106,6 +105,7 @@ public class TextPresenter
                 bindAttributes();
                 glDrawArrays(GL_TRIANGLE_FAN, 0, 6);
 
+                itr++;
                 if (i <= 0)
                 {
                     break;

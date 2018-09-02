@@ -51,4 +51,17 @@ public class ThrustComponent extends Component
     {
         return thrustPower;
     }
+
+    public float getThrustPower()
+    {
+        if(live)
+        {
+            return thrustPower;
+        }
+        else
+        {
+            return 1;
+        }
+    }
+
 }
