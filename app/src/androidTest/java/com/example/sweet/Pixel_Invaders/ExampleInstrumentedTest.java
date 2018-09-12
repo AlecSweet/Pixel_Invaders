@@ -1,4 +1,4 @@
-package com.example.sweet.game20;
+package com.example.sweet.Pixel_Invaders;
 
 import android.content.Context;
 import android.support.test.InstrumentationRegistry;

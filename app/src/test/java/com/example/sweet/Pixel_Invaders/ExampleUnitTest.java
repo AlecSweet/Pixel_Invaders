@@ -1,4 +1,4 @@
-package com.example.sweet.game20;
+package com.example.sweet.Pixel_Invaders;
 
 import org.junit.Test;
 
