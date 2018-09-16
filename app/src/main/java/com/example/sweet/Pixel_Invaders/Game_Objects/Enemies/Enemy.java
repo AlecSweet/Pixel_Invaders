@@ -473,7 +473,7 @@ public class Enemy extends Drawable
             case 6: dT = BULLET_SPEED; break;
             case 7: dT = RESTORATION; break;
         }
-        return new ModComponent(null, x, y, 0, dT, (int)difficulty);
+        return new ModComponent(null, x, y, 0, dT, (int)difficulty + 1);
     }
 
 }

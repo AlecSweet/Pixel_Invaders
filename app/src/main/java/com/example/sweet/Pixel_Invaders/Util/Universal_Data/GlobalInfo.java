@@ -1,6 +1,7 @@
 package com.example.sweet.Pixel_Invaders.Util.Universal_Data;
 
 import com.example.sweet.Pixel_Invaders.Game_Objects.Pooling.LocationHistory;
+import com.example.sweet.Pixel_Invaders.Game_Objects.Rift;
 
 /**
  * Created by Sweet on 7/13/2018.

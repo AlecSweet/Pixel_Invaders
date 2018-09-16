@@ -72,11 +72,12 @@ public class CollisionThread implements Runnable
         {
             if(entities[i] != null && !entities[i].collisionRemoveConsensus)
             {
-                if(!entities[i].collisionRecognized)
+                /*if(!entities[i].collisionRecognized)
                 {
                     entities[i].collisionRecognized = true;
                 }
-                if(entities[i].collisionRecognized)
+                if(entities[i].collisionRecognized)*/
+                if(entities[i].spawned)
                 {
                     if (entities[i].getPixelGroup().getTotalPixels() * entities[i].getPixelGroup().getLivablePercentage() >
                             entities[i].getPixelGroup().numLivePixels)
@@ -159,6 +160,10 @@ public class CollisionThread implements Runnable
                         entities[i].collisionRemoveConsensus = true;
                     }
                 }
+                else
+                {
+                    entities[i].checkSpawned();
+                }
                 clearedTemp = false;
             }
             else
@@ -202,7 +207,7 @@ public class CollisionThread implements Runnable
 
         for(Enemy e: entities)
         {
-            if(e != null && !e.collisionRemoveConsensus && e.collisionRecognized)
+            if(e != null && !e.collisionRemoveConsensus) //&& e.collisionRecognized)
             {
                 checkLowestHelper(e.getPixelGroup().consumeCollisionLocation(frameRequest));
 

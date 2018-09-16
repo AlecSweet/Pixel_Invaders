@@ -129,4 +129,14 @@ public class Button
         regular.applyScale(xS, yS);
         hoveredOver.applyScale(xS, yS);
     }
+
+    public float getX()
+    {
+        return regular.getX();
+    }
+
+    public float getY()
+    {
+        return regular.getY();
+    }
 }

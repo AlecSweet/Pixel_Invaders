@@ -101,7 +101,7 @@ public class MineLayer extends Enemy
         targetX = (float)(Math.random()) * xbound * 2 - xbound;
         targetY = (float)(Math.random()) * ybound * 2 - ybound;
 
-        generateDrops(guns[0], thrusters[0], difficulty, 1);
+        generateDrops(null, thrusters[0], difficulty, 1);
     }
 
     public void move(float pX, float pY)

@@ -107,11 +107,12 @@ public class AIThread implements Runnable
         {
             if(entities[i] != null && !entities[i].aiRemoveConsensus)
             {
-                if(!entities[i].aiRecognized)
+                /*if(!entities[i].aiRecognized)
                 {
                     entities[i].aiRecognized = true;
                 }
-                if(entities[i].aiRecognized)
+                if(entities[i].aiRecognized)*/
+                if(entities[i].spawned)
                 {
                     if (entities[i].getPixelGroup().getCollidableLive())
                     {
@@ -195,6 +196,10 @@ public class AIThread implements Runnable
                         entities[i].aiRemoveConsensus = true;
                     }
                 }
+                else
+                {
+                    entities[i].checkSpawned();
+                }
                 clearedTemp = false;
             }
             else
@@ -214,7 +219,7 @@ public class AIThread implements Runnable
     {
         for(Enemy e: entities)
         {
-            if(e != null && !e.aiRemoveConsensus && e.aiRecognized)
+            if(e != null && !e.aiRemoveConsensus) //&& e.aiRecognized)
             {
                 e.publishLocation(currentFrame);
             }

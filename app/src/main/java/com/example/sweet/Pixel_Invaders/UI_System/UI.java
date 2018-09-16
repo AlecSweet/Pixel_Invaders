@@ -3,7 +3,6 @@ package com.example.sweet.Pixel_Invaders.UI_System;
 import android.content.Context;
 import android.graphics.PointF;
 
-import com.example.sweet.Pixel_Invaders.Game_Objects.Component_System.Component;
 import com.example.sweet.Pixel_Invaders.Game_Objects.Component_System.Drop;
 import com.example.sweet.Pixel_Invaders.Game_Objects.Component_System.ModComponent;
 import com.example.sweet.Pixel_Invaders.Game_Objects.Component_System.ThrustComponent;
@@ -20,6 +19,7 @@ import static android.opengl.GLES20.GL_TEXTURE0;
 import static android.opengl.GLES20.GL_TEXTURE_2D;
 import static android.opengl.GLES20.glActiveTexture;
 import static android.opengl.GLES20.glBindTexture;
+import static android.opengl.GLES20.glUniform1f;
 import static android.opengl.GLES20.glUniform1i;
 import static android.opengl.GLES20.glUseProgram;
 import static android.opengl.GLES20.glGetAttribLocation;
@@ -69,7 +69,8 @@ public class UI extends Drawable
             uiShaderProgram,
             pixelShaderProgram,
             whiteTexture,
-            uTextureLocation;
+            uTextureLocation,
+            magLoc;
 
     private float flash = 0;
     private float flashSwitch = .5f;
@@ -93,18 +94,28 @@ public class UI extends Drawable
             optionsMenu,
             shadeBar,
             fireRate,
+            fireRateDesc,
             extraShots,
+            extraShotsDesc,
             precision,
+            precisionDesc,
             plating,
+            platingDesc,
             piercing,
+            piercingDesc,
             temporal,
+            temporalDesc,
             bulletSpeed,
+            bulletSpeedDesc,
             restoration,
+            restorationDesc,
             title,
             title1,
             title2,
             title3,
-            title4;
+            title4,
+            cannotPlace,
+            riftShade;
 
     private Button
             resumeButton,
@@ -181,6 +192,7 @@ public class UI extends Drawable
         glVarLocations[1] = glGetAttribLocation(shaderLocation, "a_Position");
         glVarLocations[2] = glGetAttribLocation(shaderLocation, "a_TexCoordinate");
         glVarLocations[3] = glGetUniformLocation(shaderLocation, "u_Texture");
+        magLoc = glGetUniformLocation(shaderLocation, "mag");
 
         textPresenter = new TextPresenter(context, glVarLocations);
 
@@ -230,6 +242,16 @@ public class UI extends Drawable
                         -1, -1
                 );
 
+        riftShade = new ImageContainer
+                (
+                        TextureLoader.loadTexture(context, R.drawable.riftshade),
+                        Constants.riftShadeVA,
+                        0, 0,
+                        "screenShade",
+                        glVarLocations,
+                        -1, -1
+                );
+
         shadeBar = new ImageContainer
                 (
                         TextureLoader.loadTexture(context, R.drawable.shade),
@@ -259,6 +281,7 @@ public class UI extends Drawable
                         glVarLocations,
                         -1, -1
                 );
+        
         bulletSpeed = new ImageContainer
                 (
                         TextureLoader.loadTexture(context, R.drawable.accelerator),
@@ -322,6 +345,81 @@ public class UI extends Drawable
                         glVarLocations,
                         -1, -1
                 );
+
+        fireRateDesc = new ImageContainer
+                (
+                        TextureLoader.loadTexture(context, R.drawable.overdrivedescrip),
+                        Constants.modDescripVA,
+                        -.284f, .936f,
+                        "modPanel",
+                        glVarLocations,
+                        -1, -1
+                );
+
+        bulletSpeedDesc = new ImageContainer
+                (
+                        TextureLoader.loadTexture(context, R.drawable.acceleratordescrip),
+                        Constants.modDescripVA,
+                        -.284f, .936f,
+                        "modPanel",
+                        glVarLocations,
+                        -1, -1
+                );
+        extraShotsDesc = new ImageContainer
+                (
+                        TextureLoader.loadTexture(context, R.drawable.projectileclonerdescrip),
+                        Constants.modDescripVA,
+                        -.284f, .936f,
+                        "modPanel",
+                        glVarLocations,
+                        -1, -1
+                );
+        precisionDesc = new ImageContainer
+                (
+                        TextureLoader.loadTexture(context, R.drawable.precisionbarrelsdescrip),
+                        Constants.modDescripVA,
+                        -.284f, .936f,
+                        "modPanel",
+                        glVarLocations,
+                        -1, -1
+                );
+        restorationDesc = new ImageContainer
+                (
+                        TextureLoader.loadTexture(context, R.drawable.restorativecellsdescrip),
+                        Constants.modDescripVA,
+                        -.284f, .936f,
+                        "modPanel",
+                        glVarLocations,
+                        -1, -1
+                );
+        platingDesc = new ImageContainer
+                (
+                        TextureLoader.loadTexture(context, R.drawable.pixelplatingdescrip),
+                        Constants.modDescripVA,
+                        -.284f, .936f,
+                        "modPanel",
+                        glVarLocations,
+                        -1, -1
+                );
+        piercingDesc = new ImageContainer
+                (
+                        TextureLoader.loadTexture(context, R.drawable.piercingroundsdescrip),
+                        Constants.modDescripVA,
+                        -.284f, .936f,
+                        "modPanel",
+                        glVarLocations,
+                        -1, -1
+                );
+        temporalDesc = new ImageContainer
+                (
+                        TextureLoader.loadTexture(context, R.drawable.temporaldescrip),
+                        Constants.modDescripVA,
+                        -.284f, .936f,
+                        "modPanel",
+                        glVarLocations,
+                        -1, -1
+                );
+        
         gunPanel = new ImageContainer
                 (
                         TextureLoader.loadTexture(context, R.drawable.gunpanel),
@@ -404,6 +502,16 @@ public class UI extends Drawable
                         Constants.titleVA,
                         //.35f, -.56f,
                         .6f, .04f,
+                        "largeBox",
+                        glVarLocations,
+                        -1, -1
+                );
+        cannotPlace = new ImageContainer
+                (
+                        TextureLoader.loadTexture(context, R.drawable.squarec),
+                        Constants.playerSquareVA,
+                        //.35f, -.56f,
+                        0, 0,
                         "largeBox",
                         glVarLocations,
                         -1, -1
@@ -876,6 +984,15 @@ public class UI extends Drawable
     @Override
     public void draw(double interp)
     {
+        if (gameState == Constants.GameState.IN_GAME || gameState == Constants.GameState.PAUSE_MENU ||
+                (gameState == Constants.GameState.OPTIONS && prevGameState == Constants.GameState.PAUSE_MENU))
+        {
+            //riftShade.setLoc(player.rift.x, player.rift.y);
+            glUniform1f(magLoc, player.rift.radius);
+            riftShade.draw(player.rift.x - globalInfo.getScreenShiftX(),
+                    player.rift.y - globalInfo.getScreenShiftY());
+            glUniform1f(magLoc, 1);
+        }
         if (gameState == Constants.GameState.IN_GAME)
         {
             moveJoySticks();
@@ -898,11 +1015,13 @@ public class UI extends Drawable
                 readyButton.draw(movementOnMove.x, movementOnMove.y, shootingOnMove.x, shootingOnMove.y);
             }
             textPresenter.drawInt(player.score, -.9f, 0f, true);
+
+            textPresenter.drawString("Hello World", 0, 0, 11);
         }
         else if (gameState == Constants.GameState.PAUSE_MENU)
         {
             screenShade.draw();
-
+            //player.uiCosmetics(.5f);
             glUseProgram(pixelShaderProgram);
             glActiveTexture(GL_TEXTURE0);
             glBindTexture(GL_TEXTURE_2D, whiteTexture);
@@ -1030,6 +1149,7 @@ public class UI extends Drawable
                     case FIRE_RATE:
                         modPanel.draw();
                         fireRate.draw();
+                        fireRateDesc.draw();
                         textPresenter.drawInt(
                                 ((ModComponent) selectedButton.drop.component).getModLevel(),
                                 Constants.iPnum3X, Constants.infoPanelY,
@@ -1039,6 +1159,7 @@ public class UI extends Drawable
                     case BULLET_SPEED:
                         modPanel.draw();
                         bulletSpeed.draw();
+                        bulletSpeedDesc.draw();
                         textPresenter.drawInt(
                                 ((ModComponent) selectedButton.drop.component).getModLevel(),
                                 Constants.iPnum3X, Constants.infoPanelY,
@@ -1048,6 +1169,7 @@ public class UI extends Drawable
                     case EXTRA_SHOTS:
                         modPanel.draw();
                         extraShots.draw();
+                        extraShotsDesc.draw();
                         textPresenter.drawInt(
                                 ((ModComponent) selectedButton.drop.component).getModLevel(),
                                 Constants.iPnum3X, Constants.infoPanelY,
@@ -1057,6 +1179,7 @@ public class UI extends Drawable
                     case PRECISION:
                         modPanel.draw();
                         precision.draw();
+                        precisionDesc.draw();
                         textPresenter.drawInt(
                                 ((ModComponent) selectedButton.drop.component).getModLevel(),
                                 Constants.iPnum3X, Constants.infoPanelY,
@@ -1066,6 +1189,7 @@ public class UI extends Drawable
                     case PLATING:
                         modPanel.draw();
                         plating.draw();
+                        platingDesc.draw();
                         textPresenter.drawInt(
                                 ((ModComponent) selectedButton.drop.component).getModLevel(),
                                 Constants.iPnum3X, Constants.infoPanelY,
@@ -1075,6 +1199,7 @@ public class UI extends Drawable
                     case PIERCING:
                         modPanel.draw();
                         piercing.draw();
+                        piercingDesc.draw();
                         textPresenter.drawInt(
                                 ((ModComponent) selectedButton.drop.component).getModLevel(),
                                 Constants.iPnum3X, Constants.infoPanelY,
@@ -1084,6 +1209,7 @@ public class UI extends Drawable
                     case RESTORATION:
                         modPanel.draw();
                         restoration.draw();
+                        restorationDesc.draw();
                         textPresenter.drawInt(
                                 ((ModComponent) selectedButton.drop.component).getModLevel(),
                                 Constants.iPnum3X, Constants.infoPanelY,
@@ -1093,6 +1219,7 @@ public class UI extends Drawable
                     case TEMPORAL:
                         modPanel.draw();
                         temporal.draw();
+                        temporalDesc.draw();
                         textPresenter.drawInt(
                                 ((ModComponent) selectedButton.drop.component).getModLevel(),
                                 Constants.iPnum3X, Constants.infoPanelY,
@@ -1101,6 +1228,16 @@ public class UI extends Drawable
                         break;
                 }
             }
+            Constants.DropType dType;
+            if(heldDropButton != null && heldDropButton.drop != null)
+            {
+                dType = heldDropButton.drop.component.type;
+            }
+            else
+            {
+                dType = Constants.DropType.NONE;
+            }
+
             for (Button[] bA : componentPanel)
             {
                 for (Button b : bA)
@@ -1111,17 +1248,41 @@ public class UI extends Drawable
 
             for (int g = 0; g < player.getMaxGuns(); g++)
             {
-                playerGuns[g].draw(menuOnMove.x, menuOnMove.y);
+                if(dType == Constants.DropType.GUN || dType == Constants.DropType.NONE)
+                {
+                    playerGuns[g].draw(menuOnMove.x, menuOnMove.y);
+                }
+                else
+                {
+                    cannotPlace.draw(playerGuns[g].getX(), playerGuns[g].getY());
+                }
             }
 
             for (Button b : playerThrusters)
             {
-                b.draw(menuOnMove.x, menuOnMove.y);
+                if(dType == Constants.DropType.THRUSTER || dType == Constants.DropType.NONE)
+                {
+                    b.draw(menuOnMove.x, menuOnMove.y);
+                }
+                else
+                {
+                    cannotPlace.draw(b.getX(), b.getY());
+                }
             }
 
             for (int m = 0; m < player.getMaxMods(); m++)
             {
-                playerMods[m].draw(menuOnMove.x, menuOnMove.y);
+
+                if((dType != Constants.DropType.THRUSTER && dType != Constants.DropType.GUN) ||
+                        dType == Constants.DropType.NONE)
+                {
+                    playerMods[m].draw(menuOnMove.x, menuOnMove.y);
+                }
+                else
+                {
+                    cannotPlace.draw(playerMods[m].getX(), playerMods[m].getY());
+                }
+
             }
 
             textPresenter.drawInt(player.score, -.86f, -.006f, false);

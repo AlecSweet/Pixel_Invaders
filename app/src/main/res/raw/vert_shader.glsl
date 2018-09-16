@@ -15,6 +15,7 @@ uniform float squareLength;
 uniform vec2 shadingPoint;
 uniform float pointSize;
 uniform float time;
+uniform vec3 riftData;
 
 varying vec4 v_Color;
 varying highp float v_CosA;
@@ -61,6 +62,64 @@ void main()
 	vec2 rotated = vec2(v_CosA * tX + v_SinA * tY,
 						v_CosA * tY - v_SinA * tX);
 	
+	float radius = riftData.z;
+	vec2 center = riftData.xy;
+	vec2 tc = (rotated * mag) + posData.xy;
+	tc -= center;
+	float dist = length(tc);
+	if (dist < radius) 
+	{
+		float angle = 20.0;
+		if(mod(floor(time), 2.0) == 0.0)
+		{
+			angle *= pow(fract(time),2.0);
+			angle += 6.28;
+		}
+		else
+		{
+			angle *= 1.0 - pow(fract(time),2.0);
+			angle += 6.28;
+		}
+		float percent = (radius - dist) / radius;
+		
+		float theta = pow(percent,2.0) * angle;
+		float s = sin(theta);
+		float c = cos(theta);
+		tc = vec2(dot(tc, vec2(c, -s)), dot(tc, vec2(s, c)));
+		
+		dist = length(tc);
+		percent = (radius - dist) / radius;
+		gl_PointSize = pointSize * ((percent * percent) + 1.0);
+		v_Color.b *= 1.0 + percent * percent * 2.0;
+			/*if(percent < 0.5)
+			{
+				v_Color.r *= 1.0 + (0.5 - percent) * 2.0;
+				//v_Color.b -= (0.5 - percent) * 0.5;
+			}
+			else
+			{
+				v_Color.b *= 1.0 + (percent - 0.5) * 2.0;
+				//v_Color.r -= (percent - 0.5) * 0.5;
+			}*/
+	}
+	tc += center;
+	  
+	
+	if(dist >= radius)
+	{
+		gl_Position.x = ((rotated.x * mag) + posData.x - x_ScreenShift) * x_Scale;
+		gl_Position.y = ((rotated.y * mag) + posData.y - y_ScreenShift) * y_Scale;
+		//gl_Position.x = (tc.x - x_ScreenShift) * x_Scale;
+		//gl_Position.y = (tc.y - y_ScreenShift) * y_Scale;
+	}
+	else
+	{
+		gl_Position.x = (tc.x - x_ScreenShift) * x_Scale;
+		gl_Position.y = (tc.y - y_ScreenShift) * y_Scale;
+		//gl_Position.x = ((rotated.x * mag) + posData.x - x_ScreenShift) * x_Scale;
+		//gl_Position.y = ((rotated.y * mag) + posData.y - y_ScreenShift) * y_Scale;
+	}
+	
 	float normX = -rotated.x;
 	float normY = rotated.y;
 	float a = 1.1;
@@ -80,9 +139,6 @@ void main()
 			v_Color.b *= factor;
 		}
 	}
-
-	gl_Position.x = ((rotated.x * mag) + posData.x - x_ScreenShift) * x_Scale;
-	gl_Position.y = ((rotated.y * mag) + posData.y - y_ScreenShift) * y_Scale;
 }
 
 

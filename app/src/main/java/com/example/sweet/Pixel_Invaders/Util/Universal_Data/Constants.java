@@ -81,7 +81,8 @@ public class Constants
         PIERCING,
         TEMPORAL,
         BULLET_SPEED,
-        RESTORATION
+        RESTORATION,
+        NONE
     }
 
     public enum GameState
@@ -165,6 +166,16 @@ public class Constants
             -2f,  2f,   0f, 1f,
             2f,  2f,   1f, 1f,
     };
+
+    public static final float[] riftShadeVA = new float[]{
+            0f,  0f, 0.5f, 0.5f,
+            1f,  1f,   1f, 1f,
+            1f, -1f,   1f, 0f,
+            -1f, -1f,   0f, 0f,
+            -1f,  1f,   0f, 1f,
+            1f,  1f,   1f, 1f,
+    };
+    
     public static final float
             rbL = .1f,
             rbW = .4f,
@@ -242,7 +253,7 @@ public class Constants
     };
 
 
-    //----- pause shit
+    //----- pause Info
     
     public static final float
             aibL = .808f, //aibL = .664f,
@@ -318,19 +329,6 @@ public class Constants
             -chckR,  chckR,   0f, 0f,
             -chckR, -chckR,   0f, 1f
     };
-    
-
-    public static final float dL = .04f;
-    public static final float dW = .016f;
-    public static final float dSkipY = .048f;
-    public static final float[] digitVA = new float[]{
-            0f,  0f, 0.5f, 0.5f,
-            -dL, -dW,   0f, 1f,
-            dL, -dW,   1f, 1f,
-            dL,  dW,   1f, 0f,
-            -dL,  dW,   0f, 0f,
-            -dL, -dW,   0f, 1f
-    };
 
     public static final float
             paL = .072f,
@@ -358,6 +356,17 @@ public class Constants
             -modL, -modW,   0f, 1f
     };
 
+    public static final float
+            modL2 = .256f;
+
+    public static final float[] modDescripVA = new float[]{
+            0f,  0f, 0.5f, 0.5f,
+            -modL2, -modW,   0f, 1f,
+            modL2, -modW,   1f, 1f,
+            modL2,  modW,   1f, 0f,
+            -modL2,  modW,   0f, 0f,
+            -modL2, -modW,   0f, 1f
+    };
     public static final float
             titleL = .256f,
             titleW = .512f;

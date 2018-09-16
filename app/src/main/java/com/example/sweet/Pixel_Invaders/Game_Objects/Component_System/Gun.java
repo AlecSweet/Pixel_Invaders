@@ -222,7 +222,7 @@ public abstract class Gun
 
     void freeMemory()
     {
-        pixelGroupTemplate.freeMemory();
+        //pixelGroupTemplate.freeMemory();
     }
 
     void addMaxHealth(int h)

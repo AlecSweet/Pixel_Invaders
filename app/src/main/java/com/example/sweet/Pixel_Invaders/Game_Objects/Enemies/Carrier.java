@@ -95,7 +95,7 @@ public class Carrier extends Enemy
         thrusters[0] = new ThrustComponent(leftThrusterPixels, 0, 0, 0, 2);
         thrusters[0] = new ThrustComponent(rightThrusterPixels, 0, 0, 0, 2);
         enemyBody.rotate(enemyBody.angle);
-        baseSpeed = .001f;
+        baseSpeed = .005f;
         enemyBody.speed = baseSpeed;
         hasGun = false;
 
@@ -104,6 +104,7 @@ public class Carrier extends Enemy
         enemyBody.speed = baseSpeed;
 
         float travelAngle = -(float)(Math.atan2(targetY - enemyBody.centerY, targetX - enemyBody.centerX));
+        enemyBody.angle = travelAngle;
         rotate(travelAngle,6, 1);
         distX = -(float)(baseSpeed * Math.cos(travelAngle));
         distY = (float)(baseSpeed * Math.sin(travelAngle));

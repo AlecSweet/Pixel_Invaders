@@ -55,6 +55,8 @@ public class Player extends Drawable
             screenShakeX = 0,
             screenShakeY = 0;
 
+    public Rift rift;
+
     public int
             bonus = 1,
             score = 0;
@@ -106,7 +108,9 @@ public class Player extends Drawable
 
     private int
             tiltLoc,
-            magLoc,
+            magLoc;
+
+    private float
             stageCounter = 0;
 
     private PixelGroup playerBody;
@@ -160,6 +164,7 @@ public class Player extends Drawable
         particleSystem = ps;
         baseSpeed = sp;
         globalInfo = gI;
+        rift = new Rift();
 
         playerBody = body;
         playerBody.setLoc(0,0);
@@ -307,6 +312,7 @@ public class Player extends Drawable
             addThrustParticles(mainBoostPixels,tempRatio,.054f);
             rotate(angleMoving, tempRatio, slow);
         }
+
     }
 
     public void rotate(float angleMoving, float ratio, float slow)
@@ -405,7 +411,7 @@ public class Player extends Drawable
         }
     }
 
-    private void drift()
+    private void drift(float slow)
     {
         float tX = (float)Math.cos(driftCount/200*Constants.twoPI)/6000;
         float tY = (float)Math.sin(driftCount/200*Constants.twoPI)/6000;
@@ -420,7 +426,7 @@ public class Player extends Drawable
         {
             driftDirection = -1;
         }
-        driftCount += driftDirection;
+        driftCount += driftDirection * slow;
     }
 
     private void moveGuns()
@@ -775,7 +781,7 @@ public class Player extends Drawable
     public void draw(double interpolation)
     {
         //handleCosmetics();
-        glUniform1f(magLoc, .7f);
+        glUniform1f(magLoc, .8f);
         for(Drop d: componentDrops)
         {
             if(d != null && d.onScreen && !d.held)
@@ -804,7 +810,7 @@ public class Player extends Drawable
         glUniform1f(tiltLoc, 0);
     }
 
-    private void handleCosmetics()
+    public void handleCosmetics(float slow)
     {
 
         if (stageCounter >= 120)
@@ -816,10 +822,10 @@ public class Player extends Drawable
             stageDirection = 1;
         }
 
-        tiltAngle = (float) Math.sin(((double) stageCounter - 60) / 200);
-        drift();
+        tiltAngle = (float) Math.sin((stageCounter - 60) / 200);
+        drift(slow);
 
-        stageCounter += stageDirection;
+        stageCounter += stageDirection * slow;
     }
 
     private void initAttachmentPixels()
@@ -963,7 +969,8 @@ public class Player extends Drawable
         {
             move(movementOnMoveX - movementOnDownX, movementOnMoveY - movementOnDownY);
         }
-        handleCosmetics();
+        rift.addParticles(particleSystem);
+        handleCosmetics(globalInfo.timeSlow);
         moveCamera();
     }
 
