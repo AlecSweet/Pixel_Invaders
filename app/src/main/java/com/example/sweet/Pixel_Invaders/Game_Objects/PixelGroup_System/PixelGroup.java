@@ -90,9 +90,19 @@ public class  PixelGroup extends Collidable
 
         if(enableLocationChain)
         {
-            while(locationDrawTail.nextLocation != null && locationDrawTail.nextLocation.collisionDone)
+            if(isBullet)
             {
-                locationDrawTail = locationDrawTail.nextLocation;
+                while (locationDrawTail.nextLocation != null && locationDrawTail.nextLocation.collisionDone)
+                {
+                    locationDrawTail = locationDrawTail.nextLocation;
+                }
+            }
+            else
+            {
+                while (locationDrawTail.nextLocation != null && locationDrawTail.nextLocation.readyToBeConsumed)
+                {
+                    locationDrawTail = locationDrawTail.nextLocation;
+                }
             }
             glUniform4f(uPosData, locationDrawTail.x, locationDrawTail.y, cosA, sinA);
         }

@@ -140,7 +140,8 @@ public class MassAccelerator extends Enemy
                     (float)(enemyBody.angle+Math.PI),
                     globalInfo,
                     enemyBody.cosA,
-                    enemyBody.sinA
+                    enemyBody.sinA,
+                    0f
             );
         }
         guns[0].gun.move(globalInfo);

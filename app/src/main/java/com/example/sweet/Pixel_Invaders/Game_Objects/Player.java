@@ -7,6 +7,7 @@ import static android.opengl.GLES20.glGetUniformLocation;
 import static android.opengl.GLES20.glUniform1f;
 
 import com.example.sweet.Pixel_Invaders.Engine_Events.ScreenShakeEngine;
+import com.example.sweet.Pixel_Invaders.Game_Objects.PixelGroup_System.Collidable;
 import com.example.sweet.Pixel_Invaders.Game_Objects.PixelGroup_System.Drawable;
 import com.example.sweet.Pixel_Invaders.Game_Objects.PixelGroup_System.PixelGroup;
 import com.example.sweet.Pixel_Invaders.R;
@@ -39,7 +40,8 @@ public class Player extends Drawable
             driftX,
             driftY,
             xBound,
-            yBound;
+            yBound,
+            slowResist;
 
     private volatile PointF panToward = new PointF(0,0);
 
@@ -164,7 +166,7 @@ public class Player extends Drawable
         particleSystem = ps;
         baseSpeed = sp;
         globalInfo = gI;
-        rift = new Rift();
+        rift = new Rift(ps, globalInfo);
 
         playerBody = body;
         playerBody.setLoc(0,0);
@@ -276,7 +278,7 @@ public class Player extends Drawable
         {
             pow = ((ThrustComponent) thrusters[1].component).getThrustPower();
         }
-        float slow = globalInfo.timeSlow + (1-playerBody.slowResist) * (1 - globalInfo.timeSlow);
+        float slow = globalInfo.timeSlow + slowResist * (1 - globalInfo.timeSlow);
         float distance = baseSpeed * pow * slow;
         float tempDistX = -(float)(distance * -Math.cos(angleMoving));
         float tempDistY = -(float)(distance * Math.sin(angleMoving));
@@ -431,7 +433,7 @@ public class Player extends Drawable
 
     private void moveGuns()
     {
-        float slow = globalInfo.timeSlow + (1-playerBody.slowResist) * (1 - globalInfo.timeSlow);
+        float slow = globalInfo.timeSlow + slowResist * (1 - globalInfo.timeSlow);
         if(getGuns()!= null)
         {
             for (Drop d: gunDrops)
@@ -765,16 +767,24 @@ public class Player extends Drawable
     public void applyMods()
     {
         playerBody.regen = false;
-        playerBody.temporal = false;
+        slowResist = 1;
+        rift.resetFreqMod();
         for(Drop d: mods)
         {
             if(d != null)
             {
+                if(d.component.type == Constants.DropType.TEMPORAL)
+                {
+                    float val = ((ModComponent)d.component).getModValue();
+                    rift.reduceFreqMod(val);
+                    slowResist *= 1 / val;
+                }
                 ((ModComponent)d.component).modify(gunDrops, playerBody);
                 d.x = playerBody.getCenterX();
                 d.y = playerBody.getCenterY();
             }
         }
+        slowResist = 1 - slowResist;
     }
 
     @Override
@@ -969,8 +979,8 @@ public class Player extends Drawable
         {
             move(movementOnMoveX - movementOnDownX, movementOnMoveY - movementOnDownY);
         }
-        rift.addParticles(particleSystem);
-        handleCosmetics(globalInfo.timeSlow);
+
+        handleCosmetics(globalInfo.timeSlow + slowResist * (1 - globalInfo.timeSlow));
         moveCamera();
     }
 
@@ -1007,7 +1017,9 @@ public class Player extends Drawable
                             shootAngle + (float) Math.PI,
                             globalInfo,
                             playerBody.cosA,
-                            playerBody.sinA))
+                            playerBody.sinA,
+                            slowResist
+                        ))
                         {
                             shakeEngine.addShake(
                                     ((GunComponent)d.component).gun.shakeMod,
@@ -1154,4 +1166,85 @@ public class Player extends Drawable
         }
     }
 
+    public void destroyCollidableAnimation(Collidable c)
+    {
+        for (Pixel p : c.getPixels())
+        {
+            if(p.state >= 1)
+            {
+                p.xDisp = c.infoMap[p.row][p.col].xOriginal * c.cosA + c.infoMap[p.row][p.col].yOriginal * c.sinA;
+                p.yDisp = c.infoMap[p.row][p.col].yOriginal * c.cosA - c.infoMap[p.row][p.col].xOriginal * c.sinA;
+                addParticleHelper(p, c);
+                c.killPixel(p);
+                c.numLivePixels--;
+                c.pixelsKilled++;
+            }
+        }
+    }
+
+    private void addParticleHelper(Pixel p, Collidable c)
+    {
+        float angle = (float)(Math.atan2(p.yDisp, p.xDisp) + Math.random() * .2 - .1);
+        particleSystem.addParticle(
+                p.xDisp + c.getCenterX(),
+                p.yDisp + c.getCenterY(),
+                angle,
+                c.infoMap[p.row][p.col].r,
+                c.infoMap[p.row][p.col].g,
+                c.infoMap[p.row][p.col].b,
+                .8f,
+                (float)(Math.random())+.1f,
+                (float)(Math.random()*.5)+.01f,
+                (float)(Math.random()*40)-20
+        );
+    }
+
+    public void addParticleToCenter()
+    {
+        float angle = (float)Math.random() * Constants.twoPI;
+        float dist = (float)Math.random()*1.5f + 1f;
+        float xT = (float)Math.cos(angle) * dist;
+        float yT = (float)Math.sin(angle) * dist;
+        particleSystem.addParticle(
+                xT,
+                yT,
+                angle,
+                1,
+                (float)Math.random(),
+                1,
+                .4f,
+                (float)(Math.random() * .2f)+.1f,
+                (float)(Math.random()*.5)+.01f,
+                (float)(Math.random()*40)-20
+        );
+    }
+
+    public void addParticleCircleToCenter(float dist, float spd, float distance)
+    {
+        if(spd == -1)
+        {
+            spd = (float) (Math.random() * .05f) + .05f;
+        }
+        if(distance == -1)
+        {
+            distance = (float) (Math.random() * .2) + .1f;
+        }
+        for(float angle = 0; angle < Constants.twoPI;  angle += .01f)
+        {
+            float xT = (float) Math.cos(angle) * dist;
+            float yT = (float) Math.sin(angle) * dist;
+            particleSystem.addParticle(
+                    xT,
+                    yT,
+                    angle,
+                    1,
+                    1,
+                    1,
+                    .2f,
+                        spd,
+                    distance,
+                    (float) (Math.random() * 40) - 20
+            );
+        }
+    }
 }

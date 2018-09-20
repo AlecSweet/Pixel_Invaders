@@ -8,9 +8,11 @@ public class TimeSlowEvent
 {
     private float amplitude;
 
-    private double duration;
+    private float duration;
 
-    private double startTime;
+    private long startTime;
+
+    private SlowPatternFunction slowFunc;
 
     boolean active = true;
 
@@ -19,8 +21,9 @@ public class TimeSlowEvent
         active = false;
     }
 
-    void resetEvent(float a, double d)
+    void resetEvent(float a, float d, SlowPatternFunction sF)
     {
+        slowFunc = sF;
         amplitude = a;
         duration = d;
         startTime = System.currentTimeMillis();
@@ -29,7 +32,7 @@ public class TimeSlowEvent
 
     public float getSlow()
     {
-        double timeRunning = (System.currentTimeMillis()-startTime);
+        float timeRunning = (System.currentTimeMillis() - startTime);
         if(timeRunning > duration)
         {
             active = false;
@@ -37,13 +40,12 @@ public class TimeSlowEvent
         }
         else
         {
-            float t = Math.abs((float)(timeRunning / duration));
-            return t * t * t * amplitude + 1 - amplitude;
+            return slowFunc.getSlow(amplitude, duration, timeRunning);
         }
     }
 
     float getRemainingPercentTime()
     {
-        return (float)((System.currentTimeMillis()-startTime) / duration);
+        return (System.currentTimeMillis()-startTime) / duration;
     }
 }

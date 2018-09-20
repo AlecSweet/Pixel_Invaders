@@ -56,7 +56,7 @@ public class ModComponent extends Component
                 modValue = mLevel;
                 break;
             case TEMPORAL:
-                modValue += .5 * mLevel;
+                modValue += .33 * mLevel;
                 break;
             case BULLET_SPEED:
                 modValue += .5 * mLevel;
@@ -109,6 +109,10 @@ public class ModComponent extends Component
                     break;
                 case EXTRA_SHOTS:
                     gun.numShots += modValue;
+                    if(gun.numShots > 8)
+                    {
+                        gun.numShots = 8;
+                    }
                     bulletPoolUpdate = true;
                     break;
                 case PRECISION:
@@ -140,6 +144,10 @@ public class ModComponent extends Component
                     break;
                 case EXTRA_SHOTS:
                     gun.numShots -= modValue;
+                    if(gun.numShots < 1)
+                    {
+                        gun.numShots = 1;
+                    }
                     break;
                 case PRECISION:
                     gun.spread /= modValue;
@@ -165,10 +173,6 @@ public class ModComponent extends Component
             case PLATING:
                 group.addMaxHealth((int)modValue);
                 break;
-            case TEMPORAL:
-                group.temporal = true;
-                group.slowResist /= modValue;
-                break;
         }
     }
 
@@ -182,14 +186,16 @@ public class ModComponent extends Component
             case PLATING:
                 group.reduceMaxHealth((int)modValue);
                 break;
-            case TEMPORAL:
-                group.slowResist *= modValue;
-                break;
         }
     }
 
     public int getModLevel()
     {
         return modLevel;
+    }
+
+    public float getModValue()
+    {
+        return modValue;
     }
 }

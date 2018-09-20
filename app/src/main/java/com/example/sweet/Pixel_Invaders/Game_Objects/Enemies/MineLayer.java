@@ -136,7 +136,8 @@ public class MineLayer extends Enemy
                     ang,
                     globalInfo,
                     enemyBody.cosA,
-                    enemyBody.sinA))
+                    enemyBody.sinA,
+                    0f))
             {
                 numshot++;
             }

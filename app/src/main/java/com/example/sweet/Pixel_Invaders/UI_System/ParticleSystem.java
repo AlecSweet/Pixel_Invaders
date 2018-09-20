@@ -6,6 +6,7 @@ import com.example.sweet.Pixel_Invaders.Util.Universal_Data.GlobalInfo;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
+import java.util.Arrays;
 
 import static android.opengl.GLES20.GL_ARRAY_BUFFER;
 import static android.opengl.GLES20.GL_DYNAMIC_DRAW;
@@ -342,5 +343,37 @@ public class ParticleSystem
     public ParticleSystem clone()
     {
         return new ParticleSystem(maxParticleCount, shaderLocation, textureID[0], globalStartTime, globalInfo);
+    }
+
+    public void clear()
+    {
+        nextParticle = 0;
+        lastUpdatePos = 0;
+        Arrays.fill(particles, 0f);
+        particleBuf.position(0);
+        particleBuf.put(particles);
+        particleBuf.position(0);
+        glBindBuffer(GL_ARRAY_BUFFER, particleVBO[0]);
+        glBufferSubData(GL_ARRAY_BUFFER, 0, particleBuf.capacity() * Constants.BYTES_PER_FLOAT, particleBuf);
+    }
+
+    public void clear(int start, int end)
+    {
+        start *= TOTAL_COMPONENT_COUNT;
+        end *= TOTAL_COMPONENT_COUNT;
+        for(int i = start; i < end; i++)
+        {
+            particles[i] = 0;
+        }
+        particleBuf.position(0);
+        particleBuf.put(particles);
+        particleBuf.position(0);
+        glBindBuffer(GL_ARRAY_BUFFER, particleVBO[0]);
+        glBufferSubData(GL_ARRAY_BUFFER, 0, particleBuf.capacity() * Constants.BYTES_PER_FLOAT, particleBuf);
+    }
+
+    public int getCurParticle()
+    {
+        return nextParticle;
     }
 }

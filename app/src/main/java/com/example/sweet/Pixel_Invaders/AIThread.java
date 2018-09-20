@@ -1,13 +1,14 @@
 package com.example.sweet.Pixel_Invaders;
 
-import com.example.sweet.Pixel_Invaders.Game_Objects.Component_System.Drop;
-import com.example.sweet.Pixel_Invaders.Game_Objects.Enemies.Asteroid;
 import com.example.sweet.Pixel_Invaders.Util.CollisionHandler;
 import com.example.sweet.Pixel_Invaders.Util.Universal_Data.Constants;
 import com.example.sweet.Pixel_Invaders.Game_Objects.Enemies.Enemy;
 import com.example.sweet.Pixel_Invaders.Game_Objects.Player;
 import com.example.sweet.Pixel_Invaders.Engine_Events.TimeSlowEngine;
 import com.example.sweet.Pixel_Invaders.Util.Universal_Data.GlobalInfo;
+
+import static com.example.sweet.Pixel_Invaders.Engine_Events.TimeSlowEngine.SlowPattern.POW2_FADEIN_FADEOUT;
+import static com.example.sweet.Pixel_Invaders.Engine_Events.TimeSlowEngine.SlowPattern.POW3_FADEOUT;
 
 public class AIThread implements Runnable
 {
@@ -44,7 +45,7 @@ public class AIThread implements Runnable
     {
         entities = new Enemy[Constants.ENTITIES_LENGTH];
         globalInfo = gI;
-        timeEngine = new TimeSlowEngine(globalInfo, 20);
+        timeEngine = new TimeSlowEngine(globalInfo, 30);
     }
 
     public void run()
@@ -91,6 +92,11 @@ public class AIThread implements Runnable
         //player1.moveCamera();
         player1.handleScreenShake(globalInfo.gameSettings.screenShakePercent);
         player1.checkRegen();
+        float r = player1.rift.checkState(player1, globalInfo);
+        if(r > 0)
+        {
+            timeEngine.addSlow(r, player1.rift.getSlowDuration(), POW2_FADEIN_FADEOUT);
+        }
         //globalInfo.publishScreenShift(player1.xScreenShift - player1.screenShakeX, player1.yScreenShift - player1.screenShakeY);
         globalInfo.screenShiftX = player1.xScreenShift - player1.screenShakeX;
         globalInfo.screenShiftY = player1.yScreenShift - player1.screenShakeY;
@@ -191,7 +197,7 @@ public class AIThread implements Runnable
                         );
                         if (globalInfo.gameSettings.slowOnKill)
                         {
-                            timeEngine.addSlow(.7f, 400);
+                            timeEngine.addSlow(.7f, 400, POW3_FADEOUT);
                         }
                         entities[i].aiRemoveConsensus = true;
                     }
@@ -228,10 +234,9 @@ public class AIThread implements Runnable
         player1.publishLocation(currentFrame);
     }
 
-    void setInfo(Player p, GlobalInfo gI)
+    void setInfo(Player p)
     {
         player1 = p;
-        globalInfo = gI;
         currentFrame = 0;
         frameRequest = 0;
     }

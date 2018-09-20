@@ -43,6 +43,11 @@ public class Button
         }
     }
 
+    public void drawShift(float x, float y)
+    {
+        regular.draw(x, y);
+    }
+
     public void draw(float x, float y, float x2, float y2)
     {
         if((Math.abs(x - regular.x) <= regular.halfLength &&

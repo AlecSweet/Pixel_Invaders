@@ -227,7 +227,8 @@ public class Pulser extends Enemy
                                 ang,
                                 globalInfo,
                                 enemyBody.cosA,
-                                enemyBody.sinA
+                                enemyBody.sinA,
+                                0f
                         );
                     }
                     guns[i].move(globalInfo);

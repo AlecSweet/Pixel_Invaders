@@ -13,7 +13,6 @@ import java.util.HashMap;
 
 import static android.opengl.GLES20.GL_ARRAY_BUFFER;
 import static android.opengl.GLES20.GL_FLOAT;
-import static android.opengl.GLES20.GL_POINTS;
 import static android.opengl.GLES20.GL_STATIC_DRAW;
 import static android.opengl.GLES20.GL_TEXTURE0;
 import static android.opengl.GLES20.GL_TEXTURE_2D;
@@ -25,10 +24,10 @@ import static android.opengl.GLES20.glBufferData;
 import static android.opengl.GLES20.glDrawArrays;
 import static android.opengl.GLES20.glEnableVertexAttribArray;
 import static android.opengl.GLES20.glGenBuffers;
-import static android.opengl.GLES20.glUniform1f;
 import static android.opengl.GLES20.glUniform1i;
 import static android.opengl.GLES20.glUniform2f;
 import static android.opengl.GLES20.glVertexAttribPointer;
+
 
 /**
  * Created by Sweet on 6/26/2018.
@@ -37,8 +36,6 @@ import static android.opengl.GLES20.glVertexAttribPointer;
 public class TextPresenter
 {
     private int
-            xDispLoc,
-            yDispLoc,
             dispLoc,
             aPositionLocation,
             aTextureCoordLocation,
@@ -49,15 +46,14 @@ public class TextPresenter
     private HashMap<Integer, Integer> characters = new HashMap<>();
     private HashMap<Integer, Float> characterWidth = new HashMap<>();
 
-    private int dot;
-
-    private int vboHandle[] = new int[2];
+    private int vboHandle[] = new int[3];
 
     private static final float dSkipY = .048f;
 
     private static final float pixSize = .01f;
     private static final float charSkipY = 2 * pixSize;
     private static final float charSpaceY = 3 * pixSize;
+    public static final float charSkipX = (16 + 8) * pixSize;
     
     private static final float dL = 5 * .008f;
     private static final float dW = 2 * .008f;
@@ -84,19 +80,12 @@ public class TextPresenter
 
     TextPresenter(Context context, int[] glVarLocations)
     {
-       /* xDispLoc = glVarLocations[0];
-        yDispLoc = glVarLocations[1];
-        aPositionLocation = glVarLocations[2];
-        aTextureCoordLocation = glVarLocations[3];
-        uTextureLocation  = glVarLocations[4];*/
         dispLoc = glVarLocations[0];
         aPositionLocation = glVarLocations[1];
         aTextureCoordLocation = glVarLocations[2];
         uTextureLocation  = glVarLocations[3];
 
         initTextures(context);
-
-        dot = TextureLoader.loadTexture(context, R.drawable.tdot);
 
         FloatBuffer digitBuf = ByteBuffer
                 .allocateDirect(digitVA.length * Constants.BYTES_PER_FLOAT)
@@ -112,7 +101,7 @@ public class TextPresenter
                 .put(charVA);
         charBuf.position(0);
 
-        glGenBuffers(2, vboHandle, 0);
+        glGenBuffers(3, vboHandle, 0);
         glBindBuffer(GL_ARRAY_BUFFER, vboHandle[0]);
         glBufferData(GL_ARRAY_BUFFER, digitBuf.capacity() * Constants.BYTES_PER_FLOAT, digitBuf, GL_STATIC_DRAW);
         glBindBuffer(GL_ARRAY_BUFFER, vboHandle[1]);
@@ -121,11 +110,10 @@ public class TextPresenter
 
     void drawInt(int i, float x, float y, boolean center)
     {
-        //glUniform1f(xDispLoc, x);
         float disp = 0;
         if(center)
         {
-            disp = (dSkipY * getNumDigitsInt(i)) / 2;
+            disp = (dSkipY * getNumDigitsInt(i)) / 2f;
         }
         int itr = 0;
         if(i > 0)
@@ -139,13 +127,11 @@ public class TextPresenter
                 glBindTexture(GL_TEXTURE_2D, digitTextures[digit]);
                 glUniform1i(uTextureLocation, 0);
 
-                //glUniform1f(yDispLoc, y + itr * Constants.dSkipY - disp);
                 glUniform2f(dispLoc, x, y + itr * dSkipY - disp);
 
                 glBindBuffer(GL_ARRAY_BUFFER, vboHandle[0]);
                 bindAttributes();
                 glDrawArrays(GL_TRIANGLE_FAN, 0, 6);
-                //glDrawArrays(GL_POINTS, 0, 1);
 
                 itr++;
                 if (i <= 0)
@@ -160,7 +146,6 @@ public class TextPresenter
             glBindTexture(GL_TEXTURE_2D, digitTextures[0]);
             glUniform1i(uTextureLocation, 0);
 
-            //glUniform1f(yDispLoc, y + itr * Constants.dSkipY - disp);
             glUniform2f(dispLoc, x, y + itr * dSkipY - disp);
 
             glBindBuffer(GL_ARRAY_BUFFER, vboHandle[0]);
@@ -169,11 +154,26 @@ public class TextPresenter
         }
     }
 
-    void drawString(String s, float x, float y, int len)
+    public float drawString(String s, float x, float y, int start, int len, float mag, boolean center)
     {
         float disp = 0;
+        if(center)
+        {
+            for(int i = start; i < len; i++)
+            {
+                if(characters.get((int)s.charAt(i)) != null)
+                {
+                    disp -= (characterWidth.get((int)s.charAt(i)) + charSkipY) * mag;
+                }
+                else
+                {
+                    disp -= (charSpaceY + charSkipY) * mag;
+                }
+            }
+            disp /= 2.5f;
+        }
 
-        for(int i = 0; i < len; i++)
+        for(int i = start; i < len; i++)
         {
             if(characters.get((int)s.charAt(i)) != null)
             {
@@ -182,16 +182,18 @@ public class TextPresenter
                 glUniform1i(uTextureLocation, 0);
 
                 glUniform2f(dispLoc, x, y - disp);
+
                 glBindBuffer(GL_ARRAY_BUFFER, vboHandle[1]);
                 bindAttributes();
                 glDrawArrays(GL_TRIANGLE_FAN, 0, 6);
-                disp += characterWidth.get((int)s.charAt(i)) + charSkipY;
+                disp += (characterWidth.get((int)s.charAt(i)) + charSkipY) * mag;
             }
             else
             {
-                disp += charSpaceY + charSkipY;
+                disp += (charSpaceY + charSkipY) * mag;
             }
         }
+        return disp;
     }
 
     private void bindAttributes()
@@ -350,6 +352,7 @@ public class TextPresenter
         characters.put((int)'7',TextureLoader.loadTexture(context, R.drawable.s7));
         characters.put((int)'8',TextureLoader.loadTexture(context, R.drawable.s8));
         characters.put((int)'9',TextureLoader.loadTexture(context, R.drawable.s9));
+        characters.put((int)'|',TextureLoader.loadTexture(context, R.drawable.bar));
 
         characterWidth.put((int)'A', 5 * pixSize);
         characterWidth.put((int)'B', 5 * pixSize);
@@ -382,7 +385,7 @@ public class TextPresenter
         characterWidth.put((int)'c', 4 * pixSize);
         characterWidth.put((int)'d', 4 * pixSize);
         characterWidth.put((int)'e', 4 * pixSize);
-        characterWidth.put((int)'f', 3 * pixSize);
+        characterWidth.put((int)'f', 2 * pixSize);
         characterWidth.put((int)'g', 4 * pixSize);
         characterWidth.put((int)'h', 4 * pixSize);
         characterWidth.put((int)'i', pixSize);
@@ -396,7 +399,7 @@ public class TextPresenter
         characterWidth.put((int)'q', 4 * pixSize);
         characterWidth.put((int)'r', 4 * pixSize);
         characterWidth.put((int)'s', 4 * pixSize);
-        characterWidth.put((int)'t', 3 * pixSize);
+        characterWidth.put((int)'t', 2 * pixSize);
         characterWidth.put((int)'u', 4 * pixSize);
         characterWidth.put((int)'v', 5 * pixSize);
         characterWidth.put((int)'w', 9 * pixSize);
@@ -416,5 +419,6 @@ public class TextPresenter
         characterWidth.put((int)'7', 5 * pixSize);
         characterWidth.put((int)'8', 5 * pixSize);
         characterWidth.put((int)'9', 5 * pixSize);
+        characterWidth.put((int)'|', pixSize);
     }
 }

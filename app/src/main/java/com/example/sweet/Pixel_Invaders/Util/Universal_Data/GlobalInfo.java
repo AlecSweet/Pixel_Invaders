@@ -104,7 +104,7 @@ public class GlobalInfo
         scaleY = sY;
     }
 
-    public void publishScreenShift(float sX, float sY)
+   /* public void publishScreenShift(float sX, float sY)
     {
         screenShiftHead.nextLocation.setLocation(sX,sY);
         LocationHistory prev = screenShiftHead;
@@ -118,7 +118,7 @@ public class GlobalInfo
         {
             screenShiftDrawTail = screenShiftDrawTail.nextLocation;
         }
-    }
+    }*/
 
     public float getScreenShiftX()
     {

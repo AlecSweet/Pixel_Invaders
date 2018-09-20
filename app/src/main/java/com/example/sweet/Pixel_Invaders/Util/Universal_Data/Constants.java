@@ -131,6 +131,33 @@ public class Constants
             pulserVal = 10,
             massAcceleratorVal = 20,
             carrierVal = 30;
+    //--------------------------------------Background Info
+
+    public static final float[] background = new float[]{
+            0f,    0f, 0.5f, 0.5f,
+            -2.5f, -2.5f,   0f, 1f,
+            2.5f, -2.5f,   1f, 1f,
+            2.5f,  2.5f,   1f, 0f,
+            -2.5f,  2.5f,   0f, 0f,
+            -2.5f, -2.5f,   0f, 1f
+    };
+    public static final float[] moonVA = new float[]{
+            0f,    0f, 0.5f, 0.5f,
+            -.088f, -.088f,   0f, 1f,
+            .088f, -.088f,   1f, 1f,
+            .088f,  .088f,   1f, 0f,
+            -.088f,  .088f,   0f, 0f,
+            -.088f, -.088f,   0f, 1f
+    };
+
+    public static final float[] earthVA = new float[]{
+            0f,    0f, 0.5f, 0.5f,
+            -.256f, -.256f,   0f, 1f,
+            .256f, -.256f,   1f, 1f,
+            .256f,  .256f,   1f, 0f,
+            -.256f,  .256f,   0f, 0f,
+            -.256f, -.256f,   0f, 1f
+    };
 
     //--------------------------------------UI Info
 

@@ -19,7 +19,7 @@ public class MineGun extends Gun
     }
 
     @Override
-    public boolean shoot(float cX, float cY, float angle, GlobalInfo gI, float cosA, float sinA)
+    public boolean shoot(float cX, float cY, float angle, GlobalInfo gI, float cosA, float sinA, float slowRed)
     {
         if (gI.getAugmentedTimeMillis() > lastShotTime + shootDelay * fireRateMod)
         {
@@ -120,7 +120,7 @@ public class MineGun extends Gun
             if(bullets[i].live)
             {
                 bullets[i].move(gI);
-                for(Pixel p: bullets[i].getPixels())
+                /*for(Pixel p: bullets[i].getPixels())
                 {
                     if(p.state >= 2)
                     {
@@ -136,7 +136,7 @@ public class MineGun extends Gun
                                 .2f, .02f, 4f
                         );
                     }
-                }
+                }*/
             }
             if(!bullets[i].live && bullets[i].active)
             {

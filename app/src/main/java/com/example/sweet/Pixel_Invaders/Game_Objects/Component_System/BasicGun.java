@@ -20,9 +20,10 @@ public class BasicGun extends Gun
     }
 
     @Override
-    public boolean shoot(float cX, float cY, float angle, GlobalInfo gI, float cosA, float sinA)
+    public boolean shoot(float cX, float cY, float angle, GlobalInfo gI, float cosA, float sinA, float slowRes)
     {
-        if (gI.getAugmentedTimeMillis() > lastShotTime + shootDelay * fireRateMod)
+        float reduction =  (shootDelay * fireRateMod) * (1 - gI.timeSlow) * (slowRes);
+        if (gI.getAugmentedTimeMillis() > lastShotTime + shootDelay * fireRateMod - reduction)
         {
             float tX = x * cosA + y * sinA + cX;
             float tY = y * cosA - x * sinA + cY;

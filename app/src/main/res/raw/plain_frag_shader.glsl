@@ -1,6 +1,7 @@
 precision mediump float;
 
 uniform sampler2D u_Texture;
+uniform float alpha;
 //uniform vec3 riftData;
 
 varying vec4 v_Color;
@@ -13,6 +14,7 @@ varying vec2 v_TexCoordinate;
 void main()
 {
 	gl_FragColor = texture2D(u_Texture, v_TexCoordinate);
+	gl_FragColor.a *= alpha;
 	/*float radius = riftData.z;
 	vec2 center = riftData.xy;
 	

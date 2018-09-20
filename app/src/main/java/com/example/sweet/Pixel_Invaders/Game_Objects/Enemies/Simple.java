@@ -156,10 +156,12 @@ public class Simple extends Enemy
             {
                 guns[0].shoot(guns[0].x + enemyBody.centerX,
                         guns[0].y + enemyBody.centerY,
-                        (float) enemyBody.angle + (float) Math.PI,
+                        enemyBody.angle + (float) Math.PI,
                         globalInfo,
                         enemyBody.cosA,
-                        enemyBody.sinA);
+                        enemyBody.sinA,
+                        0f
+                );
             }
         }
 

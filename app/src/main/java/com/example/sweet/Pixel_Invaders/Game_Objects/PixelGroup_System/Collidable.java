@@ -29,8 +29,7 @@ public class Collidable
             livablePercentage = .5f,
             knockBackFactor = .006f,
             regenDelay = 4,
-            lastRegenTime = 0,
-            slowResist = 1;
+            lastRegenTime = 0;
 
     public long
             orphanChunkCheckDelay = 100,
@@ -51,6 +50,8 @@ public class Collidable
     boolean
             collidableLive,
             needsUpdate;
+
+    public boolean isBullet = false;
 
     public volatile boolean aiNeedsUpdate = false;
 
@@ -76,8 +77,7 @@ public class Collidable
     public boolean
             restorable = false,
             knockable = true,
-            regen = false,
-            temporal = false;
+            regen = false;
 
     public volatile boolean
             readyToKnockback = false,

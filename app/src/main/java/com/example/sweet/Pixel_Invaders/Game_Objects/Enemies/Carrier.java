@@ -116,6 +116,7 @@ public class Carrier extends Enemy
         if (Math.abs(enemyBody.getCenterX() - targetX) <= baseSpeed * 3 &&
                 Math.abs(enemyBody.getCenterY() - targetY) <= baseSpeed * 3)
         {
+            enemyBody.move(0, 0);
         }
         else
         {

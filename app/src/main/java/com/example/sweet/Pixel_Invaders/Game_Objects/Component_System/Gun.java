@@ -190,7 +190,7 @@ public abstract class Gun
         return false;
     }*/
 
-    public boolean shoot(float x, float y, float angle, GlobalInfo gI, float cosA, float sinA)
+    public boolean shoot(float x, float y, float angle, GlobalInfo gI, float cosA, float sinA, float slow)
     {
         return false;
     }

@@ -36,6 +36,7 @@ public class Bullet
         pixelGroup.restorable = true;
         pixelGroup.orphanChunkCheckDelay = 10;
         pixelGroup.knockable = false;
+        pixelGroup.isBullet = true;
         speed = spd;
         pixelGroup.speed = speed;
         angle = a;

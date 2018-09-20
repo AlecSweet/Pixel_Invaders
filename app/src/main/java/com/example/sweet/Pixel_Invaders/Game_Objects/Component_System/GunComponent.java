@@ -54,10 +54,10 @@ public class GunComponent extends Component
         }
     }
 
-    public boolean shoot(float cX, float cY, float angle, GlobalInfo gI, float cosA, float sinA)
+    public boolean shoot(float cX, float cY, float angle, GlobalInfo gI, float cosA, float sinA, float slowRed)
     {
         checkAlive();
-        return live && gun.shoot(cX, cY, angle, gI, cosA, sinA);
+        return live && gun.shoot(cX, cY, angle, gI, cosA, sinA, slowRed);
     }
 
     public boolean shoot(float cX, float cY, float angle, GlobalInfo gI)

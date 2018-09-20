@@ -14,8 +14,6 @@ import com.example.sweet.Pixel_Invaders.Game_Objects.Component_System.GunCompone
 import com.example.sweet.Pixel_Invaders.Game_Objects.PixelGroup_System.Pixel;
 import com.example.sweet.Pixel_Invaders.Util.Factories.DropFactory;
 
-import java.util.ArrayList;
-
 import static android.opengl.GLES20.glUniform1f;
 import static com.example.sweet.Pixel_Invaders.Util.Universal_Data.Constants.DropType.BULLET_SPEED;
 import static com.example.sweet.Pixel_Invaders.Util.Universal_Data.Constants.DropType.EXTRA_GUN;
@@ -34,7 +32,7 @@ import static com.example.sweet.Pixel_Invaders.Util.Universal_Data.Constants.Dro
  * Created by Sweet on 2/14/2018.
  */
 
-public class Enemy extends Drawable
+public abstract class Enemy extends Drawable
 {
     protected PixelGroup enemyBody;
 
@@ -331,10 +329,7 @@ public class Enemy extends Drawable
 
     public Enemy clone(float difficulty, float delay)
     {
-        System.out.println("SHOULDNT BE IN HERE _____________________________________________________________");
-        Enemy e = new Enemy(enemyBody.clone(), particleSystem, dropFactory, xbound, ybound, globalInfo);
-        e.setLoc(x, y);
-        return e;
+        return null;
     }
 
     public void publishLocation(long frame)

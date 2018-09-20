@@ -5,7 +5,6 @@ import android.content.Context;
 import android.opengl.GLSurfaceView.Renderer;
 
 import java.util.Arrays;
-import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
@@ -30,7 +29,6 @@ import com.example.sweet.Pixel_Invaders.Game_Objects.Component_System.BasicGun;
 import com.example.sweet.Pixel_Invaders.Game_Objects.Component_System.MineGun;
 import com.example.sweet.Pixel_Invaders.Game_Objects.Level;
 import com.example.sweet.Pixel_Invaders.Game_Objects.Player;
-import com.example.sweet.Pixel_Invaders.UI_System.ImageContainer;
 import com.example.sweet.Pixel_Invaders.UI_System.ParticleSystem;
 import com.example.sweet.Pixel_Invaders.UI_System.UI;
 import com.example.sweet.Pixel_Invaders.Util.Factories.DropFactory;
@@ -126,10 +124,8 @@ public class GameRenderer implements Renderer
             pTimeLocation,
             riftDataLoc,
             partRiftDataLoc,
-            plainMagLoc;
-            //plainRiftDataLoc,
-            //plainTimeLoc;
-
+            plainMagLoc,
+            plainAlphaLoc;
 
     private static final String
             X_SCALE = "x_Scale",
@@ -140,19 +136,12 @@ public class GameRenderer implements Renderer
             U_TEXTURE = "u_Texture",
             POINT_SIZE = "pointSize";
 
-    /*private float
-            pointSize = 0,
-            particlePointSize = 0;*/
-
     private final long MILLIS_PER_SECOND = 1000;
     private final long UPS = 60;
 
     private final long mSPU = MILLIS_PER_SECOND / UPS;
 
-    private long currentFrame = 0;
-
     private volatile Enemy[] entities;
-    //private volatile Enemy[] backgroundEnemies = new Enemy[20];
     
     private ParticleSystem
             playerParticles,
@@ -168,7 +157,6 @@ public class GameRenderer implements Renderer
             saveTime = false,
             scaleSet = false,
             levelDone = true,
-            levelCleared = false,
             levelLoaded = false,
             requestLevel = false,
             enemiesLive = false;
@@ -184,39 +172,6 @@ public class GameRenderer implements Renderer
             globalStartTime = 0.0,
             interpolation = 0.0;
 
-    private float[] background = new float[]{
-            0f,    0f, 0.5f, 0.5f,
-            -2.5f, -2.5f,   0f, 1f,
-            2.5f, -2.5f,   1f, 1f,
-            2.5f,  2.5f,   1f, 0f,
-            -2.5f,  2.5f,   0f, 0f,
-            -2.5f, -2.5f,   0f, 1f
-    };
-    private float[] moonVA = new float[]{
-            0f,    0f, 0.5f, 0.5f,
-            -.088f, -.088f,   0f, 1f,
-            .088f, -.088f,   1f, 1f,
-            .088f,  .088f,   1f, 0f,
-            -.088f,  .088f,   0f, 0f,
-            -.088f, -.088f,   0f, 1f
-    };
-
-    private float[] earthVA = new float[]{
-            0f,    0f, 0.5f, 0.5f,
-            -.256f, -.256f,   0f, 1f,
-            .256f, -.256f,   1f, 1f,
-            .256f,  .256f,   1f, 0f,
-            -.256f,  .256f,   0f, 0f,
-            -.256f, -.256f,   0f, 1f
-    };
-    private ImageContainer
-            earthC,
-            moonC,
-            stars1,
-            stars2,
-            stars3,
-            stars4;
-
     private AIThread aiRunnable;
 
     private CollisionThread collisionRunnable;
@@ -231,6 +186,7 @@ public class GameRenderer implements Renderer
         pastTime = System.currentTimeMillis();
         context = c;
         globalInfo = new GlobalInfo((long)globalStartTime, new GameSettings());
+        globalInfo.setTimeSlow(1);
     }
 
     @Override
@@ -290,6 +246,7 @@ public class GameRenderer implements Renderer
         xScaleLocationPlain = glGetUniformLocation(plainShaderProgram, X_SCALE);
         yScaleLocationPlain = glGetUniformLocation(plainShaderProgram, Y_SCALE);
         plainMagLoc = glGetUniformLocation(plainShaderProgram, "mag");
+        plainAlphaLoc = glGetUniformLocation(plainShaderProgram, "alpha");
         /*plainRiftDataLoc = glGetUniformLocation(plainShaderProgram, "riftData");
         plainTimeLoc = glGetUniformLocation(plainShaderProgram, "time");*/
 
@@ -308,6 +265,7 @@ public class GameRenderer implements Renderer
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         glUniform1f(plainMagLoc, 1);
+        glUniform1f(plainAlphaLoc, 1);
 
         int[] glVarLocations = new int[4];
         /*glVarLocations[0] = glGetUniformLocation(plainShaderProgram, "x_displacement");
@@ -319,62 +277,7 @@ public class GameRenderer implements Renderer
         glVarLocations[1] = glGetAttribLocation(plainShaderProgram, "a_Position");
         glVarLocations[2] = glGetAttribLocation(plainShaderProgram, "a_TexCoordinate");
         glVarLocations[3] = glGetUniformLocation(plainShaderProgram, "u_Texture");
-        earthC = new ImageContainer
-                (
-                        TextureLoader.loadTexture(context, R.drawable.earth),
-                        earthVA,
-                        0, 0,
-                        "earth",
-                        glVarLocations,
-                        -1, -1
-                );
 
-        moonC = new ImageContainer
-                (
-                        TextureLoader.loadTexture(context, R.drawable.moon),
-                        moonVA,
-                        -.2f, -.34f,
-                        "earth",
-                        glVarLocations,
-                        -1, -1
-                );
-        stars1 = new ImageContainer
-                (
-                        TextureLoader.loadTexture(context, R.drawable.layer0),
-                        background,
-                        0, 0,
-                        "",
-                        glVarLocations,
-                        -1, -1
-                );
-        stars2 = new ImageContainer
-                (
-                        TextureLoader.loadTexture(context, R.drawable.layer1),
-                        background,
-                        0, 0,
-                        "",
-                        glVarLocations,
-                        -1, -1
-                );
-        stars3 = new ImageContainer
-                (
-                        TextureLoader.loadTexture(context, R.drawable.layer2),
-                        background,
-                        0, 0,
-                        "",
-                        glVarLocations,
-                        -1, -1
-                );
-        stars4 = new ImageContainer
-                (
-                        TextureLoader.loadTexture(context, R.drawable.spacebackground),
-                        //TextureLoader.loadTexture(context, R.drawable.white),
-                        background,
-                        0, 0,
-                        "",
-                        glVarLocations,
-                        -1, -1
-                );
         if(!init)
         {
             init();
@@ -464,18 +367,8 @@ public class GameRenderer implements Renderer
 
     public void draw()
     {
-        //globalInfo.consumeScreenShift();
+        ui.drawBackground();
 
-        /*long start = System.nanoTime();
-        glClear(GL_COLOR_BUFFER_BIT);
-        System.out.println((System.nanoTime() - start)/1000);*/
-        drawBackground();
-        //long start = System.nanoTime();
-        /*if(ui.gameState == Constants.GameState.IN_GAME ||
-                ui.gameState == Constants.GameState.PAUSE_MENU ||
-                ui.gameState == Constants.GameState.GAME_OVER ||
-                (ui.gameState == Constants.GameState.OPTIONS &&
-                ui.prevGameState != Constants.GameState.MAIN_MENU))*/
         if((ui.gameState != Constants.GameState.MAIN_MENU && ui.gameState != Constants.GameState.OPTIONS) ||
                 (ui.gameState == Constants.GameState.OPTIONS && ui.prevGameState != Constants.GameState.MAIN_MENU))
         {
@@ -485,7 +378,7 @@ public class GameRenderer implements Renderer
             glUniform1i(uTextureLocation, 0);
 
             glUseProgram(shaderProgram);
-            glUniform3f(riftDataLoc, player1.rift.x, player1.rift.y, player1.rift.radius);
+            player1.rift.riftDataUniform(riftDataLoc);
             glUniform1f(xScreenShiftLocation, player1.xScreenShift - player1.screenShakeX);
             glUniform1f(yScreenShiftLocation, player1.yScreenShift - player1.screenShakeY);
 
@@ -493,7 +386,10 @@ public class GameRenderer implements Renderer
             glUniform1f(pointSizeLocation, globalInfo.pointSize);
             glUniform1f(uMagLoc, 1f);
 
-            player1.draw(interpolation);
+            if(!ui.intro)
+            {
+                player1.draw(interpolation);
+            }
 
             glUniform1f(pTimeLocation, globalInfo.getAugmentedTimeSeconds());
             glUniform1f(xScreenShiftLocation, globalInfo.getScreenShiftX());
@@ -506,19 +402,8 @@ public class GameRenderer implements Renderer
             {
                 if (entities[i] != null)
                 {
-                    /*while (!entities[i].dropsToAdd.isEmpty())
-                    {
-                        drops[dropIndex] = entities[i].dropsToAdd.peek();
-                        entities[i].dropsToAdd.remove(drops[dropIndex]);
-                        player1.addDrop(drops[dropIndex]);
-                        dropIndex++;
-                        if (dropIndex >= Constants.DROPS_LENGTH)
-                        {
-                            dropIndex -= Constants.DROPS_LENGTH;
-                        }
-                    }*/
                     if ((entities[i].aiRemoveConsensus && entities[i].collisionRemoveConsensus) ||
-                            (aiRunnable.entities[i] != null && collisionRunnable.entities[i] == null))
+                            (!entities[i].collisionRemoveConsensus && collisionRunnable.entities[i] == null))
                     {
 
                         if(!entities[i].isAsteriod)
@@ -551,28 +436,10 @@ public class GameRenderer implements Renderer
                     }
                     else
                     {
-                        /*if(!entities[i].inBackground)
-                        {*/
-                       /* System.out.println(
-                                "Col Th:" + (collisionRunnable.entities[i] != null) +
-                                "  AI Th:" + (aiRunnable.entities[i] != null) +
-                                "  Spawned?: " + entities[i].spawned +
-                                "  Asteriod? " + entities[i].isAsteriod
-                        );*/
-
                         if(entities[i].spawned)
                         {
                             entities[i].draw(0);
                         }
-                        /*else
-                        {
-                            if(entities[i].checkSpawned())
-                            {
-
-                                collisionRunnable.entities[i] = entities[i];
-                                aiRunnable.entities[i] = entities[i];
-                            }
-                        }*/
 
                         if(!entities[i].isAsteriod)
                         {
@@ -585,11 +452,7 @@ public class GameRenderer implements Renderer
                                 ((Asteroid)entities[i]).levelDone = true;
                             }
                         }
-                        //}
-                        /*else
-                        {
-                            entities[i].drawInBackground();
-                        }*/
+
                         levelDone = false;
                     }
                 }
@@ -603,28 +466,25 @@ public class GameRenderer implements Renderer
             }
 
             glUniform3f(riftDataLoc, 0, 0, 0);
-            //System.out.println((System.nanoTime() - start) / 1000);
 
             glUseProgram(particleShaderProgram);
-            glUniform3f(partRiftDataLoc, player1.rift.x, player1.rift.y, player1.rift.radius);
+            player1.rift.riftDataUniform(partRiftDataLoc);
             glUniform1f(timeLocation, globalInfo.getAugmentedTimeSeconds());
-            /*glUniform1f(xScreenShiftLocationParticle, player1.xScreenShift - player1.screenShakeX);
-            glUniform1f(yScreenShiftLocationParticle, player1.yScreenShift - player1.screenShakeY);*/
             glUniform1f(xScreenShiftLocationParticle, globalInfo.getScreenShiftX());
             glUniform1f(yScreenShiftLocationParticle, globalInfo.getScreenShiftY());
             glUniform1f(particlePointSizeLocation, globalInfo.particlePointSize * 1.1f);
 
 
-            //long start = System.nanoTime();
-            collisionParticles.draw();
-            enemyParticles.draw();
-            playerParticles.draw();
+            if(ui.introRevTime || !ui.intro)
+            {
+                collisionParticles.draw();
+                enemyParticles.draw();
+                playerParticles.draw();
+            }
             glUniform3f(partRiftDataLoc, 0, 0, 0);
-            //System.out.println((System.nanoTime() - start) / 1000);
-
         }
-        glUseProgram(plainShaderProgram);
 
+        glUseProgram(plainShaderProgram);
         ui.draw(interpolation);
         if(ui.gameState != Constants.GameState.IN_GAME)
         {
@@ -639,7 +499,6 @@ public class GameRenderer implements Renderer
             uiParticles.draw();
             glUseProgram(plainShaderProgram);
         }
-        //System.out.println((System.nanoTime() - start)/1000);
     }
 
     @Override
@@ -713,24 +572,42 @@ public class GameRenderer implements Renderer
     
     private void newGame()
     {
+        playerParticles.clear();
+        collisionParticles.clear();
+        enemyParticles.clear();
+
+        for(int i = 0; i < entities.length; i++)
+        {
+            if(entities[i] != null)
+            {
+                entities[i].aiRemoveConsensus = true;
+                entities[i].collisionRemoveConsensus = true;
+                entities[i] = null;
+            }
+        }
+
         player1 = new Player(dropFactory,
                 context,
                 .008f,
                 shaderProgram,
                 playerParticles,
-                ImageParser.parseImage(context, R.drawable.playerm, R.drawable.player_light, shaderProgram,2),
+                ImageParser.parseImage(context, R.drawable.playerm, R.drawable.player_lightm, shaderProgram,2),
                 globalInfo
         );
         player1.setScale(xScale, yScale);
         player1.xbound = 1.5f;
         player1.ybound = 1.5f;
         ui.player = player1;
+        ui.reset();
+        player1.destroyCollidableAnimation(player1.getPixelGroup());
+        player1.getPixelGroup().resetPixels();
 
-        aiRunnable.setInfo(player1, globalInfo);
+        aiRunnable.setInfo(player1);
         collisionRunnable.setInfo(player1);
 
         globalInfo.extraGunChance = .2f;
         globalInfo.extraModChance = .5f;
+        globalInfo.setTimeSlow(1);
         ui.gameState = Constants.GameState.IN_GAME;
         gameState = Constants.GameState.IN_GAME;
 
@@ -740,53 +617,11 @@ public class GameRenderer implements Renderer
         interpolation = 0.0;
         difficulty = 0;
 
-        loadLevel.resetLoadLevel(difficulty);
-        difficulty++;
-        ui.difficulty = difficulty;
-        levelFuture = levelLoader.submit(loadLevel);
-
-        try
-        {
-            float st = globalInfo.getAugmentedTimeMillis();
-            //backgroundEnemies = levelFuture.get().backgroundEnemies;
-            for(int i = 0; i < entities.length; i++)
-            {
-                if(entities[i] != null)
-                {
-                    entities[i].freeMemory();
-                }
-                entities[i] = levelFuture.get().levelEnemies[i];
-                collisionRunnable.entities[i] = entities[i];
-                aiRunnable.entities[i] = entities[i];
-                /*collisionRunnable.entities[i] = null;
-                aiRunnable.entities[i] = null;*/
-                if(entities[i] != null)
-                {
-                    entities[i].setLevelStartTime(st);
-                }
-            }
-
-            //backgroundEnemies = levelFuture.get().backgroundEnemies;
-        }
-        catch (InterruptedException e)
-        {
-            System.out.println("Interrupted");
-        }
-        catch (ExecutionException e)
-        {
-            System.out.println("ExecutionException");
-        }
-        catch (CancellationException e)
-        {
-            System.out.println("Cancellation");
-        }
-
         if(!threadsStarted)
         {
             aiThread.start();
             collisionThread.start();
             threadsStarted = true;
-            //levelThread.start();
         }
         else
         {
@@ -798,50 +633,11 @@ public class GameRenderer implements Renderer
             {
                 collisionRunnable.lock.notify();
             }
-            /*synchronized (levelRunnable.lock)
-            {
-                levelRunnable.lock.notify();
-            }*/
         }
-
-
-
-        /*aiRunnable = new AIThread(entities, globalInfo, collisionHandler);
-        aiThread = new Thread(aiRunnable);
-        aiRunnable.setPlayer(player1);
-
-        collisionRunnable = new CollisionThread(entities);
-        //collisionThread = new Thread(collisionRunnable);
-        collisionThread = new Thread(null, collisionRunnable, "collision", 6000000);
-        collisionRunnable.setPlayer(player1);
-        collisionRunnable.setCollisionHandler(collisionHandler);
-
-        levelRunnable = new LevelControllerThread(enemyFactory, globalInfo);
-        levelThread = new Thread(levelRunnable);
-        levelRunnable.setPlayer(player1);
-
-        aiThread.start();
-        collisionThread.start();
-        levelThread.start();*/
     }
 
     private void update()
     {
-       /* if(!levelRunnable.enemiesToAdd.isEmpty())
-        {
-            Enemy e = levelRunnable.enemiesToAdd.peek();
-            levelRunnable.enemiesToAdd.remove(e);
-            if(!openEntityIndices.isEmpty())
-            {
-                int index = openEntityIndices.pop();
-                entities[index] = e;
-            }
-            else
-            {
-                enemyOverflow.add(e);
-            }
-        }*/
-
         if(levelDone && aiRunnable.getClearedConsensus() && collisionRunnable.getClearedConsensus())
         {
             if(!requestLevel)
@@ -857,99 +653,32 @@ public class GameRenderer implements Renderer
             {
                 if(levelFuture.isDone())
                 {
-                    //System.out.println("loaded");
                     levelLoaded = true;
                     ui.displayReady = true;
                 }
             }
         }
-        //player1.moveCamera();
-        if(player1.getPixelGroup().getCollidableLive())
+
+        if(!ui.intro)
         {
             player1.movePlayer();
         }
-        else
+
+        if(!player1.getPixelGroup().getCollidableLive())
         {
             ui.gameState = Constants.GameState.GAME_OVER;
         }
-        //player1.movePlayer(globalInfo.timeSlow);
-        currentFrame++;
-    }
-
-    private void drawBackground()
-    {
-        float tShiftX = 0;
-        float tShiftY = 0;
-
-        if(ui.gameState == Constants.GameState.MAIN_MENU ||
-            (ui.gameState == Constants.GameState.OPTIONS && ui.prevGameState == Constants.GameState.MAIN_MENU))
-        {
-            tShiftX = (float)Math.cos((System.currentTimeMillis() - globalStartTime) / 4000) * .1f - .6f;
-            tShiftY = (float)Math.sin((System.currentTimeMillis() - globalStartTime) / 4000) * .2f - 1f;
-            //glUniform1f(plainTimeLoc, (float)(System.currentTimeMillis()-globalStartTime) / 1000);
-        }
-        else
-        {
-            if(player1 != null)
-            {
-                tShiftX = -(player1.xScreenShift - player1.screenShakeX);
-                tShiftY = -(player1.yScreenShift - player1.screenShakeY);
-                /*tShiftX = -globalInfo.getScreenShiftX();
-                tShiftY = -globalInfo.getScreenShiftY();*/
-            }
-            //glUniform1f(plainTimeLoc, globalInfo.getAugmentedTimeSeconds());
-        }
-
-       /* glUniform3f(
-                plainRiftDataLoc,
-                globalInfo.rift.x - globalInfo.getScreenShiftX(),
-                globalInfo.rift.y - globalInfo.getScreenShiftY(),
-                globalInfo.rift.radius
-        );*/
-        //long start = System.nanoTime();
-        stars4.draw(tShiftX / 6f, tShiftY / 6f);
-        //System.out.println((System.nanoTime() - start)/1000);
-        //long start = System.nanoTime();
-        stars3.draw(tShiftX / 4.6f, tShiftY / 4.6f);
-        //System.out.println((System.nanoTime() - start)/1000);
-        stars2.draw(tShiftX / 4f, tShiftY / 4f);
-        stars1.draw(tShiftX / 3.4f, tShiftY / 3.4f);
-
-        /*if(ui.gameState == Constants.GameState.IN_GAME)
-        {
-            glUseProgram(shaderProgram);
-            glActiveTexture(GL_TEXTURE0);
-            glBindTexture(GL_TEXTURE_2D, whiteTexture);
-            glUniform1i(uTextureLocation, 0);
-            glUniform1f(xScreenShiftLocation, player1.xScreenShift - player1.screenShakeX);
-            glUniform1f(yScreenShiftLocation, player1.yScreenShift - player1.screenShakeY);
-            for (Enemy e : backgroundEnemies)
-            {
-                if (e != null && e.inBackground)
-                {
-                    System.out.println("Drawn");
-                    e.drawInBackground();
-                }
-            }
-        }
-        glUseProgram(plainShaderProgram);*/
-        moonC.draw(tShiftX / 2.1f, tShiftY / 2.1f);
-        earthC.draw(tShiftX / 2, tShiftY / 2);
-        //glUniform3f(plainRiftDataLoc, 0, 0, 0);
     }
 
     private void init()
     {
-        playerParticles = new ParticleSystem(20000, particleShaderProgram , whiteTexture, globalStartTime, globalInfo);
-        //playerParticles = new ParticleSystem(1000, particleShaderProgram , whiteTexture, globalStartTime, globalInfo);
+        playerParticles = new ParticleSystem(30000, particleShaderProgram , whiteTexture, globalStartTime, globalInfo);
 
-        enemyParticles = new ParticleSystem(30000, particleShaderProgram, whiteTexture, globalStartTime, globalInfo);
-        //enemyParticles = new ParticleSystem(3000, particleShaderProgram, whiteTexture, globalStartTime, globalInfo);
+        enemyParticles = new ParticleSystem(40000, particleShaderProgram, whiteTexture, globalStartTime, globalInfo);
 
-        collisionParticles = new ParticleSystem(12000, particleShaderProgram, whiteTexture, globalStartTime, globalInfo);
-        //collisionParticles = new ParticleSystem(1200, particleShaderProgram, whiteTexture, globalStartTime, globalInfo);
+        collisionParticles = new ParticleSystem(24000, particleShaderProgram, whiteTexture, globalStartTime, globalInfo);
 
-        uiParticles = new ParticleSystem(500, particleShaderProgram, whiteTexture, globalStartTime, globalInfo);
+        uiParticles = new ParticleSystem(6000, particleShaderProgram, whiteTexture, globalStartTime, globalInfo);
 
         enemyFactory = initEnemyFactory();
 
@@ -972,74 +701,10 @@ public class GameRenderer implements Renderer
         aiRunnable = new AIThread(globalInfo);
         aiThread = new Thread(aiRunnable);
 
-        /*player1 = new Player(dropFactory,
-                context,
-                .0054f,
-                shaderProgram,
-                playerParticles,
-                ImageParser.parseImage(context, R.drawable.player, R.drawable.player_light, shaderProgram),
-                globalInfo
-        );
-        ui.player = player1;*/
-
-        //aiRunnable.block = true;
-
         collisionRunnable = new CollisionThread(globalInfo);
         collisionThread = new Thread(null, collisionRunnable, "collision", 6000000);
         collisionRunnable.setCollisionHandler(new CollisionHandler(collisionParticles));
-
-        //collisionRunnable.block = true;
-
-        /*levelRunnable = new LevelControllerThread(enemyFactory, globalInfo);
-        levelThread = new Thread(levelRunnable);*/
-
-        //levelRunnable.block = true;
-
-        /*aiThread.start();
-        collisionThread.start();
-        levelThread.start();*/
-
-
-        /*synchronized (aiThread)
-        {
-            try
-            {
-                aiThread.wait();
-            }
-            catch (InterruptedException e)
-            {
-            }
-        }
-        synchronized (collisionThread)
-        {
-            try
-            {
-                collisionThread.wait();
-            }
-            catch (InterruptedException e)
-            {
-            }
-        }
-        synchronized (levelThread)
-        {
-            try
-            {
-                levelThread.wait();
-            }
-            catch (InterruptedException e)
-            {
-            }
-        }*/
-
-        /*try
-        {
-            aiThread.wait();
-            collisionThread.wait();
-            levelThread.wait();
-        }
-        catch (InterruptedException e)
-        {
-        }*/
+        ui.startTitleIntro();
     }
 
     private EnemyFactory initEnemyFactory()
@@ -1383,6 +1048,8 @@ public class GameRenderer implements Renderer
         if(ui.newGameFlag)
         {
             newGame();
+            ui.startIntro();
+            //ui.intro = false;
             inGameUnpause();
             ui.newGameFlag = false;
         }
@@ -1409,7 +1076,6 @@ public class GameRenderer implements Renderer
             try
             {
                 float st = globalInfo.getAugmentedTimeMillis();
-                //backgroundEnemies = levelFuture.get().backgroundEnemies;
                 for(int i = 0; i < entities.length; i++)
                 {
                     if(entities[i] != null)
@@ -1436,5 +1102,4 @@ public class GameRenderer implements Renderer
             ui.readyFlag = false;
         }
     }
-
 }
