@@ -176,7 +176,7 @@ public class TextTypeEvent
         }
     }
 
-    public void drawTyping(TextPresenter tP, float x, float y, float mag, GlobalInfo gI)
+    public void drawTyping(TextPresenter tP, float x, float y, float mag, GlobalInfo gI, boolean hang)
     {
         if(!ended)
         {
@@ -188,7 +188,7 @@ public class TextTypeEvent
                 {
                     disp = tP.drawString(
                             text,
-                            x - tP.charSkipX * i, y,
+                            x - tP.charSkipX * mag * i, y,
                             lineBreaks.get(i), lineBreaks.get(i+1),
                             mag,
                             centeredTyping
@@ -198,7 +198,7 @@ public class TextTypeEvent
                 {
                     disp = tP.drawString(
                             text,
-                            x - tP.charSkipX * i, y,
+                            x - tP.charSkipX * mag * i, y,
                             lineBreaks.get(i), indx,
                             mag,
                             centeredTyping
@@ -224,9 +224,12 @@ public class TextTypeEvent
                 }
                 if(gI.getAugmentedTimeMillis() - lingerDelay > lingerStartTime)
                 {
-                    flash = 1;
-                    lingerStartTime = gI.getAugmentedTimeMillis();
-                    deleting = true;
+                    if(!hang)
+                    {
+                        flash = 1;
+                        lingerStartTime = gI.getAugmentedTimeMillis();
+                        deleting = true;
+                    }
                 }
             }
             else if(deleting)
@@ -312,9 +315,8 @@ public class TextTypeEvent
         }
     }
 
-    public void drawTypingRealTime(TextPresenter tP, float x, float y, float mag)
+    public void drawTypingRealTime(TextPresenter tP, float x, float y, float mag, boolean hang)
     {
-        System.out.println(curLine);
         if(!ended)
         {
             float disp = 0;
@@ -325,7 +327,7 @@ public class TextTypeEvent
                 {
                     disp = tP.drawString(
                             text,
-                            x - tP.charSkipX * i, y,
+                            x - tP.charSkipX * mag * i, y,
                             lineBreaks.get(i), lineBreaks.get(i+1),
                             mag,
                             centeredTyping
@@ -335,7 +337,7 @@ public class TextTypeEvent
                 {
                     disp = tP.drawString(
                             text,
-                            x - tP.charSkipX * i, y,
+                            x - tP.charSkipX * mag * i, y,
                             lineBreaks.get(i), indx,
                             mag,
                             centeredTyping
@@ -346,7 +348,7 @@ public class TextTypeEvent
             {
                 tP.drawString(
                         bar,
-                        x - tP.charSkipX * curLine, y - disp,
+                        x - tP.charSkipX * mag * curLine, y - disp,
                         0,1,
                         mag,
                         centeredTyping
@@ -361,9 +363,12 @@ public class TextTypeEvent
                 }
                 if(System.currentTimeMillis() - lingerStartTimeRT > lingerDelay)
                 {
-                    flash = 1;
-                    lingerStartTimeRT = System.currentTimeMillis();
-                    deleting = true;
+                    if(!hang)
+                    {
+                        flash = 1;
+                        lingerStartTimeRT = System.currentTimeMillis();
+                        deleting = true;
+                    }
                 }
             }
             else if(deleting)

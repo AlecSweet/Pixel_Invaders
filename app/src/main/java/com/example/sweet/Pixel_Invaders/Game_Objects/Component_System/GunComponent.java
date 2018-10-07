@@ -1,5 +1,6 @@
 package com.example.sweet.Pixel_Invaders.Game_Objects.Component_System;
 
+import com.example.sweet.Pixel_Invaders.Game_Objects.PixelGroup_System.PixelGroup;
 import com.example.sweet.Pixel_Invaders.Util.Universal_Data.Constants;
 import com.example.sweet.Pixel_Invaders.Util.Universal_Data.GlobalInfo;
 import com.example.sweet.Pixel_Invaders.Game_Objects.PixelGroup_System.Pixel;
@@ -12,9 +13,9 @@ public class GunComponent extends Component
 {
     public Gun gun;
 
-    public GunComponent(Pixel[] p, float x, float y, float a, Gun g)
+    public GunComponent(PixelGroup base, float x, float y, float a, Gun g, int[] attachIndices)
     {
-        super(p, x, y, a, Constants.DropType.GUN);
+        super(base, Constants.DropType.GUN, attachIndices);
         gun = g;
         gun.x = x;
         gun.y = y;
@@ -23,7 +24,7 @@ public class GunComponent extends Component
 
     private void setColor()
     {
-        float pps = (float)gun.pixelGroupTemplate.totalPixels * (1000 / (float)gun.shootDelay);
+        float pps = (float)gun.pixelGroupTemplate.totalPixels * (1000 / gun.shootDelay);
         float halfMaxPPs = Constants.MAX_PPS /2;
         b = 1;
         g = 1;

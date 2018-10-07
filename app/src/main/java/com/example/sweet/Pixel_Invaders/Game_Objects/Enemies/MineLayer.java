@@ -28,33 +28,9 @@ public class MineLayer extends Enemy
     {
         super(p, ps, dF, xb, yb, gI);
 
-        for(int i = 0; i < Constants.mineLayerThrustCoors[1].length; i += 2)
-        {
-            leftThrusterPixels[i / 2] = enemyBody.getpMap()[Constants.mineLayerThrustCoors[1][i + 1] + 1][Constants.mineLayerThrustCoors[1][i] + 1];
-            rightThrusterPixels[i / 2] = enemyBody.getpMap()[Constants.mineLayerThrustCoors[0][i + 1] + 1][Constants.mineLayerThrustCoors[0][i] + 1];
-        }
-        for(int i = 0; i < Constants.mineLayerGunCoors.length; i += 2)
-        {
-            gunPixels[i / 2] = enemyBody.getpMap()[Constants.mineLayerGunCoors[i + 1] + 1][Constants.mineLayerGunCoors[i] + 1];
-        }
-
-
         guns = new GunComponent[1];
-        guns[0] = new GunComponent(gunPixels, 0, 0, 0, g);
-
+        guns[0] = new GunComponent(enemyBody,0, 0, 0, g, Constants.mineLayerGunCoors);
         hasGun = true;
-        thrusters = new ThrustComponent[2];
-        thrusters[0] = new ThrustComponent(leftThrusterPixels, 0, 0, 0,2);
-        thrusters[1] = new ThrustComponent(rightThrusterPixels, 0, 0, 0,2);
-
-        baseSpeed = .004f;
-        rotateSpeed = .03f;
-        enemyBody.speed = baseSpeed;
-        p.speed = baseSpeed;
-
-        targetX = (float)(Math.random()) * xbound * 2 - xbound;
-        targetY = (float)(Math.random()) * ybound * 2 - ybound;
-
     }
 
     private MineLayer(PixelGroup p, Gun g, ParticleSystem ps, DropFactory dF, float xb, float yb, float difficulty, float delay, GlobalInfo gI)
@@ -86,12 +62,12 @@ public class MineLayer extends Enemy
         }
 
         guns = new GunComponent[1];
-        guns[0] = new GunComponent(gunPixels, 0, 0, 0, g);
+        guns[0] = new GunComponent(enemyBody, 0, 0, 0, g, Constants.mineLayerGunCoors);
         guns[0].gun.reduceDelay(del);
         hasGun = true;
         thrusters = new ThrustComponent[2];
-        thrusters[0] = new ThrustComponent(leftThrusterPixels, 0, 0, 0, power);
-        thrusters[1] = new ThrustComponent(rightThrusterPixels, 0, 0, 0,    power);
+        thrusters[0] = new ThrustComponent(enemyBody, power, Constants.mineLayerThrustCoors[1]);
+        thrusters[1] = new ThrustComponent(enemyBody, power, Constants.mineLayerThrustCoors[0]);
 
         baseSpeed = .006f;
         rotateSpeed = .03f;
@@ -127,8 +103,8 @@ public class MineLayer extends Enemy
         float ang = (float)(Math.atan2(pY - enemyBody.centerY, enemyBody.centerX - pX));
         if(numshot < guns[0].gun.totalBullets &&
                 guns[0].canShoot(globalInfo) &&
-                Math.abs(enemyBody.centerX) < xbound*.8 &&
-                Math.abs(enemyBody.centerY) < ybound*.8)
+                Math.abs(enemyBody.centerX) < xbound * .8f &&
+                Math.abs(enemyBody.centerY) < ybound * .8f)
         {
             if(guns[0].shoot(
                     enemyBody.centerX,
@@ -153,7 +129,7 @@ public class MineLayer extends Enemy
 
     public void rotate(float angleMoving, float ratio, float slow)
     {
-        float delta = (float)enemyBody.angle - angleMoving;
+        float delta = enemyBody.angle - angleMoving;
 
         float sideSpd, sideSpd2;
         if(thrusters[0] != null)
@@ -193,11 +169,11 @@ public class MineLayer extends Enemy
         {
             if (delta < -Math.PI || (delta > 0 && delta < Math.PI))
             {
-                addThrustParticles(leftThrusterPixels, ratio, .042f, enemyBody);
+                addThrustParticles(thrusters[0].getAttachmentPixels(), ratio, .042f, enemyBody);
             }
             else
             {
-                addThrustParticles(rightThrusterPixels, ratio, .042f, enemyBody);
+                addThrustParticles(thrusters[1].getAttachmentPixels(), ratio, .042f, enemyBody);
             }
         }
 

@@ -31,13 +31,23 @@ public class Asteroid extends Enemy
     public Asteroid(PixelGroup p, ParticleSystem ps, float xb, float yb, DropFactory dF, GlobalInfo gI)
     {
         super(p, ps, dF, xb, yb, gI);
+    }
+
+    public Asteroid(PixelGroup p, ParticleSystem ps, float xb, float yb, float difficulty, float delay, DropFactory dF, GlobalInfo gI)
+    {
+        super(p, ps, dF, xb, yb, delay, gI);
         consumables = new Drop[5];
         isAsteriod = true;
         guns = null;
         thrusters = null;
         checkOverlap = false;
         enemyBody.rotate(enemyBody.angle);
-        baseSpeed = .005f;
+        float per = 2;
+        if(difficulty <= 20)
+        {
+            per = difficulty / 20f + 1;
+        }
+        baseSpeed = .005f * (1.5f - (float)Math.random()) * per;
         enemyBody.speed = baseSpeed;
         hasGun = false;
         xbound = xb + .2f;
@@ -259,6 +269,8 @@ public class Asteroid extends Enemy
                 particleSystem,
                 xbound,
                 ybound,
+                dif,
+                delay,
                 dropFactory,
                 globalInfo);
     }

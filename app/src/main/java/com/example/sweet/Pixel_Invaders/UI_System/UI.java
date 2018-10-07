@@ -9,8 +9,12 @@ import com.example.sweet.Pixel_Invaders.Game_Objects.Component_System.Drop;
 import com.example.sweet.Pixel_Invaders.Game_Objects.Component_System.ModComponent;
 import com.example.sweet.Pixel_Invaders.Game_Objects.Component_System.ThrustComponent;
 import com.example.sweet.Pixel_Invaders.Game_Objects.PixelGroup_System.Drawable;
+import com.example.sweet.Pixel_Invaders.Game_Objects.PixelGroup_System.Pixel;
+import com.example.sweet.Pixel_Invaders.Game_Objects.PixelGroup_System.PixelGroup;
+import com.example.sweet.Pixel_Invaders.Game_Objects.PixelGroup_System.PixelInfo;
 import com.example.sweet.Pixel_Invaders.Game_Objects.Player;
 import com.example.sweet.Pixel_Invaders.Game_Objects.Rift;
+import com.example.sweet.Pixel_Invaders.Util.Resource_Readers.ImageParser;
 import com.example.sweet.Pixel_Invaders.Util.Resource_Readers.TextureLoader;
 import com.example.sweet.Pixel_Invaders.Util.Static.VectorFunctions;
 import com.example.sweet.Pixel_Invaders.Util.Universal_Data.Constants;
@@ -30,6 +34,11 @@ import static android.opengl.GLES20.glGetUniformLocation;
 import static com.example.sweet.Pixel_Invaders.Util.Universal_Data.Constants.background;
 import static com.example.sweet.Pixel_Invaders.Util.Universal_Data.Constants.earthVA;
 import static com.example.sweet.Pixel_Invaders.Util.Universal_Data.Constants.moonVA;
+import static com.example.sweet.Pixel_Invaders.Util.Universal_Data.Constants.slideDistMax;
+import static com.example.sweet.Pixel_Invaders.Util.Universal_Data.Constants.staticMoveLocX;
+import static com.example.sweet.Pixel_Invaders.Util.Universal_Data.Constants.staticMoveLocY;
+import static com.example.sweet.Pixel_Invaders.Util.Universal_Data.Constants.staticShootLocX;
+import static com.example.sweet.Pixel_Invaders.Util.Universal_Data.Constants.staticShootLocY;
 
 /**
  * Created by Sweet on 2/14/2018.
@@ -48,6 +57,7 @@ public class UI extends Drawable
             shootingOnDown = new PointF(0, 0),
             shootingOnMove = new PointF(0, 0);
 
+    private static final String stringX = "x";
     private boolean
             movementDown = false,
             shootingDown = false;
@@ -61,17 +71,21 @@ public class UI extends Drawable
             readyFlag = false,
             displayReady = false;
 
-    public boolean intro = true;
+    public boolean intro = false;
     public boolean introRevTime = false;
     private float introTimeStart;
     private float introTimeMod;
 
     public boolean titleIntro = true;
+    private boolean titleIntroBackward = false;
+    private Constants.GameState outroSwitchTo = Constants.GameState.MAIN_MENU;
     private double titleIntroStart;
     private float
             titleIntroLengh = 2000f,
             titleIntroButtonY = -.2f,
-            titleBackgroundY = .5f;
+            titleBackgroundY = .5f,
+            tBShiftX = 0,
+            tBShiftY = 0;
 
     private boolean settingsChanged = false;
 
@@ -91,6 +105,7 @@ public class UI extends Drawable
             magLoc,
             alphaLoc;
 
+    private int shipLogsPage = 0;
     private float flash = 0;
     private float flashSwitch = .5f;
     private float flashDelay = 1000;
@@ -134,7 +149,14 @@ public class UI extends Drawable
             title3,
             title4,
             cannotPlace,
-            riftShade;
+            riftShade,
+            missionContext,
+            mInfoControls,
+            mInfoDestruction,
+            mInfoConsumables,
+            mInfoTime,
+            mInfoIndex,
+            bonusBar;
 
     private Button
             resumeButton,
@@ -150,7 +172,13 @@ public class UI extends Drawable
             pauseButton,
             readyButton,
             heldDropButton,
-            selectedButton = null;
+            selectedButton = null,
+            leftSkipButton,
+            rightSkipButton,
+            leftPageButton,
+            rightPageButton,
+            controlsButton,
+            historyButton;
 
     private ImageContainer
             earthC,
@@ -162,8 +190,8 @@ public class UI extends Drawable
 
     private Button[][] componentPanel = new Button[3][2];
 
-    private Button[] slideButtons = new Button[4];
-    private Button[] checkButtons = new Button[3];
+    private Button[] slideButtons = new Button[5];
+    private Button[] checkButtons = new Button[6];
 
     private float
             playerModelX = 0.08f,
@@ -207,7 +235,15 @@ public class UI extends Drawable
 
     private TextTypeEvent
             riftDetected,
-            onceMore;
+            onceMore,
+            missionText1,
+            missionText2,
+            missionText3,
+            missionText4,
+            missionText5,
+            missionText6,
+            missionText7,
+            missionText8;
 
     public UI(Context context, int shaderLocation, GlobalInfo globalInfo, ParticleSystem ps)
     {
@@ -216,55 +252,104 @@ public class UI extends Drawable
         lastFlash = System.currentTimeMillis();
         uiParticles = ps;
 
-        riftDetected = new TextTypeEvent("Rift Detected...", .5f, true, 3000);
-        onceMore = new TextTypeEvent("Once More", 1.5f, false, 3000);
-
+        initTextEvents();
         alphaLoc = glGetUniformLocation(shaderLocation, "alpha");
         magLoc = glGetUniformLocation(shaderLocation, "mag");
         init(context,shaderLocation);
+    }
+
+    public void setPlayer(Player p)
+    {
+        player = p;
     }
 
     private void moveJoySticks()
     {
         if (movementDown)
         {
-            joyBaseMove.x = movementOnDown.x;
-            joyBaseMove.y = -movementOnDown.y;
+            float movOnDownX = 0;
+            float movOnDownY = 0;
+            if(!globalInfo.gameSettings.staticJoysticks)
+            {
+                movOnDownX = movementOnDown.x;
+                movOnDownY = movementOnDown.y;
+            }
+            else
+            {
+                movOnDownX = Constants.staticMoveLocX;
+                movOnDownY = Constants.staticMoveLocY;
+            }
+            
+            joyBaseMove.x = movOnDownX;
+            joyBaseMove.y = -movOnDownY;
 
-            float xTempDifference = (movementOnMove.x - movementOnDown.x);
-            float yTempDifference = (movementOnMove.y - movementOnDown.y);
+            float xTempDifference = (movementOnMove.x - movOnDownX);
+            float yTempDifference = (movementOnMove.y - movOnDownY);
             float tempMagnitude = VectorFunctions.getMagnitude(xTempDifference, yTempDifference);
 
-            if (tempMagnitude > joyStickRadius * .8f)
+            if (tempMagnitude > joyStickRadius * .8f * globalInfo.gameSettings.joyStickSize)
             {
-                joyStickMove.x = joyStickRadius * .8f * (xTempDifference / tempMagnitude) + movementOnDown.x;
-                joyStickMove.y = -(joyStickRadius * .8f * (yTempDifference / tempMagnitude) + movementOnDown.y);
+                joyStickMove.x = joyStickRadius * .8f * globalInfo.gameSettings.joyStickSize * (xTempDifference / tempMagnitude) + movOnDownX;
+                joyStickMove.y = -(joyStickRadius * .8f * globalInfo.gameSettings.joyStickSize * (yTempDifference / tempMagnitude) + movOnDownY);
             }
             else
             {
                 joyStickMove.x = movementOnMove.x;
                 joyStickMove.y = -movementOnMove.y;
             }
+            
+        }
+        else
+        {
+            if(globalInfo.gameSettings.staticJoysticks)
+            {
+                joyBaseMove.x = staticMoveLocX;
+                joyBaseMove.y = -staticMoveLocY;
+                joyStickMove.x = staticMoveLocX;
+                joyStickMove.y = -staticMoveLocY;
+            }
         }
 
         if (shootingDown)
         {
-            joyBaseShoot.x = shootingOnDown.x;
-            joyBaseShoot.y = -shootingOnDown.y;
+            float shootOnDownX = 0;
+            float shootOnDownY = 0;
+            if(!globalInfo.gameSettings.staticJoysticks)
+            {
+                shootOnDownX = shootingOnDown.x;
+                shootOnDownY = shootingOnDown.y;
+            }
+            else
+            {
+                shootOnDownX = Constants.staticShootLocX;
+                shootOnDownY = Constants.staticShootLocY;
+            }
+            joyBaseShoot.x = shootOnDownX;
+            joyBaseShoot.y = -shootOnDownY;
 
-            float xTempDifference = (shootingOnMove.x - shootingOnDown.x);
-            float yTempDifference = (shootingOnMove.y - shootingOnDown.y);
+            float xTempDifference = (shootingOnMove.x - shootOnDownX);
+            float yTempDifference = (shootingOnMove.y - shootOnDownY);
             float tempMagnitude = VectorFunctions.getMagnitude(xTempDifference, yTempDifference);
 
-            if (tempMagnitude > joyStickRadius * .8f)
+            if (tempMagnitude > joyStickRadius * .8f * globalInfo.gameSettings.joyStickSize)
             {
-                joyStickShoot.x = joyStickRadius * .8f * (xTempDifference / tempMagnitude) + shootingOnDown.x;
-                joyStickShoot.y = -(joyStickRadius * .8f * (yTempDifference / tempMagnitude) + shootingOnDown.y);
+                joyStickShoot.x = joyStickRadius * .8f * globalInfo.gameSettings.joyStickSize * (xTempDifference / tempMagnitude) + shootOnDownX;
+                joyStickShoot.y = -(joyStickRadius * .8f * globalInfo.gameSettings.joyStickSize * (yTempDifference / tempMagnitude) + shootOnDownY);
             }
             else
             {
                 joyStickShoot.x = shootingOnMove.x;
                 joyStickShoot.y = -shootingOnMove.y;
+            }
+        }
+        else
+        {
+            if(globalInfo.gameSettings.staticJoysticks)
+            {
+                joyBaseShoot.x = staticShootLocX;
+                joyBaseShoot.y = -staticShootLocY;
+                joyStickShoot.x = staticShootLocX;
+                joyStickShoot.y = -staticShootLocY;
             }
         }
     }
@@ -299,8 +384,8 @@ public class UI extends Drawable
                             player.getPixelGroup().getCenterY() - globalInfo.getScreenShiftY());
                 }
 
-                glUniform1f(magLoc, .8f);
-                riftDetected.drawTyping(textPresenter, .6f, 0f, .8f, globalInfo);
+                glUniform1f(magLoc, .7f);
+                riftDetected.drawTyping(textPresenter, .664f, 0f, .7f, globalInfo, false);
                 glUniform1f(magLoc, 1f);
             }
 
@@ -317,16 +402,7 @@ public class UI extends Drawable
                     glUniform1f(alphaLoc, 1 - progress * progress * progress);
                     screenShade.draw();
                     glUniform1f(alphaLoc, 1f);
-                    onceMore.drawTypingRealTime(textPresenter, .34f, .208f, 1f);
-                   /* for(int i = 0; i < 4; i++)
-                    {
-                        player.addParticleToCenter();
-                    }*/
-                    /*if((int)(progress*1000) % 10 == 0)
-                    {
-                        player.addParticleCircleToCenter((1 - progress)*1.5f + 1f);
-                    }*/
-                    //System.out.println(progress);
+                    onceMore.drawTypingRealTime(textPresenter, .34f, .208f, 1f, false);
                     if (progress > .6f && !introRevTime)
                     {
                         introRevTime = true;
@@ -353,20 +429,36 @@ public class UI extends Drawable
             }
             else
             {
+
                 moveJoySticks();
-                if (movementDown)
+                glUniform1f(magLoc, globalInfo.gameSettings.joyStickSize);
+                if(!globalInfo.gameSettings.staticJoysticks)
+                {
+                    if (movementDown)
+                    {
+                        joyBaseMove.draw();
+                        joyStickMove.draw();
+                    }
+                    if (shootingDown)
+                    {
+                        joyBaseShoot.draw();
+                        joyStickShoot.draw();
+                    }
+                }
+                else
                 {
                     joyBaseMove.draw();
                     joyStickMove.draw();
-                }
-                if (shootingDown)
-                {
                     joyBaseShoot.draw();
                     joyStickShoot.draw();
                 }
+                glUniform1f(magLoc, 1f);
+
                 if (!globalInfo.gameSettings.doubleTapPause)
                 {
+                    glUniform1f(magLoc, .8f);
                     pauseButton.draw(movementOnMove.x, movementOnMove.y, shootingOnMove.x, shootingOnMove.y);
+                    glUniform1f(magLoc, 1f);
                 }
                 if (displayReady)
                 {
@@ -374,7 +466,12 @@ public class UI extends Drawable
                     readyButton.draw(movementOnMove.x, movementOnMove.y, shootingOnMove.x, shootingOnMove.y);
                     glUniform1f(magLoc, 1f);
                 }
-                textPresenter.drawInt(player.score, .9f, 0f, true);
+                bonusBar.draw();
+                glUniform1f(magLoc, .7f);
+                textPresenter.drawString(stringX, .918f, -.9f, 0,1,.7f, false);
+                glUniform1f(magLoc, 1f);
+                textPresenter.drawInt(player.bonus, .918f, -.932f, true);
+                textPresenter.drawInt(player.score, .812f, 0f, true);
             }
 
             //textPresenter.drawString("Hello World", 0, 0, 11);
@@ -469,7 +566,6 @@ public class UI extends Drawable
             resumeButton.draw(menuOnMove.x, menuOnMove.y);
             optionsButton.draw(menuOnMove.x, menuOnMove.y);
             mainMenuButton.draw(menuOnMove.x, menuOnMove.y);
-
 
             if (selectedButton != null &&
                     selectedButton.drop != null &&
@@ -654,6 +750,7 @@ public class UI extends Drawable
         else if (gameState == Constants.GameState.MAIN_MENU)
         {
             glUseProgram(uiShaderProgram);
+            drawTitle();
             //shadeBar.draw();
             /*if(System.currentTimeMillis() - lastFlash > flashDelay)
             {
@@ -664,113 +761,14 @@ public class UI extends Drawable
                     lastFlash = System.currentTimeMillis();
                 }
             }*/
-            if(titleIntro)
-            {
-                float progress = (float)(System.currentTimeMillis() - titleIntroStart) / titleIntroLengh;
-                if(progress <= .1f)
-                {
-                    screenShade.draw();
-                }
-                else if(progress > .1 && progress <= .4f)
-                {
-                    float locProg = (progress - .1f) / .3f;
-                    locProg *= locProg * locProg;
-                    glUniform1f(alphaLoc, 1 - locProg);
-                    screenShade.draw();
-                    glUniform1f(alphaLoc, locProg);
-                    drawTitleHelper(0, titleBackgroundY);
-                    glUniform1f(alphaLoc, 1);
-                }
-                else if(progress > .4f && progress <= .7f)
-                {
-                    float locProg = (progress - .4f) / .3f;
-                    locProg *= locProg;
-                    titleBackgroundY = .5f * (1 - locProg);
-                    drawTitleHelper(0, titleBackgroundY);
-                }
-                else if(progress > .7f && progress < .8f)
-                {
-                    float locProg = (progress - .7f) / .1f;
-                    locProg *= locProg * locProg;
-                    glUniform1f(alphaLoc, locProg);
-                    arcadeButton.drawShift(0, (1 - locProg) * titleIntroButtonY);
-                    exitButton.drawShift(0, (1 - locProg) * titleIntroButtonY);
-                    glUniform1f(alphaLoc, 1);
-                    drawTitleHelper(0, 0);
-                }
-                else if(progress > .8f && progress < .9f)
-                {
-                    float locProg = (progress - .8f) / .1f;
-                    locProg *= locProg * locProg;
-                    glUniform1f(alphaLoc, locProg);
-                    challengeButton.drawShift(0, (1 - locProg) * titleIntroButtonY);
-                    optionsButton2.drawShift(0, (1 - locProg) * titleIntroButtonY);
-                    glUniform1f(alphaLoc, 1);
-                    arcadeButton.draw(menuOnMove.x, menuOnMove.y);
-                    exitButton.draw(menuOnMove.x, menuOnMove.y);
-                    drawTitleHelper(0, 0);
-                }
-                else if(progress > .9f && progress < 1f)
-                {
-                    float locProg = (progress - .9f) / .1f;
-                    locProg *= locProg * locProg;
-                    glUniform1f(alphaLoc, locProg);
-                    shipLogsButton.drawShift(0, (1 - locProg) * titleIntroButtonY);
-                    glUniform1f(alphaLoc, 1);
-                    arcadeButton.draw(menuOnMove.x, menuOnMove.y);
-                    challengeButton.draw(menuOnMove.x, menuOnMove.y);
-                    optionsButton2.draw(menuOnMove.x, menuOnMove.y);
-                    exitButton.draw(menuOnMove.x, menuOnMove.y);
-                    drawTitleHelper(0, 0);
-                }
-                else if(progress >= 1f)
-                {
-                    titleIntro = false;
-                }
-            }
 
-            if(!titleIntro)
-            {
-                arcadeButton.draw(menuOnMove.x, menuOnMove.y);
-                challengeButton.draw(menuOnMove.x, menuOnMove.y);
-                shipLogsButton.draw(menuOnMove.x, menuOnMove.y);
-                optionsButton2.draw(menuOnMove.x, menuOnMove.y);
-                exitButton.draw(menuOnMove.x, menuOnMove.y);
-
-                drawTitleHelper(0,0);
-                /*switch ((int) flash)
-                {
-                    case 0:
-                        title.draw();
-                        break;
-                    case 1:
-                        title1.draw();
-                        break;
-                    case 2:
-                        title2.draw();
-                        break;
-                    case 3:
-                        title3.draw();
-                        break;
-                    case 4:
-                        title4.draw();
-                        break;
-                }
-                if (flash <= .05)
-                {
-                    flashSwitch = .5f;
-                }
-                else if (flash >= 5)
-                {
-                    flashSwitch = -.5f;
-                }*/
-            }
         }
         else if (gameState == Constants.GameState.OPTIONS)
         {
             glUseProgram(uiShaderProgram);
             screenShade.draw();
             optionsMenu.draw();
+            backButton.setLoc(.84f, -.96f);
             backButton.draw(menuOnMove.x, menuOnMove.y);
             if (menuPointerDown)
             {
@@ -780,19 +778,19 @@ public class UI extends Drawable
                     if (b.touchedOnDown)
                     {
                         b.drawHighlight();
-                        if (menuOnMove.y > Constants.slideMax)
+                        if (-menuOnMove.y < b.getOriginalY())
                         {
-                            b.setY(-Constants.slideMax);
+                            b.setY(b.getOriginalY());
                         }
-                        else if (menuOnMove.y < Constants.slideMin)
+                        else if (-menuOnMove.y > b.getOriginalY() + slideDistMax)
                         {
-                            b.setY(-Constants.slideMin);
+                            b.setY(b.getOriginalY() + slideDistMax);
                         }
                         else
                         {
                             b.setY(-menuOnMove.y);
                         }
-                        float percent = (-b.regular.y - Constants.slideMin) / (Constants.slideMax - Constants.slideMin);
+                        float percent = 1 - Math.abs(b.getY() - b.getOriginalY()) / slideDistMax;
                         globalInfo.gameSettings.setSlideSetting(index, percent);
                         settingsChanged = true;
                     }
@@ -827,12 +825,53 @@ public class UI extends Drawable
             textPresenter.drawInt((int) (globalInfo.gameSettings.screenShakePercent * 100), -.044f, -1.224f, false);
             textPresenter.drawInt((int) (globalInfo.gameSettings.musicPercent * 100), -.436f, -1.224f, false);
             textPresenter.drawInt((int) (globalInfo.gameSettings.soundPercent * 100), -.828f, -1.224f, false);
+            textPresenter.drawInt((int) (globalInfo.gameSettings.joyStickSize * 100), -.828f, .144f, false);
         }
         else if(gameState == Constants.GameState.GAME_OVER)
         {
             screenShade.draw();
             mainMenuButton2.draw(menuOnMove.x, menuOnMove.y);
             textPresenter.drawInt(player.score, -.2f, 0, true);
+        }
+        else if(gameState == Constants.GameState.SHIP_LOGS)
+        {
+            screenShade.draw();
+            backButton.setLoc(.784f , -.872f);
+            backButton.draw(menuOnMove.x, menuOnMove.y);
+            leftPageButton.draw(menuOnMove.x, menuOnMove.y);
+            rightPageButton.draw(menuOnMove.x, menuOnMove.y);
+            leftSkipButton.draw(menuOnMove.x, menuOnMove.y);
+            rightSkipButton.draw(menuOnMove.x, menuOnMove.y);
+            missionContext.draw();
+            if(shipLogsPage >= 5)
+            {
+                glUniform1f(magLoc, .8f);
+            }
+            else
+            {
+                glUniform1f(magLoc, 1f);
+            }
+            switch(shipLogsPage)
+            {
+                case 0: mInfoIndex.draw();
+                        glUniform1f(magLoc, .8f);
+                        historyButton.draw(menuOnMove.x, menuOnMove.y);
+                        controlsButton.draw(menuOnMove.x, menuOnMove.y);
+                        break;
+                case 1: mInfoControls.draw(); break;
+                case 2: mInfoConsumables.draw(); break;
+                case 3: mInfoDestruction.draw(); break;
+                case 4: mInfoTime.draw(); break;
+                case 5: missionText1.drawTypingRealTime(textPresenter,.464f,1.12f,.8f, true); break;
+                case 6: missionText2.drawTypingRealTime(textPresenter,.464f,1.12f,.8f, true); break;
+                case 7: missionText3.drawTypingRealTime(textPresenter,.464f,1.12f,.8f, true); break;
+                case 8: missionText4.drawTypingRealTime(textPresenter,.464f,1.12f,.8f, true); break;
+                case 9: missionText5.drawTypingRealTime(textPresenter,.464f,1.12f,.8f, true); break;
+                case 10: missionText6.drawTypingRealTime(textPresenter,.464f,1.12f,.8f, true); break;
+                case 11: missionText7.drawTypingRealTime(textPresenter,.464f,1.12f,.8f, true); break;
+                case 12: missionText8.drawTypingRealTime(textPresenter,.464f,1.12f,.8f, true); break;
+            }
+            glUniform1f(magLoc, 1f);
         }
 
         if(gameState != Constants.GameState.IN_GAME)
@@ -869,9 +908,9 @@ public class UI extends Drawable
 
         if (globalInfo.gameSettings.showFps)
         {
-            textPresenter.drawInt((int)uiAvgFrame, .9f, -.6f, false);
-            textPresenter.drawInt((int)aiAvgFrame, .9f, -.9f, false);
-            textPresenter.drawInt((int)collisionAvgFrame, .9f, -1.2f, false);
+            textPresenter.drawInt((int)uiAvgFrame, .9f, -1.4f, false);
+            textPresenter.drawInt((int)aiAvgFrame, .8f, -1.4f, false);
+            textPresenter.drawInt((int)collisionAvgFrame, .7f, -1.4f, false);
         }
     }
 
@@ -980,6 +1019,7 @@ public class UI extends Drawable
             {
                 if(prevGameState == Constants.GameState.MAIN_MENU)
                 {
+                    startTitleIntro();
                     gameState = Constants.GameState.MAIN_MENU;
                 }
                 else if(prevGameState == Constants.GameState.PAUSE_MENU)
@@ -1005,20 +1045,31 @@ public class UI extends Drawable
         }
         else if(gameState == Constants.GameState.MAIN_MENU)
         {
-            if(exitButton.cursorOnButton)
+            if(!titleIntro)
             {
-                exitFlag = true;
-            }
-            else if(arcadeButton.cursorOnButton)
-            {
-                newGameFlag = true;
-                arcadeButton.cursorOnButton = false;
-            }
-            else if(optionsButton2.cursorOnButton)
-            {
-                prevGameState = Constants.GameState.MAIN_MENU;
-                gameState = Constants.GameState.OPTIONS;
-                optionsButton2.cursorOnButton = false;
+                if (exitButton.cursorOnButton)
+                {
+                    exitFlag = true;
+                }
+                else if (arcadeButton.cursorOnButton)
+                {
+                    prevGameState = Constants.GameState.MAIN_MENU;
+                    startTitleOutro(Constants.GameState.IN_GAME);
+                    arcadeButton.cursorOnButton = false;
+                }
+                else if (optionsButton2.cursorOnButton)
+                {
+                    prevGameState = Constants.GameState.MAIN_MENU;
+                    startTitleOutro(Constants.GameState.OPTIONS);
+                    optionsButton2.cursorOnButton = false;
+                }
+                else if (shipLogsButton.cursorOnButton)
+                {
+                    prevGameState = Constants.GameState.MAIN_MENU;
+                    startTitleOutro(Constants.GameState.SHIP_LOGS);
+                    missionText1.startTypeEventRealTime();
+                    shipLogsButton.cursorOnButton = false;
+                }
             }
         }
         else if(gameState == Constants.GameState.GAME_OVER)
@@ -1032,18 +1083,92 @@ public class UI extends Drawable
                 mainMenuButton2.cursorOnButton = false;
             }
         }
+        else if(gameState == Constants.GameState.SHIP_LOGS)
+        {
+            if (backButton.cursorOnButton)
+            {
+                gameState = Constants.GameState.MAIN_MENU;
+                prevGameState = Constants.GameState.SHIP_LOGS;
+                startTitleIntro();
+                backButton.cursorOnButton = false;
+            }
+
+            int tempPage = shipLogsPage;
+            if(leftPageButton.cursorOnButton)
+            {
+                shipLogsPage--;
+                if(shipLogsPage < 0)
+                {
+                    shipLogsPage = 0;
+                }
+                leftPageButton.cursorOnButton = false;
+            }
+
+            if(rightPageButton.cursorOnButton)
+            {
+                shipLogsPage++;
+                if(shipLogsPage > 12)
+                {
+                    shipLogsPage = 12;
+                }
+                rightPageButton.cursorOnButton = false;
+            }
+
+            if(leftSkipButton.cursorOnButton)
+            {
+                shipLogsPage = 0;
+                leftSkipButton.cursorOnButton = false;
+            }
+
+            if(rightSkipButton.cursorOnButton)
+            {
+                shipLogsPage = 12;
+                rightSkipButton.cursorOnButton = false;
+            }
+
+            if(shipLogsPage == 0)
+            {
+                if (historyButton.cursorOnButton)
+                {
+                    shipLogsPage = 5;
+                    historyButton.cursorOnButton = false;
+                }
+
+                if (controlsButton.cursorOnButton)
+                {
+                    shipLogsPage = 1;
+                    controlsButton.cursorOnButton = false;
+                }
+            }
+
+            if(tempPage != shipLogsPage)
+            {
+                switch(shipLogsPage)
+                {
+                    case 5: missionText1.startTypeEventRealTime(); break;
+                    case 6: missionText2.startTypeEventRealTime(); break;
+                    case 7: missionText3.startTypeEventRealTime(); break;
+                    case 8: missionText4.startTypeEventRealTime(); break;
+                    case 9: missionText5.startTypeEventRealTime(); break;
+                    case 10: missionText6.startTypeEventRealTime(); break;
+                    case 11: missionText7.startTypeEventRealTime(); break;
+                    case 12: missionText8.startTypeEventRealTime(); break;
+                }
+            }
+        }
+        menuOnDown.x = -2;
+        menuOnDown.y = -2;
+        menuOnMove.x = -2;
+        menuOnMove.y = -2;
     }
 
     public void drawBackground()
     {
-        float tShiftX = 0;
-        float tShiftY = 0;
-
-        if(gameState == Constants.GameState.MAIN_MENU ||
+        if(gameState == Constants.GameState.MAIN_MENU || gameState == Constants.GameState.SHIP_LOGS ||
                 (gameState == Constants.GameState.OPTIONS && prevGameState == Constants.GameState.MAIN_MENU))
         {
-            tShiftX = (float) Math.cos((System.currentTimeMillis() - globalStartTime) / 4000) * .06f - .588f;
-            tShiftY = (float) Math.sin((System.currentTimeMillis() - globalStartTime) / 4000) * .2f - 1f + titleBackgroundY * 2;
+            tBShiftX = (float) Math.cos((System.currentTimeMillis() - globalStartTime) / 4000) * .06f - .588f;
+            tBShiftY = (float) Math.sin((System.currentTimeMillis() - globalStartTime) / 4000) * .2f - 1f + titleBackgroundY * 2;
            /* if(!titleIntro)
             {
                 tShiftX = (float) Math.cos((System.currentTimeMillis() - globalStartTime) / 4000) * .06f - .588f;
@@ -1057,41 +1182,195 @@ public class UI extends Drawable
         }
         else
         {
-            if(player != null)
+            if(intro)
             {
-                tShiftX = -(player.xScreenShift - player.screenShakeX);
-                tShiftY = -(player.yScreenShift - player.screenShakeY);
+                float dist = (float)Math.hypot(tBShiftX, tBShiftY);
+                if(dist > .01)
+                {
+                    tBShiftX -= (tBShiftX / dist) * .01f;
+                    tBShiftY -= (tBShiftY / dist) * .01f;
+                }
+                else
+                {
+                    tBShiftX = 0;
+                    tBShiftY = 0;
+                }
+            }
+            else
+            {
+                if(player != null)
+                {
+                    tBShiftX = -(player.xScreenShift - player.screenShakeX);
+                    tBShiftY = -(player.yScreenShift - player.screenShakeY);
+                }
             }
         }
 
-        stars4.draw(tShiftX / 6f, tShiftY / 6f);
-        stars3.draw(tShiftX / 4.6f, tShiftY / 4.6f);
-        stars2.draw(tShiftX / 4f, tShiftY / 4f);
-        stars1.draw(tShiftX / 3.4f, tShiftY / 3.4f);
-        moonC.draw(tShiftX / 2.1f, tShiftY / 2.1f);
-        earthC.draw(tShiftX / 2, tShiftY / 2);
+        stars4.draw(tBShiftX / 6f, tBShiftY / 6f);
+        stars3.draw(tBShiftX / 4.6f, tBShiftY / 4.6f);
+        stars2.draw(tBShiftX / 4f, tBShiftY / 4f);
+        stars1.draw(tBShiftX / 3.4f, tBShiftY / 3.4f);
+        moonC.draw(tBShiftX / 2.1f, tBShiftY / 2.1f);
+        earthC.draw(tBShiftX / 2, tBShiftY / 2);
     }
 
+    public void drawTitle()
+    {
+        float progress = 0f;
+        if(titleIntro)
+        {
+            if(!titleIntroBackward)
+            {
+                progress = (float) (System.currentTimeMillis() - titleIntroStart) / titleIntroLengh;
+            }
+            else
+            {
+                progress = 1 - ((float) (System.currentTimeMillis() - titleIntroStart) / titleIntroLengh);
+            }
+
+            if(progress <= .1f)
+            {
+                screenShade.draw();
+            }
+            else if(progress > .1 && progress <= .4f)
+            {
+                float locProg = (progress - .1f) / .3f;
+                locProg *= locProg * locProg;
+                glUniform1f(alphaLoc, 1 - locProg);
+                screenShade.draw();
+                glUniform1f(alphaLoc, locProg);
+                drawTitleHelper(0, titleBackgroundY);
+                glUniform1f(alphaLoc, 1);
+            }
+            else if(progress > .4f && progress <= .7f)
+            {
+                float locProg = (progress - .4f) / .3f;
+                locProg *= locProg;
+                titleBackgroundY = .5f * (1 - locProg);
+                drawTitleHelper(0, titleBackgroundY);
+            }
+            else if(progress > .7f && progress < .8f)
+            {
+                float locProg = (progress - .7f) / .1f;
+                locProg *= locProg * locProg;
+                glUniform1f(alphaLoc, locProg);
+                arcadeButton.drawShift(0, (1 - locProg) * titleIntroButtonY);
+                exitButton.drawShift(0, (1 - locProg) * titleIntroButtonY);
+                glUniform1f(alphaLoc, 1);
+                drawTitleHelper(0, 0);
+            }
+            else if(progress > .8f && progress < .9f)
+            {
+                float locProg = (progress - .8f) / .1f;
+                locProg *= locProg * locProg;
+                glUniform1f(alphaLoc, locProg);
+                challengeButton.drawShift(0, (1 - locProg) * titleIntroButtonY);
+                optionsButton2.drawShift(0, (1 - locProg) * titleIntroButtonY);
+                glUniform1f(alphaLoc, 1);
+                arcadeButton.draw(menuOnMove.x, menuOnMove.y);
+                exitButton.draw(menuOnMove.x, menuOnMove.y);
+                drawTitleHelper(0, 0);
+            }
+            else if(progress > .9f && progress < 1f)
+            {
+                float locProg = (progress - .9f) / .1f;
+                locProg *= locProg * locProg;
+                glUniform1f(alphaLoc, locProg);
+                shipLogsButton.drawShift(0, (1 - locProg) * titleIntroButtonY);
+                glUniform1f(alphaLoc, 1);
+                arcadeButton.draw(menuOnMove.x, menuOnMove.y);
+                challengeButton.draw(menuOnMove.x, menuOnMove.y);
+                optionsButton2.draw(menuOnMove.x, menuOnMove.y);
+                exitButton.draw(menuOnMove.x, menuOnMove.y);
+                drawTitleHelper(0, 0);
+            }
+            if(!titleIntroBackward)
+            {
+                if(progress >= 1f)
+                {
+                    titleIntro = false;
+                }
+            }
+        }
+
+        if(!titleIntro)
+        {
+            arcadeButton.draw(menuOnMove.x, menuOnMove.y);
+            challengeButton.draw(menuOnMove.x, menuOnMove.y);
+            shipLogsButton.draw(menuOnMove.x, menuOnMove.y);
+            optionsButton2.draw(menuOnMove.x, menuOnMove.y);
+            exitButton.draw(menuOnMove.x, menuOnMove.y);
+
+            drawTitleHelper(0,0);
+        }
+
+        if(titleIntro && titleIntroBackward)
+        {
+            if(progress <= 0f)
+            {
+                titleIntro = false;
+                titleIntroBackward = false;
+                if(outroSwitchTo == Constants.GameState.IN_GAME)
+                {
+                    newGameFlag = true;
+                }
+                else
+                {
+                    gameState = outroSwitchTo;
+                }
+            }
+        }
+    }
     public void startIntro()
     {
-        intro = true;
-        introRevTime = false;
-        introTimeMod = -2.4f;
-        float m = .04f;
-        for(float d = 0; d < 2f; d += m)
+        if(!globalInfo.gameSettings.skipIntros)
         {
-            player.addParticleCircleToCenter(.5f + d, (float)Math.sqrt(d), d);
-            m *= 1.1;
+            intro = true;
+            introRevTime = false;
+            introTimeMod = -2.4f;
+            float m = .07f;
+            for (float d = 0; d < 2f; d += m)
+            {
+                player.addParticleCircleToCenter(.5f + d, (float) Math.sqrt(d), d);
+                m *= 1.1;
+            }
+            introTimeStart = globalInfo.getAugmentedTimeMillis();
+            onceMore.startTypeEventRealTime();
         }
-        introTimeStart = globalInfo.getAugmentedTimeMillis();
-        onceMore.startTypeEventRealTime();
     }
 
     public void startTitleIntro()
     {
-        titleIntro = true;
-        titleBackgroundY = .5f;
-        titleIntroStart = System.currentTimeMillis();
+        if(!globalInfo.gameSettings.skipIntros)
+        {
+            titleIntro = true;
+            titleBackgroundY = .5f;
+            titleIntroStart = System.currentTimeMillis();
+        }
+    }
+
+    public void startTitleOutro(Constants.GameState switchTo)
+    {
+        if(!globalInfo.gameSettings.skipIntros)
+        {
+            titleIntro = true;
+            titleIntroBackward = true;
+            outroSwitchTo = switchTo;
+            titleBackgroundY = 0f;
+            titleIntroStart = System.currentTimeMillis();
+        }
+        else
+        {
+            outroSwitchTo = switchTo;
+            if(outroSwitchTo == Constants.GameState.IN_GAME)
+            {
+                newGameFlag = true;
+            }
+            else
+            {
+                gameState = outroSwitchTo;
+            }
+        }
     }
 
     public boolean checkPause()
@@ -1140,10 +1419,6 @@ public class UI extends Drawable
     {
         xScale = xS;
         yScale = yS;
-        resumeButton.applyScale(xS, yS);
-        mainMenuButton.applyScale(xS, yS);
-        optionsButton.applyScale(xS, yS);
-        backButton.applyScale(xS, yS);
     }
 
     public void setMovementDown(boolean b)
@@ -1260,6 +1535,20 @@ public class UI extends Drawable
     public void reset()
     {
 
+    }
+
+    private void initTextEvents()
+    {
+        riftDetected = new TextTypeEvent("Rift Detected...", .5f, true, 3000);
+        onceMore = new TextTypeEvent("Once More", 1.5f, false, 3000);
+        missionText1 = new TextTypeEvent("2032: Earth\\\\Space-time distortions are observed opening near earth.\\\\Research on the newly opened temporal rifts initiates.\\\\Power conflicts between nations arise...", .8f, false, 5000);
+        missionText2 = new TextTypeEvent("~2045: Unknown\\\\Sentient species from across the galaxy detect\\accessible space-time distortion for the first time...", .8f, false, 5000);
+        missionText3 = new TextTypeEvent("~2046: Unknown\\\\Alien fleets are launched on a collision course with\\earth.\\\\The invaders seek to research and control the\\temporal rifts, their intentions are malicious...", .8f, false, 5000);
+        missionText4 = new TextTypeEvent("2059: Earth\\\\Blueshift foreign objects are detected traveling toward\\Earth at nearly a third the speed of light.\\\\Worldwide conflict quickly recedes. Talks of crisis\\resolution begin...", .8f, false, 5000);
+        missionText5 = new TextTypeEvent("2061: Earth United\\\\A temporarily united world begins construction of an\\earthern space fleet.\\\\Temporal rift research, however, remains humanity's\\top priority...", .8f, false, 5000);
+        missionText6 = new TextTypeEvent("2089: Perimeter of the Sun's Solar System\\\\The United Earthern Fleet engages invading vessels.\\\\They are cannon fodder against superior combat\\technology and overwhelming numbers...", .8f, false, 5000);
+        missionText7 = new TextTypeEvent("2090: Earth United\\\\With little time to spare, humanity deciphers the\\true nature of the temporal rifts.\\\\A checkpoint in space-time is recorded and set for\\later restoration...", .8f, false, 5000);
+        missionText8 = new TextTypeEvent("2091: The Edge of Earth Space\\\\Mustering the last of its time and resources, Earth\\United produces a handful of experimental, adaptive\\ships equip with the technology to manipulate time.\\\\Their chance at victory over the invaders is nearly\\nonexistent but their attempts are infinite...", .8f, false, 5000);
     }
 
     private void init(Context context, int shaderLocation)
@@ -1648,13 +1937,91 @@ public class UI extends Drawable
                         -1, -1
                 );
 
+        missionContext = new ImageContainer
+                (
+                        TextureLoader.loadTexture(context, R.drawable.missioncontext),
+                        Constants.missionContextBoxVA,
+                        //.35f, -.56f,
+                        0, 0,
+                        "largeBox",
+                        glVarLocations,
+                        -1, -1
+                );
+
+        mInfoControls = new ImageContainer
+                (
+                        TextureLoader.loadTexture(context, R.drawable.controls),
+                        Constants.controlsVA,
+                        //.35f, -.56f,
+                        -.136f, 0,
+                        "largeBox",
+                        glVarLocations,
+                        -1, -1
+                );
+
+        mInfoConsumables = new ImageContainer
+                (
+                        TextureLoader.loadTexture(context, R.drawable.consumables),
+                        Constants.controlsVA,
+                        //.35f, -.56f,
+                        -.136f, 0,
+                        "largeBox",
+                        glVarLocations,
+                        -1, -1
+                );
+
+        mInfoDestruction = new ImageContainer
+                (
+                        TextureLoader.loadTexture(context, R.drawable.destruction),
+                        Constants.controlsVA,
+                        //.35f, -.56f,
+                        -.136f, 0,
+                        "largeBox",
+                        glVarLocations,
+                        -1, -1
+                );
+
+        mInfoTime = new ImageContainer
+                (
+                        TextureLoader.loadTexture(context, R.drawable.time),
+                        Constants.controlsVA,
+                        //.35f, -.56f,
+                        -.136f, 0,
+                        "largeBox",
+                        glVarLocations,
+                        -1, -1
+                );
+
+        mInfoIndex = new ImageContainer
+                (
+                        TextureLoader.loadTexture(context, R.drawable.index),
+                        Constants.controlsVA,
+                        //.35f, -.56f,
+                        -.136f, 0,
+                        "largeBox",
+                        glVarLocations,
+                        -1, -1
+                );
+
+        bonusBar = new ImageContainer
+                (
+                        TextureLoader.loadTexture(context, R.drawable.bonusbar),
+                        Constants.bonusBarVA,
+                        //.35f, -.56f,
+                        .92f, 0,
+                        "largeBox",
+                        glVarLocations,
+                        -1, -1
+                );
+
+
         resumeButton = new Button
                 (
                         new ImageContainer
                                 (
                                         TextureLoader.loadTexture(context, R.drawable.resume),
                                         Constants.resumeButtonVA,
-                                        .82f + .02f, .55f,
+                                        .82f + .02f, .96f,
                                         "resumeButton",
                                         glVarLocations,
                                         Constants.rbL, Constants.rbW
@@ -1663,7 +2030,7 @@ public class UI extends Drawable
                                 (
                                         TextureLoader.loadTexture(context, R.drawable.resume2),
                                         Constants.resumeButtonHoveredVA,
-                                        .82f + .02f, .55f,
+                                        .82f + .02f, .96f,
                                         "resumeButtonHover",
                                         glVarLocations,
                                         Constants.rbL, Constants.rbW
@@ -1727,7 +2094,7 @@ public class UI extends Drawable
                                 (
                                         mainmenuTex,
                                         Constants.resumeButtonVA,
-                                        .82f + .02f, -.55f,
+                                        .82f + .02f, -.96f,
                                         "exitButton",
                                         glVarLocations,
                                         Constants.rbL, Constants.rbW
@@ -1736,7 +2103,7 @@ public class UI extends Drawable
                                 (
                                         mainmenuTex2,
                                         Constants.resumeButtonHoveredVA,
-                                        .82f + .02f, -.55f,
+                                        .82f + .02f, -.96f,
                                         "exitButtonHover",
                                         glVarLocations,
                                         Constants.rbL, Constants.rbW
@@ -1773,7 +2140,7 @@ public class UI extends Drawable
                                 (
                                         TextureLoader.loadTexture(context, R.drawable.back),
                                         Constants.resumeButtonVA,
-                                        .82f + .02f, -.55f,
+                                        .82f + .02f, -.96f,
                                         "exitButton",
                                         glVarLocations,
                                         Constants.rbL, Constants.rbW
@@ -1782,7 +2149,7 @@ public class UI extends Drawable
                                 (
                                         TextureLoader.loadTexture(context, R.drawable.back2),
                                         Constants.resumeButtonHoveredVA,
-                                        .82f + .02f, -.55f,
+                                        .82f + .02f, -.96f,
                                         "exitButtonHover",
                                         glVarLocations,
                                         Constants.rbL, Constants.rbW
@@ -1925,20 +2292,159 @@ public class UI extends Drawable
                         new ImageContainer
                                 (
                                         TextureLoader.loadTexture(context, R.drawable.pause),
-                                        Constants.pauseVA,
-                                        .8f, 1f,
+                                        Constants.resumeButtonVA,
+                                        -.85f, -.672f,
                                         "optionsButton",
                                         glVarLocations,
-                                        Constants.paL, Constants.paW
+                                        Constants.rbL, Constants.rbW
                                 ),
                         new ImageContainer
                                 (
                                         TextureLoader.loadTexture(context, R.drawable.pause2),
-                                        Constants.pauseVA,
-                                        .8f, 1f,
+                                        Constants.resumeButtonVA,
+                                        -.85f, -.672f,
                                         "optionsButtonHover",
                                         glVarLocations,
-                                        Constants.paL, Constants.paW
+                                        Constants.rbL, Constants.rbW
+                                ),
+                        null
+                );
+
+        leftPageButton = new Button
+                (
+                        new ImageContainer
+                                (
+                                        TextureLoader.loadTexture(context, R.drawable.leftpage),
+                                        Constants.navButtonVA,
+                                        -.8f, .296f,
+                                        "optionsButton",
+                                        glVarLocations,
+                                        Constants.nbL, Constants.nbW
+                                ),
+                        new ImageContainer
+                                (
+                                        TextureLoader.loadTexture(context, R.drawable.leftpage2),
+                                        Constants.navButtonVA,
+                                        -.8f, .296f,
+                                        "optionsButtonHover",
+                                        glVarLocations,
+                                        Constants.nbL, Constants.nbW
+                                ),
+                        null
+                );
+
+        rightPageButton = new Button
+                (
+                        new ImageContainer
+                                (
+                                        TextureLoader.loadTexture(context, R.drawable.rightpage),
+                                        Constants.navButtonVA,
+                                        -.8f, -.296f,
+                                        "optionsButton",
+                                        glVarLocations,
+                                        Constants.nbL, Constants.nbW
+                                ),
+                        new ImageContainer
+                                (
+                                        TextureLoader.loadTexture(context, R.drawable.rightpage2),
+                                        Constants.navButtonVA,
+                                        -.8f, -.296f,
+                                        "optionsButtonHover",
+                                        glVarLocations,
+                                        Constants.nbL, Constants.nbW
+                                ),
+                        null
+                );
+
+        leftSkipButton = new Button
+                (
+                        new ImageContainer
+                                (
+                                        TextureLoader.loadTexture(context, R.drawable.leftskip),
+                                        Constants.navButtonVA,
+                                        -.8f, .856f,
+                                        "optionsButton",
+                                        glVarLocations,
+                                        Constants.nbL, Constants.nbW
+                                ),
+                        new ImageContainer
+                                (
+                                        TextureLoader.loadTexture(context, R.drawable.leftskip2),
+                                        Constants.navButtonVA,
+                                        -.8f, .856f,
+                                        "optionsButtonHover",
+                                        glVarLocations,
+                                        Constants.nbL, Constants.nbW
+                                ),
+                        null
+                );
+
+        rightSkipButton = new Button
+                (
+                        new ImageContainer
+                                (
+                                        TextureLoader.loadTexture(context, R.drawable.rightskip),
+                                        Constants.navButtonVA,
+                                        -.8f, -.856f,
+                                        "optionsButton",
+                                        glVarLocations,
+                                        Constants.nbL, Constants.nbW
+                                ),
+                        new ImageContainer
+                                (
+                                        TextureLoader.loadTexture(context, R.drawable.rightskip2),
+                                        Constants.navButtonVA,
+                                        -.8f, -.856f,
+                                        "optionsButtonHover",
+                                        glVarLocations,
+                                        Constants.nbL, Constants.nbW
+                                ),
+                        null
+                );
+
+        final float tempMag = .8f;
+        controlsButton = new Button
+                (
+                        new ImageContainer
+                                (
+                                        TextureLoader.loadTexture(context, R.drawable.controlsb),
+                                        Constants.resumeButtonVA,
+                                        mInfoIndex.x + .408f + (Constants.rbL - (Constants.rbL * tempMag)), mInfoIndex.y + .808f + (Constants.rbW - (Constants.rbW * tempMag)),
+                                        "optionsButton",
+                                        glVarLocations,
+                                        Constants.rbL, Constants.rbW
+                                ),
+                        new ImageContainer
+                                (
+                                        TextureLoader.loadTexture(context, R.drawable.controlsb2),
+                                        Constants.resumeButtonVA,
+                                        mInfoIndex.x + .408f + (Constants.rbL - (Constants.rbL * tempMag)), mInfoIndex.y + .808f + (Constants.rbW - (Constants.rbW * tempMag)),
+                                        "optionsButtonHover",
+                                        glVarLocations,
+                                        Constants.rbL, Constants.rbW
+                                ),
+                        null
+                );
+
+        historyButton = new Button
+                (
+                        new ImageContainer
+                                (
+                                        TextureLoader.loadTexture(context, R.drawable.history),
+                                        Constants.resumeButtonVA,
+                                        mInfoIndex.x + .2f + (Constants.rbL - (Constants.rbL * tempMag)), mInfoIndex.y + .808f + (Constants.rbW - (Constants.rbW * tempMag)),
+                                        "optionsButton",
+                                        glVarLocations,
+                                        Constants.rbL, Constants.rbW
+                                ),
+                        new ImageContainer
+                                (
+                                        TextureLoader.loadTexture(context, R.drawable.history2),
+                                        Constants.resumeButtonVA,
+                                        mInfoIndex.x + .2f + (Constants.rbL - (Constants.rbL * tempMag)), mInfoIndex.y + .808f + (Constants.rbW - (Constants.rbW * tempMag)),
+                                        "optionsButtonHover",
+                                        glVarLocations,
+                                        Constants.rbL, Constants.rbW
                                 ),
                         null
                 );
@@ -1948,28 +2454,56 @@ public class UI extends Drawable
 
         for(int i = 0; i < slideButtons.length; i++)
         {
-            slideButtons[i] = new Button
-                    (
-                            new ImageContainer
-                                    (
-                                            slideTexture,
-                                            Constants.slideButtonVA,
-                                            .332f + .02f - .392f * i, -.992f,
-                                            "optionsButton",
-                                            glVarLocations,
-                                            Constants.sldBR, Constants.sldBR
-                                    ),
-                            new ImageContainer
-                                    (
-                                            slideTexture2,
-                                            Constants.slideButtonVA,
-                                            .332f + .02f - .392f * i, -.992f,
-                                            "optionsButtonHover",
-                                            glVarLocations,
-                                            Constants.sldBR, Constants.sldBR
-                                    ),
-                            null
-                    );
+            if(i < 4)
+            {
+                slideButtons[i] = new Button
+                        (
+                                new ImageContainer
+                                        (
+                                                slideTexture,
+                                                Constants.slideButtonVA,
+                                                .332f + .02f - .392f * i, -.992f,
+                                                "optionsButton",
+                                                glVarLocations,
+                                                Constants.sldBR, Constants.sldBR
+                                        ),
+                                new ImageContainer
+                                        (
+                                                slideTexture2,
+                                                Constants.slideButtonVA,
+                                                .332f + .02f - .392f * i, -.992f,
+                                                "optionsButtonHover",
+                                                glVarLocations,
+                                                Constants.sldBR, Constants.sldBR
+                                        ),
+                                null
+                        );
+            }
+            else
+            {
+                slideButtons[i] = new Button
+                        (
+                                new ImageContainer
+                                        (
+                                                slideTexture,
+                                                Constants.slideButtonVA,
+                                                .332f + .02f - .392f * 3, .376f,
+                                                "optionsButton",
+                                                glVarLocations,
+                                                Constants.sldBR, Constants.sldBR
+                                        ),
+                                new ImageContainer
+                                        (
+                                                slideTexture2,
+                                                Constants.slideButtonVA,
+                                                .332f + .02f - .392f * 3, .376f,
+                                                "optionsButtonHover",
+                                                glVarLocations,
+                                                Constants.sldBR, Constants.sldBR
+                                        ),
+                                null
+                        );
+            }
         }
 
         int checkTexture = TextureLoader.loadTexture(context, R.drawable.check);

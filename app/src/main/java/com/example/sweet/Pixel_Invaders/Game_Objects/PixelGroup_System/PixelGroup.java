@@ -2,13 +2,10 @@ package com.example.sweet.Pixel_Invaders.Game_Objects.PixelGroup_System;
 
 import com.example.sweet.Pixel_Invaders.Util.Universal_Data.Constants;
 
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 
 import static android.opengl.GLES20.GL_STREAM_DRAW;
 import static android.opengl.GLES20.glDeleteBuffers;
-import static android.opengl.GLES20.glDisableVertexAttribArray;
 import static android.opengl.GLES20.glGetUniformLocation;
 import static android.opengl.GLES20.glUniform1f;
 import static android.opengl.GLES20.GL_FLOAT;
@@ -238,7 +235,7 @@ public class  PixelGroup extends Collidable
             }
             else if (p.state < 3)
             {
-                alphaBuf.put(i,1);
+                alphaBuf.put(i,infoMap[p.row][p.col].a);
             }
             else
             {
@@ -249,32 +246,37 @@ public class  PixelGroup extends Collidable
 
     public void resetPixels()
     {
+        int nL = 0;
         for(Pixel p: pixels)
         {
-            p.state = 1;
             p.health = health;
             p.groupFlag = -1;
-            if (pMap[p.row + 1][p.col] == null)
+            p.state = infoMap[p.row][p.col].originalState;
+            if(p.state > 0)
             {
-                p.state = 2;
-            }
-            else if (pMap[p.row - 1][p.col] == null)
-            {
-                p.state = 2;
-            }
-            else if (pMap[p.row][p.col + 1] == null)
-            {
-                p.state = 2;
-            }
-            else if (pMap[p.row][p.col - 1] == null)
-            {
-                p.state = 2;
+                nL++;
+                if (pMap[p.row + 1][p.col] == null)
+                {
+                    p.state = 2;
+                }
+                else if (pMap[p.row - 1][p.col] == null)
+                {
+                    p.state = 2;
+                }
+                else if (pMap[p.row][p.col + 1] == null)
+                {
+                    p.state = 2;
+                }
+                else if (pMap[p.row][p.col - 1] == null)
+                {
+                    p.state = 2;
+                }
             }
             updatePixel(p);
         }
         collidableLive = true;
         needsUpdate = true;
-        numLivePixels = totalPixels;
+        numLivePixels = nL;
     }
 
     public void move(float mX, float mY)
@@ -376,7 +378,19 @@ public class  PixelGroup extends Collidable
         {
             if(p.state > 0)
             {
-                if (pMap[p.row + 1][p.col] != null &&
+                if (pMap[p.row][p.col - 1] != null &&
+                        pMap[p.row][p.col - 1].state == 0 &&
+                        resNum > 0)
+                {
+                    resNum = revivePixelHelper(pMap[p.row][p.col - 1], resNum);
+                }
+                else if (pMap[p.row][p.col + 1] != null &&
+                        pMap[p.row][p.col + 1].state == 0 &&
+                        resNum > 0)
+                {
+                    resNum = revivePixelHelper(pMap[p.row][p.col + 1], resNum);
+                }
+                else if (pMap[p.row + 1][p.col] != null &&
                         pMap[p.row + 1][p.col].state == 0 &&
                         resNum > 0)
                 {
@@ -387,18 +401,6 @@ public class  PixelGroup extends Collidable
                         resNum > 0)
                 {
                     resNum = revivePixelHelper(pMap[p.row - 1][p.col], resNum);
-                }
-                else if (pMap[p.row][p.col + 1] != null &&
-                        pMap[p.row][p.col + 1].state == 0 &&
-                        resNum > 0)
-                {
-                    resNum = revivePixelHelper(pMap[p.row][p.col + 1], resNum);
-                }
-                else if (pMap[p.row][p.col - 1] != null &&
-                        pMap[p.row][p.col - 1].state == 0 &&
-                        resNum > 0)
-                {
-                    resNum = revivePixelHelper(pMap[p.row][p.col - 1], resNum);
                 }
             }
             if(resNum <= 0)
@@ -474,7 +476,19 @@ public class  PixelGroup extends Collidable
         numLivePixels++;
         resNum--;
 
-        if (pMap[p.row + 1][p.col] != null &&
+        if (pMap[p.row][p.col - 1] != null &&
+                pMap[p.row][p.col - 1].state == 0 &&
+                resNum > 0)
+        {
+            resNum = revivePixelHelper(pMap[p.row][p.col - 1], resNum);
+        }
+        else if (pMap[p.row][p.col + 1] != null &&
+                pMap[p.row][p.col + 1].state == 0 &&
+                resNum > 0)
+        {
+            resNum = revivePixelHelper(pMap[p.row][p.col + 1], resNum);
+        }
+        else if (pMap[p.row + 1][p.col] != null &&
                 pMap[p.row + 1][p.col].state == 0 &&
                 resNum > 0)
         {
@@ -485,18 +499,6 @@ public class  PixelGroup extends Collidable
                 resNum > 0)
         {
             resNum = revivePixelHelper(pMap[p.row - 1][p.col], resNum);
-        }
-        else if (pMap[p.row][p.col + 1] != null &&
-                pMap[p.row][p.col + 1].state == 0 &&
-                resNum > 0)
-        {
-            resNum = revivePixelHelper(pMap[p.row][p.col + 1], resNum);
-        }
-        else if (pMap[p.row][p.col - 1] != null &&
-                pMap[p.row][p.col - 1].state == 0 &&
-                resNum > 0)
-        {
-            resNum = revivePixelHelper(pMap[p.row][p.col - 1], resNum);
         }
 
         return resNum;
@@ -566,7 +568,7 @@ public class  PixelGroup extends Collidable
             }
         }
 
-        PixelGroup te = new PixelGroup(
+        PixelGroup temp = new PixelGroup(
                 pArr,
                 halfSquareLength,
                 tempZones,
@@ -575,8 +577,10 @@ public class  PixelGroup extends Collidable
                 infoMap,
                 cloneMap
         );
-        te.restorable = restorable;
-        te.health = health;
-        return te;
+        temp.knockable = knockable;
+
+        temp.restorable = restorable;
+        temp.health = health;
+        return temp;
     }
 }

@@ -14,33 +14,14 @@ import com.example.sweet.Pixel_Invaders.Util.Factories.DropFactory;
 
 public class Tiny extends Enemy
 {
-    private Pixel[] thrusterPixels = new Pixel[Constants.tinyMThrustCoor.length/2];
-
     public Tiny(PixelGroup p, float xb, float yb, ParticleSystem ps, DropFactory dF, GlobalInfo gI)
     {
         super(p, ps, dF, xb, yb, gI);
-
-        for(int i = 0; i < Constants.tinyMThrustCoor.length; i += 2)
-        {
-            thrusterPixels[i / 2] = enemyBody.getpMap()[Constants.tinyMThrustCoor[i + 1] + 1][Constants.tinyMThrustCoor[i] + 1];
-        }
-
-        thrusters = new ThrustComponent[1];
-        thrusters[0] = new ThrustComponent(thrusterPixels, 0, 0, 0, 1);
-
-        baseSpeed = .007f;
-        enemyBody.speed = baseSpeed;
-        p.speed = baseSpeed;
     }
 
     public Tiny(PixelGroup p, float xb, float yb, ParticleSystem ps, DropFactory dF, float difficulty, float delay, GlobalInfo gI)
     {
         super(p, ps, dF, xb, yb, delay, gI);
-
-        for(int i = 0; i < Constants.tinyMThrustCoor.length; i += 2)
-        {
-            thrusterPixels[i / 2] = enemyBody.getpMap()[Constants.tinyMThrustCoor[i + 1] + 1][Constants.tinyMThrustCoor[i] + 1];
-        }
 
         float power = 1;
         if(difficulty <= 20)
@@ -52,7 +33,7 @@ public class Tiny extends Enemy
             power = 3;
         }
         thrusters = new ThrustComponent[1];
-        thrusters[0] = new ThrustComponent(thrusterPixels, 0, 0, 0, power);
+        thrusters[0] = new ThrustComponent(enemyBody, power, Constants.tinyMThrustCoor);
 
         baseSpeed = .007f;
         enemyBody.speed = baseSpeed;
@@ -73,7 +54,7 @@ public class Tiny extends Enemy
         y += -tempDistY;
         enemyBody.move(-tempDistX, -tempDistY);
 
-        addThrustParticles(thrusterPixels, 1, .03f, enemyBody);
+        addThrustParticles(thrusters[0].getAttachmentPixels(), 1, .03f, enemyBody);
     }
 
     public Tiny clone(float difficulty, float delay)

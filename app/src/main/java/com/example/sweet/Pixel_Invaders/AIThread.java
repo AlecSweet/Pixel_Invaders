@@ -83,24 +83,14 @@ public class AIThread implements Runnable
     
     private void update()
     {
-        timeEngine.runEngine();
-        //player1.shoot(currentFrame, globalInfo);
-        player1.handleDrops();
-        player1.shoot();
-        //player1.consumableCollisionCheck();
-        //player1.moveConsumables();
-        //player1.moveCamera();
-        player1.handleScreenShake(globalInfo.gameSettings.screenShakePercent);
-        player1.checkRegen();
-        float r = player1.rift.checkState(player1, globalInfo);
-        if(r > 0)
+        timeEngine.update();
+        player1.update();
+
+        float amplitude = player1.rift.checkState(player1, globalInfo);
+        if(amplitude > 0)
         {
-            timeEngine.addSlow(r, player1.rift.getSlowDuration(), POW2_FADEIN_FADEOUT);
+            timeEngine.addSlow(amplitude, player1.rift.getSlowDuration(), POW2_FADEIN_FADEOUT);
         }
-        //globalInfo.publishScreenShift(player1.xScreenShift - player1.screenShakeX, player1.yScreenShift - player1.screenShakeY);
-        globalInfo.screenShiftX = player1.xScreenShift - player1.screenShakeX;
-        globalInfo.screenShiftY = player1.yScreenShift - player1.screenShakeY;
-        //player1.checkDropsOnScreen();
 
         enemyActions();
     }
@@ -113,14 +103,9 @@ public class AIThread implements Runnable
         {
             if(entities[i] != null && !entities[i].aiRemoveConsensus)
             {
-                /*if(!entities[i].aiRecognized)
-                {
-                    entities[i].aiRecognized = true;
-                }
-                if(entities[i].aiRecognized)*/
                 if(entities[i].spawned)
                 {
-                    if (entities[i].getPixelGroup().getCollidableLive())
+                    if (entities[i].live)
                     {
                         if (entities[i].checkOverlap)
                         {
@@ -141,33 +126,10 @@ public class AIThread implements Runnable
                                 player1.getPixelGroup().getCenterY()
                         );
 
-                        if (entities[i].getPixelGroup().getCollidableLive())
-                        {
-                            float difX = Math.abs(entities[i].getX() - player1.xScreenShift) * globalInfo.getScaleX();
-                            float difY = Math.abs(entities[i].getY() - player1.yScreenShift) * globalInfo.getScaleY();
-                            if (difX <= (1 + entities[i].getPixelGroup().getHalfSquareLength()) &&
-                                    difY <= (1 + entities[i].getPixelGroup().getHalfSquareLength()))
-                            {
-                                entities[i].onScreen = true;
-                                if (difX <= 1 && difY <= 1)
-                                {
-                                    entities[i].inRange = true;
-                                }
-                                else
-                                {
-                                    entities[i].inRange = false;
-                                }
-                            }
-                            else
-                            {
-                                entities[i].onScreen = false;
-                            }
-                        }
-
                         if (entities[i].getPixelGroup().readyToScreenShake && entities[i].getPixelGroup().pixelsKilled > 0)
                         {
                             player1.shakeEngine.addShake(
-                                    (float) (.002f * Math.sqrt(entities[i].getPixelGroup().pixelsKilled)),
+                                    (float) (.004f * Math.sqrt(entities[i].getPixelGroup().pixelsKilled)),
                                     120,
                                     500
                             );
@@ -186,7 +148,6 @@ public class AIThread implements Runnable
                                 entities[i].consumables[d] = null;
                             }
                         }
-
                     }
                     else
                     {
@@ -201,10 +162,6 @@ public class AIThread implements Runnable
                         }
                         entities[i].aiRemoveConsensus = true;
                     }
-                }
-                else
-                {
-                    entities[i].checkSpawned();
                 }
                 clearedTemp = false;
             }

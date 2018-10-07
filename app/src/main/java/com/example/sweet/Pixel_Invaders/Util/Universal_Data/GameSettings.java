@@ -10,12 +10,15 @@ public class GameSettings
             particlePercent = 1,
             musicPercent = 1,
             soundPercent = 1,
-            screenShakePercent = 1;
+            screenShakePercent = 1,
+            joyStickSize = 1;
 
     public boolean
             doubleTapPause = true,
             slowOnKill = true,
-            showFps = false;
+            showFps = false,
+            skipIntros = true,
+            staticJoysticks = false;
 
 
     public GameSettings()
@@ -57,6 +60,26 @@ public class GameSettings
                     doubleTapPause = true;
                 }
                 break;
+            case 3:
+                if(skipIntros)
+                {
+                    skipIntros = false;
+                }
+                else
+                {
+                    skipIntros = true;
+                }
+                break;
+            case 5:
+                if(staticJoysticks)
+                {
+                    staticJoysticks = false;
+                }
+                else
+                {
+                    staticJoysticks = true;
+                }
+                break;
         }
     }
 
@@ -67,6 +90,8 @@ public class GameSettings
             case 0: return slowOnKill;
             case 1: return showFps;
             case 2: return doubleTapPause;
+            case 3: return skipIntros;
+            case 5: return staticJoysticks;
             default: return false;
         }
     }
@@ -79,6 +104,7 @@ public class GameSettings
             case 1: screenShakePercent = percent; break;
             case 2: musicPercent = percent; break;
             case 3: soundPercent = percent; break;
+            case 4: joyStickSize = percent; break;
         }
     }
 }

@@ -18,9 +18,9 @@ public class ModComponent extends Component
 
     private float modValue = 1;
 
-    public ModComponent(Pixel[] p, float x, float y, float a, Constants.DropType mType, int mLevel)
+    public ModComponent(Constants.DropType mType, int mLevel)
     {
-        super(p, x, y, a, mType);
+        super(null, mType, null);
         modType = mType;
         modLevel = mLevel;
         if(modLevel > 4)
@@ -30,7 +30,7 @@ public class ModComponent extends Component
         switch (modType)
         {
             case FIRE_RATE:
-                modValue += .1 * mLevel;
+                modValue = .08f * mLevel;
                 break;
             case EXTRA_SHOTS:
                 modValue = mLevel;
@@ -104,15 +104,15 @@ public class ModComponent extends Component
             switch (modType)
             {
                 case FIRE_RATE:
-                    gun.fireRateMod /= modValue;
+                    gun.fireRateMod -= modValue;
+                    if(gun.fireRateMod <= .3f)
+                    {
+                        gun.fireRateMod = .3f;
+                    }
                     bulletPoolUpdate = true;
                     break;
                 case EXTRA_SHOTS:
                     gun.numShots += modValue;
-                    if(gun.numShots > 8)
-                    {
-                        gun.numShots = 8;
-                    }
                     bulletPoolUpdate = true;
                     break;
                 case PRECISION:
@@ -140,7 +140,11 @@ public class ModComponent extends Component
             switch (modType)
             {
                 case FIRE_RATE:
-                    gun.fireRateMod *= modValue;
+                    gun.fireRateMod += modValue;
+                    if(gun.fireRateMod >= 1f)
+                    {
+                        gun.fireRateMod = 1f;
+                    }
                     break;
                 case EXTRA_SHOTS:
                     gun.numShots -= modValue;

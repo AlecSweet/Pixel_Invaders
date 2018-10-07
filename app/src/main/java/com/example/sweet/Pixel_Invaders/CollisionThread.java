@@ -1,8 +1,7 @@
 package com.example.sweet.Pixel_Invaders;
 
-import android.content.Context;
-
 import com.example.sweet.Pixel_Invaders.Game_Objects.Component_System.Drop;
+import com.example.sweet.Pixel_Invaders.Game_Objects.Component_System.PixelGroupComponent;
 import com.example.sweet.Pixel_Invaders.Game_Objects.Enemies.Enemy;
 import com.example.sweet.Pixel_Invaders.Game_Objects.Component_System.Bullet;
 import com.example.sweet.Pixel_Invaders.Game_Objects.Player;
@@ -19,10 +18,9 @@ public class CollisionThread implements Runnable
     volatile float averageFrameTime = 0;
     volatile boolean
             running = true,
-            block = false,
-            inBlock = false;
+            block = false;
 
-    volatile long currentFrame = 0;
+    private long currentFrame = 0;
     volatile long frameRequest = 0;
     long lowestFrame;
 
@@ -72,97 +70,11 @@ public class CollisionThread implements Runnable
         {
             if(entities[i] != null && !entities[i].collisionRemoveConsensus)
             {
-                /*if(!entities[i].collisionRecognized)
-                {
-                    entities[i].collisionRecognized = true;
-                }
-                if(entities[i].collisionRecognized)*/
+                entities[i].checkStatus();
+
                 if(entities[i].spawned)
                 {
-                    if (entities[i].getPixelGroup().getTotalPixels() * entities[i].getPixelGroup().getLivablePercentage() >
-                            entities[i].getPixelGroup().numLivePixels)
-                    {
-                        entities[i].getPixelGroup().setCollidableLive(false);
-                    }
-
-                    if (entities[i].getPixelGroup().getCollidableLive())
-                    {
-                        // Player -> Entity
-                        int numKilled = 0;
-
-                        if (entities[i].inRange)
-                        {
-                            numKilled += collisionHandler.checkCollisions(player1.getPixelGroup(), entities[i].getPixelGroup());
-                        }
-
-                        // Player Gun's Bullets -> Entity
-                        for (Drop d : player1.getGuns())
-                        {
-                            if (d != null && d.component != null)
-                            {
-                                for (Bullet b : ((GunComponent) d.component).gun.getBullets())
-                                {
-                                    if (b.getLive())
-                                    {
-                                        //int t = numKilled;
-                                        numKilled += collisionHandler.checkCollisions(b.pixelGroup, entities[i].getPixelGroup());
-                                        /*if (numKilled > t)
-                                        {
-                                            System.out.println(
-                                                    " Size: " + entities[i].getPixelGroup().totalPixels +
-                                                            " Spawned: " + entities[i].spawned +
-                                                            " live: " + entities[i].getPixelGroup().getCollidableLive() +
-                                                            " X: " + entities[i].getPixelGroup().getCenterX() +
-                                                            " Y: " + entities[i].getPixelGroup().getCenterY() +
-                                                            " Asteroid: " + entities[i].isAsteriod +
-                                                            " Spawned: " + entities[i].spawned
-                                            );
-                                            System.out.println(
-                                                    " X: " + b.pixelGroup.getCenterX() +
-                                                            " Y: " + b.pixelGroup.getCenterY()
-                                            );
-                                        }*/
-                                    }
-                                }
-                            }
-                        }
-
-                        // Entity Gun's Bullets -> Player
-                        if (entities[i].getHasGun())
-                        {
-                            for (GunComponent gc : entities[i].getGunComponents())
-                            {
-                                if (gc != null)
-                                {
-                                    for (Bullet b : gc.gun.getBullets())
-                                    {
-                                        if (b.getLive())
-                                        {
-                                            numKilled += collisionHandler.checkCollisions(b.pixelGroup, player1.getPixelGroup());
-                                        }
-                                    }
-                                }
-                            }
-                        }
-
-                        if (numKilled > 0)
-                        {
-                            totalKilled += numKilled;
-                            entities[i].collisionOccured();
-                        }
-                    }
-                    else if (!entities[i].getPixelGroup().getCollidableLive() || entities[i].uiRemoveConsensus)
-                    {
-                        if (!entities[i].getPixelGroup().getCollidableLive())
-                        {
-                            collisionHandler.destroyCollidableAnimation(entities[i].getPixelGroup());
-                        }
-                        entities[i].collisionRemoveConsensus = true;
-                    }
-                }
-                else
-                {
-                    entities[i].checkSpawned();
+                    totalKilled += entities[i].checkCollision(player1, collisionHandler);
                 }
                 clearedTemp = false;
             }
@@ -176,9 +88,8 @@ public class CollisionThread implements Runnable
         {
             levelClearedConsensus = true;
         }
-        player1.collisionOccured(totalKilled);
-        //player1.consumableCollisionCheck();
 
+        player1.collisionOccured(totalKilled);
         consumeCollisionLocations();
     }
 
@@ -228,6 +139,18 @@ public class CollisionThread implements Runnable
                         }
                     }
                 }
+                if(e.getHasAttachments() && e.getAttachments() != null)
+                {
+                    for(PixelGroupComponent pGC: e.getAttachments())
+                    {
+                        if(pGC.live)
+                        {
+                            checkLowestHelper(pGC.getPixelGroup().consumeCollisionLocation(frameRequest));
+                            pGC.getPixelGroup().readyToKnockback = true;
+                            pGC.getPixelGroup().readyToScreenShake = true;
+                        }
+                    }
+                }
                 e.getPixelGroup().readyToKnockback = true;
                 e.getPixelGroup().readyToScreenShake = true;
             }
@@ -258,7 +181,6 @@ public class CollisionThread implements Runnable
     {
         if(block)
         {
-            inBlock = true;
             synchronized (lock)
             {
                 try
@@ -271,7 +193,6 @@ public class CollisionThread implements Runnable
                 }
             }
             block = false;
-            inBlock = false;
         }
     }
 

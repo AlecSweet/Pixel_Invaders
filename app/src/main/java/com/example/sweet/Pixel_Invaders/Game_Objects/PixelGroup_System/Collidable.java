@@ -102,7 +102,7 @@ public class Collidable
         locationDrawTail = new LocationHistory(4f, 4f);
         locationCollisionTail = locationDrawTail;
         locationHead = locationDrawTail;
-        for(int i = 0; i < 6; i++)
+        for(int i = 0; i < 4; i++)
         {
             locationHead.nextLocation = new LocationHistory(4f,4f);
             locationHead = locationHead.nextLocation;
@@ -132,7 +132,7 @@ public class Collidable
         locationDrawTail = new LocationHistory(4f, 4f);
         locationCollisionTail = locationDrawTail;
         locationHead = locationDrawTail;
-        for(int i = 0; i < 8; i++)
+        for(int i = 0; i < 4; i++)
         {
             locationHead.nextLocation = new LocationHistory(4f,4f);
             locationHead = locationHead.nextLocation;
@@ -161,7 +161,7 @@ public class Collidable
         locationDrawTail = new LocationHistory(4f, 4f);
         locationCollisionTail = locationDrawTail;
         locationHead = locationDrawTail;
-        for(int i = 0; i < 6; i++)
+        for(int i = 0; i < 4; i++)
         {
             locationHead.nextLocation = new LocationHistory(4f,4f);
             locationHead = locationHead.nextLocation;
@@ -332,47 +332,6 @@ public class Collidable
         if(p.health <= 0)
         {
             killPixel(p);
-            /*Pixel temp;
-            p.state = 0;
-            temp = pMap[p.row + 1][p.col];
-            if (temp != null && temp.state == 1)
-            {
-                temp.xDisp = infoMap[temp.row][temp.col].xOriginal * cosA +
-                        infoMap[temp.row][temp.col].yOriginal * sinA;
-                temp.yDisp = infoMap[temp.row][temp.col].yOriginal * cosA -
-                        infoMap[temp.row][temp.col].xOriginal * sinA;
-                temp.state = 3;
-            }
-
-            temp = pMap[p.row - 1][p.col];
-            if (temp != null && temp.state == 1)
-            {
-                temp.xDisp = infoMap[temp.row][temp.col].xOriginal * cosA +
-                        infoMap[temp.row][temp.col].yOriginal * sinA;
-                temp.yDisp = infoMap[temp.row][temp.col].yOriginal * cosA -
-                        infoMap[temp.row][temp.col].xOriginal * sinA;
-                temp.state = 3;
-            }
-
-            temp = pMap[p.row][p.col + 1];
-            if (temp != null && temp.state == 1)
-            {
-                temp.xDisp = infoMap[temp.row][temp.col].xOriginal * cosA +
-                        infoMap[temp.row][temp.col].yOriginal * sinA;
-                temp.yDisp = infoMap[temp.row][temp.col].yOriginal * cosA -
-                        infoMap[temp.row][temp.col].xOriginal * sinA;
-                temp.state = 3;
-            }
-
-            temp = pMap[p.row][p.col - 1];
-            if (temp != null && temp.state == 1)
-            {
-                temp.xDisp = infoMap[temp.row][temp.col].xOriginal * cosA +
-                        infoMap[temp.row][temp.col].yOriginal * sinA;
-                temp.yDisp = infoMap[temp.row][temp.col].yOriginal * cosA -
-                        infoMap[temp.row][temp.col].xOriginal * sinA;
-                temp.state = 3;
-            }*/
         }
     }
 
@@ -380,36 +339,41 @@ public class Collidable
     {
         centerX = mX;
         centerY = mY;
-        //move(0,0);
     }
 
     public void resetPixels()
     {
+        int nL = 0;
         for(Pixel p: pixels)
         {
-            p.state = 1;
+
             p.health = health;
             p.groupFlag = -1;
-            if (pMap[p.row + 1][p.col] == null)
+            p.state = infoMap[p.row][p.col].originalState;
+            if(p.state > 0)
             {
-                p.state = 2;
-            }
-            else if (pMap[p.row - 1][p.col] == null)
-            {
-                p.state = 2;
-            }
-            else if (pMap[p.row][p.col + 1] == null)
-            {
-                p.state = 2;
-            }
-            else if (pMap[p.row][p.col - 1] == null)
-            {
-                p.state = 2;
+                nL++;
+                if (pMap[p.row + 1][p.col] == null)
+                {
+                    p.state = 2;
+                }
+                else if (pMap[p.row - 1][p.col] == null)
+                {
+                    p.state = 2;
+                }
+                else if (pMap[p.row][p.col + 1] == null)
+                {
+                    p.state = 2;
+                }
+                else if (pMap[p.row][p.col - 1] == null)
+                {
+                    p.state = 2;
+                }
             }
         }
         collidableLive = true;
         needsUpdate = true;
-        numLivePixels = totalPixels;
+        numLivePixels = nL;
     }
 
     public void knockBack(float tempDistX, float tempDistY)
@@ -606,19 +570,8 @@ public class Collidable
         numLivePixels++;
         resNum--;
 
-        if (pMap[p.row + 1][p.col] != null &&
-                pMap[p.row + 1][p.col].state == 0 &&
-                resNum > 0)
-        {
-            resNum = revivePixelHelper(pMap[p.row + 1][p.col], resNum);
-        }
-        else if (pMap[p.row - 1][p.col] != null &&
-                pMap[p.row - 1][p.col].state == 0 &&
-                resNum > 0)
-        {
-            resNum = revivePixelHelper(pMap[p.row - 1][p.col], resNum);
-        }
-        else if (pMap[p.row][p.col + 1] != null &&
+
+        if (pMap[p.row][p.col + 1] != null &&
                 pMap[p.row][p.col + 1].state == 0 &&
                 resNum > 0)
         {
@@ -629,6 +582,18 @@ public class Collidable
                 resNum > 0)
         {
             resNum = revivePixelHelper(pMap[p.row][p.col - 1], resNum);
+        }
+        else if (pMap[p.row + 1][p.col] != null &&
+                pMap[p.row + 1][p.col].state == 0 &&
+                resNum > 0)
+        {
+            resNum = revivePixelHelper(pMap[p.row + 1][p.col], resNum);
+        }
+        else if (pMap[p.row - 1][p.col] != null &&
+                pMap[p.row - 1][p.col].state == 0 &&
+                resNum > 0)
+        {
+            resNum = revivePixelHelper(pMap[p.row - 1][p.col], resNum);
         }
 
         return resNum;

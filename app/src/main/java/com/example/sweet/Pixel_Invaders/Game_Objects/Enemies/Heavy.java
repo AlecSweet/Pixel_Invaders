@@ -16,64 +16,20 @@ import com.example.sweet.Pixel_Invaders.Util.Factories.DropFactory;
 
 public class Heavy extends Enemy
 {
-    private Pixel[] mainThrusterPixels = new Pixel[Constants.heavyThrustCoors[1].length/2];
-    private Pixel[] leftThrusterPixels = new Pixel[Constants.heavyThrustCoors[0].length/2];
-    private Pixel[] rightThrusterPixels = new Pixel[Constants.heavyThrustCoors[2].length/2];
-    private Pixel[] gunPixels = new Pixel[Constants.heavyGunCoors.length/2];
-
     private float targetX, targetY;
 
     public Heavy(PixelGroup p, Gun g, ParticleSystem ps, DropFactory dF, float xb, float yb, GlobalInfo gI)
     {
         super(p, ps, dF, xb, yb, gI);
 
-        for(int i = 0; i < Constants.heavyThrustCoors[1].length; i += 2)
-        {
-            mainThrusterPixels[i / 2] = enemyBody.getpMap()[Constants.heavyThrustCoors[1][i + 1] + 1][Constants.heavyThrustCoors[1][i] + 1];
-        }
-        for(int i = 0; i < Constants.heavyThrustCoors[0].length; i += 2)
-        {
-            leftThrusterPixels[i / 2] = enemyBody.getpMap()[Constants.heavyThrustCoors[0][i + 1] + 1][Constants.heavyThrustCoors[0][i] + 1];
-            rightThrusterPixels[i / 2] = enemyBody.getpMap()[Constants.heavyThrustCoors[2][i + 1] + 1][Constants.heavyThrustCoors[2][i] + 1];
-        }
-        for(int i = 0; i < Constants.heavyGunCoors.length; i += 2)
-        {
-            gunPixels[i / 2] = enemyBody.getpMap()[Constants.heavyGunCoors[i + 1] + 1][Constants.heavyGunCoors[i] + 1];
-        }
-
         guns = new GunComponent[1];
-        guns[0] = new GunComponent(gunPixels, 0, 0, 0, g);
+        guns[0] = new GunComponent(enemyBody, 0, 0, 0, g, Constants.heavyGunCoors);
         hasGun = true;
-        thrusters = new ThrustComponent[3];
-        thrusters[0] = new ThrustComponent(leftThrusterPixels, 0, 0, 0, 2);
-        thrusters[1] = new ThrustComponent(mainThrusterPixels, 0, 0, 0, 2);
-        thrusters[2] = new ThrustComponent(rightThrusterPixels, 0, 0, 0, 2);
-
-        baseSpeed = .004f;
-        rotateSpeed = .03f;
-        enemyBody.speed = baseSpeed;
-
-        targetX = (float)(Math.random()) * xbound * 2 - xbound;
-        targetY = (float)(Math.random()) * ybound * 2 - ybound;
     }
 
     private Heavy(PixelGroup p, Gun g, ParticleSystem ps, DropFactory dF, float xb, float yb, float difficulty, float delay, GlobalInfo gI)
     {
         super(p, ps, dF, xb, yb, delay, gI);
-
-        for(int i = 0; i < Constants.heavyThrustCoors[1].length; i += 2)
-        {
-            mainThrusterPixels[i / 2] = enemyBody.getpMap()[Constants.heavyThrustCoors[1][i + 1] + 1][Constants.heavyThrustCoors[1][i] + 1];
-        }
-        for(int i = 0; i < Constants.heavyThrustCoors[0].length; i += 2)
-        {
-            leftThrusterPixels[i / 2] = enemyBody.getpMap()[Constants.heavyThrustCoors[0][i + 1] + 1][Constants.heavyThrustCoors[0][i] + 1];
-            rightThrusterPixels[i / 2] = enemyBody.getpMap()[Constants.heavyThrustCoors[2][i + 1] + 1][Constants.heavyThrustCoors[2][i] + 1];
-        }
-        for(int i = 0; i < Constants.heavyGunCoors.length; i += 2)
-        {
-            gunPixels[i / 2] = enemyBody.getpMap()[Constants.heavyGunCoors[i + 1] + 1][Constants.heavyGunCoors[i] + 1];
-        }
 
         float power = 1;
         float del = 1;
@@ -96,17 +52,16 @@ public class Heavy extends Enemy
         }
 
         guns = new GunComponent[1];
-        guns[0] = new GunComponent(gunPixels, 0, 0, 0, g);
+        guns[0] = new GunComponent(enemyBody, 0, 0, 0, g, Constants.heavyGunCoors);
         guns[0].gun.reduceSpread(sprd);
         guns[0].gun.incSpeed(shotspd);
         guns[0].gun.reduceDelay(del);
 
         hasGun = true;
-
         thrusters = new ThrustComponent[3];
-        thrusters[0] = new ThrustComponent(leftThrusterPixels, 0, 0, 0, power);
-        thrusters[1] = new ThrustComponent(mainThrusterPixels, 0, 0, 0, power);
-        thrusters[2] = new ThrustComponent(rightThrusterPixels, 0, 0, 0, power);
+        thrusters[0] = new ThrustComponent(enemyBody, power, Constants.heavyThrustCoors[0]);
+        thrusters[1] = new ThrustComponent(enemyBody, power, Constants.heavyThrustCoors[1]);
+        thrusters[2] = new ThrustComponent(enemyBody, power, Constants.heavyThrustCoors[2]);
 
         baseSpeed = .004f;
         rotateSpeed = .03f;
@@ -154,7 +109,7 @@ public class Heavy extends Enemy
         }
         guns[0].gun.move(globalInfo);
 
-        addThrustParticles(mainThrusterPixels, 1, .05f, enemyBody);
+        addThrustParticles(thrusters[1].getAttachmentPixels(), 1, .05f, enemyBody);
     }
 
     public void rotate(float angleMoving, float ratio, float slow)
@@ -199,11 +154,11 @@ public class Heavy extends Enemy
         {
             if (delta < -Math.PI || (delta > 0 && delta < Math.PI))
             {
-                addThrustParticles(leftThrusterPixels, ratio, .042f, enemyBody);
+                addThrustParticles(thrusters[0].getAttachmentPixels(), ratio, .042f, enemyBody);
             }
             else
             {
-                addThrustParticles(rightThrusterPixels, ratio, .042f, enemyBody);
+                addThrustParticles(thrusters[2].getAttachmentPixels(), ratio, .042f, enemyBody);
             }
         }
 

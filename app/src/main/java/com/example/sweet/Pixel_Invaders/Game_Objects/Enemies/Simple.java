@@ -32,45 +32,14 @@ public class Simple extends Enemy
     public Simple(PixelGroup p, Gun g, ParticleSystem ps, DropFactory dF, float xb, float yb, GlobalInfo gI)
     {
         super(p, ps, dF, xb, yb, gI);
-
-        for(int i = 0; i < Constants.simpleMThrustCoor.length; i += 2)
-        {
-            thrusterPixels[i / 2] = enemyBody.getpMap()[Constants.simpleMThrustCoor[i + 1] + 1][Constants.simpleMThrustCoor[i] + 1];
-        }
-
-        for(int i = 0; i < Constants.simpleGunCoor.length; i += 2)
-        {
-            gun1Pixels[i / 2] = enemyBody.getpMap()[Constants.simpleGunCoor[i + 1] + 1][Constants.simpleGunCoor[i] + 1];
-        }
-
         guns = new GunComponent[1];
-        guns[0] = new GunComponent(gun1Pixels, Constants.simpleGunOffset[0], Constants.simpleGunOffset[1], 0, g);
+        guns[0] = new GunComponent(enemyBody, Constants.simpleGunOffset[0], Constants.simpleGunOffset[1], 0, g, Constants.simpleGunCoor);
         hasGun = true;
-
-        thrusters = new ThrustComponent[1];
-        thrusters[0] = new ThrustComponent(thrusterPixels, 0, 0, 0, 2);
-
-        enemyBody.angle = 3.14f;
-        enemyBody.rotate(enemyBody.angle);
-
-        baseSpeed = .005f;
-        enemyBody.speed = baseSpeed;
-        p.speed = baseSpeed;
     }
 
     private Simple(PixelGroup p, Gun g, ParticleSystem ps, DropFactory dF, float xb, float yb, float difficulty, float delay, GlobalInfo gI)
     {
         super(p, ps, dF, xb, yb, delay, gI);
-
-        for(int i = 0; i < Constants.simpleMThrustCoor.length; i += 2)
-        {
-            thrusterPixels[i / 2] = enemyBody.getpMap()[Constants.simpleMThrustCoor[i + 1] + 1][Constants.simpleMThrustCoor[i] + 1];
-        }
-
-        for(int i = 0; i < Constants.simpleGunCoor.length; i += 2)
-        {
-            gun1Pixels[i / 2] = enemyBody.getpMap()[Constants.simpleGunCoor[i + 1] + 1][Constants.simpleGunCoor[i] + 1];
-        }
 
         float power = 1;
         float del = 1;
@@ -93,16 +62,15 @@ public class Simple extends Enemy
         }
 
         guns = new GunComponent[1];
-        guns[0] = new GunComponent(gun1Pixels, Constants.simpleGunOffset[0], Constants.simpleGunOffset[1], 0, g);
+        guns[0] = new GunComponent(enemyBody, Constants.simpleGunOffset[0], Constants.simpleGunOffset[1], 0, g, Constants.simpleGunCoor);
         guns[0].gun.reduceSpread(sprd);
         guns[0].gun.incSpeed(shotspd);
         guns[0].gun.reduceDelay(del);
 
-
         hasGun = true;
 
         thrusters = new ThrustComponent[1];
-        thrusters[0] = new ThrustComponent(thrusterPixels, 0, 0, 0, power);
+        thrusters[0] = new ThrustComponent(enemyBody, power, Constants.simpleMThrustCoor);
 
         enemyBody.angle = 3.14f;
         enemyBody.rotate(enemyBody.angle);
@@ -172,7 +140,7 @@ public class Simple extends Enemy
         {
             guns[0].gun.move(globalInfo);
         }
-        addThrustParticles(thrusterPixels, ratio, .03f, enemyBody);
+        addThrustParticles(thrusters[0].getAttachmentPixels(), ratio, .03f, enemyBody);
     }
 
     public void rotate(float angleMoving, float rotateSpeed, float slow)

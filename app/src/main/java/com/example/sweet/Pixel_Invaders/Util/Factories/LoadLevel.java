@@ -78,14 +78,17 @@ public class LoadLevel implements Callable<Level>
         }
         for(int i = 0; i < difficulty / 2 + 4; i++)
         {
-            switch((int)(Math.random()*5.99))
+            switch((int)(Math.random()*4.5))
             {
                 case 0: enemies[iter] = enemyFactory.getNewEnemy(ASTEROID_GREY_TINY, difficulty, (float)Math.random() * .5f * delay); break;
                 case 1: enemies[iter] = enemyFactory.getNewEnemy(ASTEROID_GREY_SMALL, difficulty, (float)Math.random() * .5f * delay); break;
-                case 2: enemies[iter] = enemyFactory.getNewEnemy(ASTEROID_GREY_TINY, difficulty, (float)Math.random() * .5f * delay); break;
-                case 3: enemies[iter] = enemyFactory.getNewEnemy(ASTEROID_RED_SMALL, difficulty, (float)Math.random() * .5f * delay); break;
-                case 4: enemies[iter] = enemyFactory.getNewEnemy(ASTEROID_RED_TINY, difficulty, (float)Math.random() * .5f * delay); break;
-                case 5: enemies[iter] = enemyFactory.getNewEnemy(ASTEROID_RED_MEDIUM, difficulty, (float)Math.random() * .5f * delay); break;
+                case 2: enemies[iter] = enemyFactory.getNewEnemy(ASTEROID_RED_SMALL, difficulty, (float)Math.random() * .5f * delay); break;
+                case 3: enemies[iter] = enemyFactory.getNewEnemy(ASTEROID_RED_TINY, difficulty, (float)Math.random() * .5f * delay); break;
+                case 4: switch ((int)(Math.random()*1.5))
+                        {
+                            case 0: enemies[iter] = enemyFactory.getNewEnemy(ASTEROID_GREY_MEDIUM, difficulty, (float)Math.random() * .5f * delay); break;
+                            case 1: enemies[iter] = enemyFactory.getNewEnemy(ASTEROID_RED_MEDIUM, difficulty, (float)Math.random() * .5f * delay); break;
+                        } break;
             }
             backgroundEnemies[i] = enemies[iter];
             iter++;
@@ -95,6 +98,7 @@ public class LoadLevel implements Callable<Level>
             enemies[iter] = decideOnEnemy();
             iter++;
         }
+        enemies[iter] = enemyFactory.getNewEnemy(CENTIPEDE, 1, 0);
         Arrays.sort(enemies,comparator);
         return new Level(enemies, backgroundEnemies);
     }

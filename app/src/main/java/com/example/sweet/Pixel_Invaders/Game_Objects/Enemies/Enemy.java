@@ -2,12 +2,15 @@ package com.example.sweet.Pixel_Invaders.Game_Objects.Enemies;
 
 import com.example.sweet.Pixel_Invaders.Game_Objects.Component_System.Drop;
 import com.example.sweet.Pixel_Invaders.Game_Objects.Component_System.ModComponent;
+import com.example.sweet.Pixel_Invaders.Game_Objects.Component_System.PixelGroupComponent;
 import com.example.sweet.Pixel_Invaders.Game_Objects.Component_System.ThrustComponent;
 import com.example.sweet.Pixel_Invaders.Game_Objects.Component_System.Bullet;
 import com.example.sweet.Pixel_Invaders.Game_Objects.PixelGroup_System.Collidable;
 import com.example.sweet.Pixel_Invaders.Game_Objects.PixelGroup_System.Drawable;
 import com.example.sweet.Pixel_Invaders.Game_Objects.PixelGroup_System.PixelGroup;
+import com.example.sweet.Pixel_Invaders.Game_Objects.Player;
 import com.example.sweet.Pixel_Invaders.UI_System.ParticleSystem;
+import com.example.sweet.Pixel_Invaders.Util.CollisionHandler;
 import com.example.sweet.Pixel_Invaders.Util.Universal_Data.Constants;
 import com.example.sweet.Pixel_Invaders.Util.Universal_Data.GlobalInfo;
 import com.example.sweet.Pixel_Invaders.Game_Objects.Component_System.GunComponent;
@@ -36,6 +39,8 @@ public abstract class Enemy extends Drawable
 {
     protected PixelGroup enemyBody;
 
+    protected PixelGroupComponent[] attachments;
+
     protected ParticleSystem particleSystem;
 
     protected DropFactory dropFactory;
@@ -59,7 +64,9 @@ public abstract class Enemy extends Drawable
             ybound,
             rotateSpeed;
 
-    public boolean inBackground = false, isAsteriod = false;
+    public boolean
+            inBackground = false,
+            isAsteriod = false;
 
     public float
             backgroundX,
@@ -69,7 +76,9 @@ public abstract class Enemy extends Drawable
             x,
             y;
 
-    boolean hasGun = false;
+    boolean
+            hasGun = false,
+            hasAttachments = false;
 
     public volatile boolean
             uiRemoveConsensus = false,
@@ -80,9 +89,7 @@ public abstract class Enemy extends Drawable
 
     public boolean
             live = true,
-            checkOverlap = true,
-            aiRecognized = false,
-            collisionRecognized = false;
+            checkOverlap = true;
 
     public Enemy(PixelGroup p, ParticleSystem ps, DropFactory dF, float xb, float yb, GlobalInfo gI)
     {
@@ -94,6 +101,7 @@ public abstract class Enemy extends Drawable
         dropFactory = dF;
         spawnDelay = 0;
         globalInfo = gI;
+
     }
 
     public Enemy(PixelGroup p, ParticleSystem ps, DropFactory dF, float xb, float yb, float delay, GlobalInfo gI)
@@ -223,7 +231,6 @@ public abstract class Enemy extends Drawable
     {
         for (Pixel p : pixels)
         {
-            //if(p.live)
             if (p != null && p.state >= 1)
             {
                 float xDisp = c.infoMap[p.row][p.col].xOriginal * enemyBody.cosA +
@@ -316,6 +323,15 @@ public abstract class Enemy extends Drawable
         return hasGun;
     }
 
+    public boolean getHasAttachments()
+    {
+        return hasAttachments;
+    }
+
+    public PixelGroupComponent[] getAttachments()
+    {
+        return attachments;
+    }
     public GunComponent[] getGunComponents()
     {
         return guns;
@@ -446,6 +462,193 @@ public abstract class Enemy extends Drawable
         }
     }
 
+    public void checkStatus()
+    {
+        if(live)
+        {
+            boolean temp = false;
+            if (getPixelGroup().getTotalPixels() * getPixelGroup().getLivablePercentage() >
+                    getPixelGroup().numLivePixels)
+            {
+                getPixelGroup().setCollidableLive(false);
+            }
+            float difX = Math.abs(enemyBody.getCenterX() - globalInfo.getScreenShiftX()) * globalInfo.getScaleX();
+            float difY = Math.abs(enemyBody.getCenterY() - globalInfo.getScreenShiftY()) * globalInfo.getScaleY();
+            if (difX <= (1 + getPixelGroup().getHalfSquareLength()) &&
+                    difY <= (1 + getPixelGroup().getHalfSquareLength()))
+            {
+                onScreen = true;
+                if (difX <= 1 && difY <= 1)
+                {
+                    inRange = true;
+                }
+                else
+                {
+                    inRange = false;
+                }
+            }
+            else
+            {
+                onScreen = false;
+            }
+            temp = getPixelGroup().getCollidableLive() || temp;
+            if (hasAttachments && attachments != null)
+            {
+                for (PixelGroupComponent pGC : attachments)
+                {
+                    if (pGC.getPixelGroup().getTotalPixels() * pGC.getPixelGroup().getLivablePercentage() >
+                            pGC.getPixelGroup().numLivePixels)
+                    {
+                        pGC.getPixelGroup().setCollidableLive(false);
+                    }
+
+                    difX = Math.abs(pGC.getPixelGroup().getCenterX() - globalInfo.getScreenShiftX()) * globalInfo.getScaleX();
+                    difY = Math.abs(pGC.getPixelGroup().getCenterY() - globalInfo.getScreenShiftY()) * globalInfo.getScaleY();
+                    if (difX <= (1 + pGC.getPixelGroup().getHalfSquareLength()) &&
+                            difY <= (1 + pGC.getPixelGroup().getHalfSquareLength()))
+                    {
+                        pGC.onScreen = true;
+                        if (difX <= 1 && difY <= 1)
+                        {
+                            pGC.inRange = true;
+                        }
+                        else
+                        {
+                            pGC.inRange = false;
+                        }
+                    }
+                    else
+                    {
+                        pGC.onScreen = false;
+                    }
+                    temp = pGC.getPixelGroup().getCollidableLive() || temp;
+                }
+            }
+            live = temp;
+        }
+        if(!spawned)
+        {
+            checkSpawned();
+        }
+
+        //float difX = Math.abs(entities[i].getX() - player1.xScreenShift) * globalInfo.getScaleX();
+        //float difY = Math.abs(entities[i].getY() - player1.yScreenShift) * globalInfo.getScaleY();
+
+    }
+
+    public int checkCollision(Player player, CollisionHandler collisionHandler)
+    {
+        int numKilled = 0;
+        if(live)
+        {
+            if (inRange)
+            {
+                numKilled += collisionHandler.checkCollisions(player.getPixelGroup(), enemyBody);
+            }
+
+            // Player Gun's Bullets -> Entity
+            for (Drop d : player.getGuns())
+            {
+                if (d != null && d.component != null)
+                {
+                    for (Bullet b : ((GunComponent) d.component).gun.getBullets())
+                    {
+                        if (b.getLive())
+                        {
+                            numKilled += collisionHandler.checkCollisions(b.pixelGroup, enemyBody);
+                        }
+                    }
+                }
+            }
+
+            // Entity Gun's Bullets -> Player
+            if (hasGun)
+            {
+                for (GunComponent gc : guns)
+                {
+                    if (gc != null)
+                    {
+                        for (Bullet b : gc.gun.getBullets())
+                        {
+                            if (b.getLive())
+                            {
+                                collisionHandler.checkCollisions(b.pixelGroup, player.getPixelGroup());
+                            }
+                        }
+                    }
+                }
+            }
+
+            if(hasAttachments && attachments != null)
+            {
+                for(PixelGroupComponent pGC: attachments)
+                {
+                    if(pGC.getPixelGroup().getCollidableLive())
+                    {
+                        if (pGC.inRange)
+                        {
+                            numKilled += collisionHandler.checkCollisions(player.getPixelGroup(), pGC.getPixelGroup());
+                        }
+
+                        for (Drop d : player.getGuns())
+                        {
+                            if (d != null && d.component != null)
+                            {
+                                for (Bullet b : ((GunComponent) d.component).gun.getBullets())
+                                {
+                                    if (b.getLive())
+                                    {
+                                        numKilled += collisionHandler.checkCollisions(b.pixelGroup, pGC.getPixelGroup());
+                                    }
+                                }
+                            }
+                        }
+
+                        if (pGC.getHasGun())
+                        {
+                            for (GunComponent gc : pGC.getGuns())
+                            {
+                                if (gc != null)
+                                {
+                                    for (Bullet b : gc.gun.getBullets())
+                                    {
+                                        if (b.getLive())
+                                        {
+                                            numKilled += collisionHandler.checkCollisions(b.pixelGroup, player.getPixelGroup());
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            collisionOccured();
+
+        }
+        else if (!live)
+        {
+            if (!enemyBody.getCollidableLive())
+            {
+                collisionHandler.destroyCollidableAnimation(enemyBody);
+            }
+            if(hasAttachments && attachments != null)
+            {
+                for(PixelGroupComponent pGC: attachments)
+                {
+                    if(!pGC.getPixelGroup().getCollidableLive())
+                    {
+                        collisionHandler.destroyCollidableAnimation(pGC.getPixelGroup());
+                    }
+                }
+            }
+            collisionRemoveConsensus = true;
+        }
+
+        return numKilled;
+    }
+    
     private ModComponent getMod(float difficulty, float modifier)
     {
         /*FIRE_RATE,
@@ -468,7 +671,7 @@ public abstract class Enemy extends Drawable
             case 6: dT = BULLET_SPEED; break;
             case 7: dT = RESTORATION; break;
         }
-        return new ModComponent(null, x, y, 0, dT, (int)difficulty + 1);
+        return new ModComponent(dT, (int)difficulty + 1);
     }
 
 }

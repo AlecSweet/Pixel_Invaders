@@ -16,7 +16,7 @@ public class BasicGun extends Gun
     public BasicGun(PixelGroup pG, ParticleSystem ps, float delay, float spd)
     {
         super(delay, pG, ps, spd);
-        spread = .1f;
+        spread = 0f;
     }
 
     @Override
@@ -27,16 +27,20 @@ public class BasicGun extends Gun
         {
             float tX = x * cosA + y * sinA + cX;
             float tY = y * cosA - x * sinA + cY;
-            float arc = (numShots - 1) * .1f;
-
-            for(int i = 0; i < numShots; i++)
+            int tempshots = numShots;
+            if(numShots > 8)
             {
+                tempshots = 8;
+            }
+            float arc = (tempshots - 1) * .1f;
 
+            for(int i = 0; i < tempshots; i++)
+            {
                 if(openIndexTail.nextObject != openIndexHead)
                 {
                 /*if(openIndexTail.nextObject != null)
                 {*/
-                    float angDisp = (((float)(i + 1) / numShots) * arc) - (arc / 2);
+                    float angDisp = (((float)(i + 1) / tempshots) * arc) - (arc / 2);
                     angDisp += (float)(Math.random() * spread - spread / 2);
                     bullets[((Integer)openIndexTail.object)].resetBullet(tX, tY, angle + angDisp);
                     openIndexTail = openIndexTail.nextObject;
@@ -73,16 +77,21 @@ public class BasicGun extends Gun
             float cosA = (float)Math.sin(angle);
             float tX = x * cosA + y * sinA + cX;
             float tY = y * cosA - x * sinA + cY;
-            float arc = (numShots - 1) * .1f;
+            int tempshots = numShots;
+            if(numShots > 8)
+            {
+                tempshots = 8;
+            }
+            float arc = (tempshots - 1) * .1f;
 
-            for(int i = 0; i < numShots; i++)
+            for(int i = 0; i < tempshots; i++)
             {
                 /*float angDisp = (((float)(i + 1) / numShots) * arc) - (arc / 2);
                 angDisp += (float)(Math.random() * spread - spread / 2);
                 bullets[((Integer)openIndexTail.object)].resetBullet(tX, tY, angle + angDisp);*/
                 if(openIndexTail.nextObject != openIndexHead)
                 {
-                    float angDisp = (((float)(i + 1) / numShots) * arc) - (arc / 2);
+                    float angDisp = (((float)(i + 1) / tempshots) * arc) - (arc / 2);
                     angDisp += (float)(Math.random() * spread - spread / 2);
                     bullets[((Integer)openIndexTail.object)].resetBullet(tX, tY, angle + angDisp);
                     openIndexTail = openIndexTail.nextObject;

@@ -53,7 +53,7 @@ public class TextPresenter
     private static final float pixSize = .01f;
     private static final float charSkipY = 2 * pixSize;
     private static final float charSpaceY = 3 * pixSize;
-    public static final float charSkipX = (16 + 8) * pixSize;
+    public static final float charSkipX = (12 + 6) * pixSize;
     
     private static final float dL = 5 * .008f;
     private static final float dW = 2 * .008f;
@@ -114,6 +114,7 @@ public class TextPresenter
         if(center)
         {
             disp = (dSkipY * getNumDigitsInt(i)) / 2f;
+            disp -= dW*1.5;
         }
         int itr = 0;
         if(i > 0)
@@ -170,7 +171,7 @@ public class TextPresenter
                     disp -= (charSpaceY + charSkipY) * mag;
                 }
             }
-            disp /= 2.5f;
+            disp /= 3f;
         }
 
         for(int i = start; i < len; i++)
@@ -353,6 +354,9 @@ public class TextPresenter
         characters.put((int)'8',TextureLoader.loadTexture(context, R.drawable.s8));
         characters.put((int)'9',TextureLoader.loadTexture(context, R.drawable.s9));
         characters.put((int)'|',TextureLoader.loadTexture(context, R.drawable.bar));
+        characters.put((int)':',TextureLoader.loadTexture(context, R.drawable.colon));
+        characters.put((int)'-',TextureLoader.loadTexture(context, R.drawable.hyphen));
+        characters.put((int)'~',TextureLoader.loadTexture(context, R.drawable.tilde));
 
         characterWidth.put((int)'A', 5 * pixSize);
         characterWidth.put((int)'B', 5 * pixSize);
@@ -420,5 +424,8 @@ public class TextPresenter
         characterWidth.put((int)'8', 5 * pixSize);
         characterWidth.put((int)'9', 5 * pixSize);
         characterWidth.put((int)'|', pixSize);
+        characterWidth.put((int)':', pixSize*2);
+        characterWidth.put((int)'-', pixSize*4);
+        characterWidth.put((int)'~', pixSize*6);
     }
 }

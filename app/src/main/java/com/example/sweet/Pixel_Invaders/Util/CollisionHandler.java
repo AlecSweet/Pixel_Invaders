@@ -423,13 +423,16 @@ public class CollisionHandler
         return 1 + total;
     }
 
+
     private void addParticleHelper(Pixel p, Collidable c, float centerX, float centerY)
     {
-        float angle = (float)(Math.atan2(p.yDisp, p.xDisp) + Math.random() * .2 - .1);
+        //float angle = (float)(Math.atan2(p.yDisp, p.xDisp) + Math.random() * .2 - .1);
+
         collisionParticles.addParticle(
                 p.xDisp + centerX,
                 p.yDisp + centerY,
-                angle,
+                -c.angle - c.infoMap[p.row][p.col].angleOriginal + (float) Math.random() * .2f - .1f,
+                //c.angle + (float) Math.random() * .2f - .1f,
                 c.infoMap[p.row][p.col].r,
                 c.infoMap[p.row][p.col].g,
                 c.infoMap[p.row][p.col].b,
@@ -442,11 +445,28 @@ public class CollisionHandler
 
     private void addParticleHelper(Pixel p, Collidable c)
     {
-        float angle = (float)(Math.atan2(p.yDisp, p.xDisp) + Math.random() * .2 - .1);
+        //float angle = (float)(Math.atan2(p.yDisp, p.xDisp) + Math.random() * .2 - .1);
         collisionParticles.addParticle(
                 p.xDisp + c.getCenterX(),
                 p.yDisp + c.getCenterY(),
-                angle,
+                c.angle - c.infoMap[p.row][p.col].angleOriginal + (float) Math.random() * .2f - .1f,
+                c.infoMap[p.row][p.col].r,
+                c.infoMap[p.row][p.col].g,
+                c.infoMap[p.row][p.col].b,
+                1.4f,
+                (float)(Math.random())+.1f,
+                (float)(Math.random()*.5)+.01f,
+                (float)(Math.random()*40)-20
+        );
+    }
+
+    private static void addParticleHelper(Pixel p, Collidable c, ParticleSystem particleSystem)
+    {
+        //float angle = (float)(Math.atan2(p.yDisp, p.xDisp) + Math.random() * .2 - .1);
+        particleSystem.addParticle(
+                p.xDisp + c.getCenterX(),
+                p.yDisp + c.getCenterY(),
+                c.angle - c.infoMap[p.row][p.col].angleOriginal + (float) Math.random() * .2f - .1f,
                 c.infoMap[p.row][p.col].r,
                 c.infoMap[p.row][p.col].g,
                 c.infoMap[p.row][p.col].b,

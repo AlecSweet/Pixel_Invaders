@@ -48,6 +48,7 @@ public class EnemyFactory
         enemyCatalog.get(Constants.EnemyType.ASTEROID_RED_MEDIUM).setBounds(xb, yb);
         enemyCatalog.get(Constants.EnemyType.ASTEROID_RED_SMALL).setBounds(xb, yb);
         enemyCatalog.get(Constants.EnemyType.ASTEROID_RED_TINY).setBounds(xb, yb);
+        enemyCatalog.get(Constants.EnemyType.CENTIPEDE).setBounds(xb, yb);
     }
 
 }

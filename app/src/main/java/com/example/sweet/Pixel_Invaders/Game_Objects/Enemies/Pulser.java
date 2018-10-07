@@ -34,71 +34,17 @@ public class Pulser extends Enemy
     {
         super(p, ps, dF, xb, yb, gI);
 
-        for(int r = 0; r < gunsPixels.length; r++)
-        {
-            for(int c = 0; c < Constants.pulseGunCoors[0].length; c+=2)
-            {
-                gunsPixels[r][c / 2] = enemyBody.getpMap()[Constants.pulseGunCoors[r][c + 1] + 1][Constants.pulseGunCoors[r][c] + 1];
-            }
-        }
-        
-        for(int r = 0; r < thrustersPixels.length; r++)
-        {
-            for(int c = 0; c < thrustersPixels[0].length; c+=2)
-            {
-                thrustersPixels[r][c / 2] = enemyBody.getpMap()[Constants.pulseThrustCoors[r][c + 1] + 1][Constants.pulseThrustCoors[r][c] + 1];
-            }
-        }
-
         guns = new GunComponent[4];
-        guns[2] = new GunComponent(gunsPixels[0], Constants.pulseGunOffsets[2][0], Constants.pulseGunOffsets[2][1], 0, g);
-        guns[1] = new GunComponent(gunsPixels[1], Constants.pulseGunOffsets[1][0], Constants.pulseGunOffsets[1][1], 0, g.clone());
-        guns[0] = new GunComponent(gunsPixels[2], Constants.pulseGunOffsets[0][0], Constants.pulseGunOffsets[0][1], 0, g.clone());
-        guns[3] = new GunComponent(gunsPixels[3], Constants.pulseGunOffsets[3][0], Constants.pulseGunOffsets[3][1], 0, g.clone());
+        guns[2] = new GunComponent(enemyBody, Constants.pulseGunOffsets[2][0], Constants.pulseGunOffsets[2][1], 0, g, Constants.pulseGunCoors[0]);
+        guns[1] = new GunComponent(enemyBody, Constants.pulseGunOffsets[1][0], Constants.pulseGunOffsets[1][1], 0, g.clone(), Constants.pulseGunCoors[1]);
+        guns[0] = new GunComponent(enemyBody, Constants.pulseGunOffsets[0][0], Constants.pulseGunOffsets[0][1], 0, g.clone(), Constants.pulseGunCoors[2]);
+        guns[3] = new GunComponent(enemyBody, Constants.pulseGunOffsets[3][0], Constants.pulseGunOffsets[3][1], 0, g.clone(), Constants.pulseGunCoors[3]);
         hasGun = true;
-
-        thrusters = new ThrustComponent[8];
-        thrusters[0] = new ThrustComponent(thrustersPixels[0], 0, 0, 0, 2);
-        thrusters[1] = new ThrustComponent(thrustersPixels[1], 0, 0, 0, 2);
-        thrusters[2] = new ThrustComponent(thrustersPixels[2], 0, 0, 0, 2);
-        thrusters[3] = new ThrustComponent(thrustersPixels[3], 0, 0, 0, 2);
-        thrusters[4] = new ThrustComponent(thrustersPixels[4], 0, 0, 0, 2);
-        thrusters[5] = new ThrustComponent(thrustersPixels[5], 0, 0, 0, 2);
-        thrusters[6] = new ThrustComponent(thrustersPixels[6], 0, 0, 0, 2);
-        thrusters[7] = new ThrustComponent(thrustersPixels[7], 0, 0, 0, 2);
-
-        checkOverlap = false;
-        targetX = (float)Math.random() * 1.2f * (x/Math.abs(x));
-        targetY = (float)Math.random() * 1.2f * (y/Math.abs(y));
-        baseSpeed = .004f;
-        enemyBody.speed = baseSpeed;
-        p.speed = baseSpeed;
-
-        float travelAngle = -(float)(Math.atan2(targetY - enemyBody.centerY, targetX - enemyBody.centerX));
-        distX = -(float)(baseSpeed * Math.cos(travelAngle));
-        distY = (float)(baseSpeed * Math.sin(travelAngle));
-        rotate = (float)(Math.random()*.06 - .03);
     }
 
     private Pulser(PixelGroup p, Gun g, ParticleSystem ps, DropFactory dF, float xb, float yb, float difficulty, float delay, GlobalInfo gI)
     {
         super(p, ps, dF, xb, yb, delay, gI);
-
-        for(int r = 0; r < gunsPixels.length; r++)
-        {
-            for(int c = 0; c < Constants.pulseGunCoors[0].length; c+=2)
-            {
-                gunsPixels[r][c / 2] = enemyBody.getpMap()[Constants.pulseGunCoors[r][c + 1] + 1][Constants.pulseGunCoors[r][c] + 1];
-            }
-        }
-
-        for(int r = 0; r < thrustersPixels.length; r++)
-        {
-            for(int c = 0; c < thrustersPixels[0].length; c+=2)
-            {
-                thrustersPixels[r][c / 2] = enemyBody.getpMap()[Constants.pulseThrustCoors[r][c + 1] + 1][Constants.pulseThrustCoors[r][c] + 1];
-            }
-        }
 
         float power = 1;
         float del = 1;
@@ -121,10 +67,10 @@ public class Pulser extends Enemy
         }
 
         guns = new GunComponent[4];
-        guns[0] = new GunComponent(gunsPixels[0], Constants.pulseGunOffsets[2][0], Constants.pulseGunOffsets[2][1], 0, g);
-        guns[1] = new GunComponent(gunsPixels[1], Constants.pulseGunOffsets[1][0], Constants.pulseGunOffsets[1][1], 0, g.clone());
-        guns[2] = new GunComponent(gunsPixels[2], Constants.pulseGunOffsets[0][0], Constants.pulseGunOffsets[0][1], 0, g.clone());
-        guns[3] = new GunComponent(gunsPixels[3], Constants.pulseGunOffsets[3][0], Constants.pulseGunOffsets[3][1], 0, g.clone());
+        guns[0] = new GunComponent(enemyBody, Constants.pulseGunOffsets[2][0], Constants.pulseGunOffsets[2][1], 0, g, Constants.pulseGunCoors[0]);
+        guns[1] = new GunComponent(enemyBody, Constants.pulseGunOffsets[1][0], Constants.pulseGunOffsets[1][1], 0, g.clone(), Constants.pulseGunCoors[1]);
+        guns[2] = new GunComponent(enemyBody, Constants.pulseGunOffsets[0][0], Constants.pulseGunOffsets[0][1], 0, g.clone(), Constants.pulseGunCoors[2]);
+        guns[3] = new GunComponent(enemyBody, Constants.pulseGunOffsets[3][0], Constants.pulseGunOffsets[3][1], 0, g.clone(), Constants.pulseGunCoors[3]);
         guns[0].gun.reduceSpread(sprd);
         guns[0].gun.incSpeed(shotspd);
         guns[0].gun.reduceDelay(del);
@@ -140,25 +86,25 @@ public class Pulser extends Enemy
         hasGun = true;
 
         thrusters = new ThrustComponent[8];
-        thrusters[0] = new ThrustComponent(thrustersPixels[0], 0, 0, 0,2);
-        thrusters[1] = new ThrustComponent(thrustersPixels[1], 0, 0, 0,2);
-        thrusters[2] = new ThrustComponent(thrustersPixels[2], 0, 0, 0,2);
-        thrusters[3] = new ThrustComponent(thrustersPixels[3], 0, 0, 0,2);
-        thrusters[4] = new ThrustComponent(thrustersPixels[4], 0, 0, 0,2);
-        thrusters[5] = new ThrustComponent(thrustersPixels[5], 0, 0, 0,2);
-        thrusters[6] = new ThrustComponent(thrustersPixels[6], 0, 0, 0,2);
-        thrusters[7] = new ThrustComponent(thrustersPixels[7], 0, 0, 0,2);
+        thrusters[0] = new ThrustComponent(enemyBody, 2, Constants.pulseThrustCoors[0]);
+        thrusters[1] = new ThrustComponent(enemyBody,2, Constants.pulseThrustCoors[1]);
+        thrusters[2] = new ThrustComponent(enemyBody,2, Constants.pulseThrustCoors[2]);
+        thrusters[3] = new ThrustComponent(enemyBody,2, Constants.pulseThrustCoors[3]);
+        thrusters[4] = new ThrustComponent(enemyBody,2, Constants.pulseThrustCoors[4]);
+        thrusters[5] = new ThrustComponent(enemyBody,2, Constants.pulseThrustCoors[5]);
+        thrusters[6] = new ThrustComponent(enemyBody,2, Constants.pulseThrustCoors[6]);
+        thrusters[7] = new ThrustComponent(enemyBody,2, Constants.pulseThrustCoors[7]);
 
         checkOverlap = false;
-        targetX = (float)Math.random() * 1.2f * (x/Math.abs(x));
-        targetY = (float)Math.random() * 1.2f * (y/Math.abs(y));
+        targetX = (float)Math.random() * 1.2f * (x / Math.abs(x));
+        targetY = (float)Math.random() * 1.2f * (y / Math.abs(y));
         baseSpeed = .004f * power;
         enemyBody.speed = baseSpeed;
 
         float travelAngle = -(float)(Math.atan2(targetY - enemyBody.centerY, targetX - enemyBody.centerX));
         distX = -(float)(baseSpeed * Math.cos(travelAngle));
         distY = (float)(baseSpeed * Math.sin(travelAngle));
-        rotate = (float)(Math.random()*.06 - .03);
+        rotate = (float)(Math.random() * .06 - .03);
         generateDrops(guns[0], thrusters[0], difficulty, 1);
     }
 
@@ -200,17 +146,17 @@ public class Pulser extends Enemy
             {
                 if(rotate < 0)
                 {
-                    addThrustParticles(thrustersPixels[3], 1, .05f, enemyBody, -(float)(enemyBody.angle - Math.PI));
-                    addThrustParticles(thrustersPixels[1], 1, .05f, enemyBody, -(float)(enemyBody.angle - Math.PI/2));
-                    addThrustParticles(thrustersPixels[7], 1, .05f, enemyBody, -(enemyBody.angle));
-                    addThrustParticles(thrustersPixels[5], 1, .05f, enemyBody, -(float)(enemyBody.angle - (Math.PI/ 2) * 3));
+                    addThrustParticles(thrusters[3].getAttachmentPixels(), 1, .05f, enemyBody, -(float)(enemyBody.angle - Math.PI));
+                    addThrustParticles(thrusters[1].getAttachmentPixels(), 1, .05f, enemyBody, -(float)(enemyBody.angle - Math.PI/2));
+                    addThrustParticles(thrusters[7].getAttachmentPixels(), 1, .05f, enemyBody, -(enemyBody.angle));
+                    addThrustParticles(thrusters[5].getAttachmentPixels(), 1, .05f, enemyBody, -(float)(enemyBody.angle - (Math.PI/ 2) * 3));
                 }
                 else
                 {
-                    addThrustParticles(thrustersPixels[6], 1, .05f, enemyBody, -(float)(enemyBody.angle - Math.PI/2));
-                    addThrustParticles(thrustersPixels[4], 1, .05f, enemyBody, -(enemyBody.angle));
-                    addThrustParticles(thrustersPixels[2], 1, .05f, enemyBody, -(float)(enemyBody.angle - (Math.PI/ 2) * 3));
-                    addThrustParticles(thrustersPixels[0], 1, .05f, enemyBody, -(float)(enemyBody.angle - Math.PI));
+                    addThrustParticles(thrusters[6].getAttachmentPixels(), 1, .05f, enemyBody, -(float)(enemyBody.angle - Math.PI/2));
+                    addThrustParticles(thrusters[4].getAttachmentPixels(), 1, .05f, enemyBody, -(enemyBody.angle));
+                    addThrustParticles(thrusters[2].getAttachmentPixels(), 1, .05f, enemyBody, -(float)(enemyBody.angle - (Math.PI/ 2) * 3));
+                    addThrustParticles(thrusters[0].getAttachmentPixels(), 1, .05f, enemyBody, -(float)(enemyBody.angle - Math.PI));
                 }
             }
 

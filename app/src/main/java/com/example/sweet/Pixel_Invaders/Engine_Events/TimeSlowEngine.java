@@ -92,7 +92,7 @@ public class TimeSlowEngine
         return lowTimeInd;
     }
 
-    public void runEngine()
+    public void update()
     {
         if(oneActive)
         {

@@ -1,5 +1,6 @@
 package com.example.sweet.Pixel_Invaders.Game_Objects.Component_System;
 
+import com.example.sweet.Pixel_Invaders.Game_Objects.PixelGroup_System.PixelGroup;
 import com.example.sweet.Pixel_Invaders.Util.Universal_Data.Constants;
 import com.example.sweet.Pixel_Invaders.Game_Objects.PixelGroup_System.Pixel;
 
@@ -11,9 +12,9 @@ public class ThrustComponent extends Component
 {
     private float thrustPower;
 
-    public ThrustComponent(Pixel[] p, float x, float y, float a, float power)
+    public ThrustComponent(PixelGroup base, float power, int[] attachIndices)
     {
-        super(p, x, y, a, Constants.DropType.THRUSTER);
+        super(base, Constants.DropType.THRUSTER, attachIndices);
         thrustPower = power;
         setColor();
     }

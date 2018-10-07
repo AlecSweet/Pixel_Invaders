@@ -62,7 +62,8 @@ public class Constants
         ASTEROID_RED_SMALL,
         ASTEROID_GREY_SMALL,
         ASTEROID_RED_MEDIUM,
-        ASTEROID_GREY_MEDIUM
+        ASTEROID_GREY_MEDIUM,
+        CENTIPEDE,
     }
 
     public enum DropType
@@ -82,6 +83,7 @@ public class Constants
         TEMPORAL,
         BULLET_SPEED,
         RESTORATION,
+        PIXELGROUP,
         NONE
     }
 
@@ -91,7 +93,8 @@ public class Constants
         PAUSE_MENU,
         MAIN_MENU,
         OPTIONS,
-        GAME_OVER
+        GAME_OVER,
+        SHIP_LOGS
     }
 
     //--------------------------------------Level Control
@@ -161,7 +164,13 @@ public class Constants
 
     //--------------------------------------UI Info
 
-    public static final float joyStickRadius = .32f;
+    public static final float
+            joyStickRadius = .32f,
+            staticMoveLocX = -.55f,
+            staticMoveLocY = 1.3f,
+            staticShootLocX = -.55f,
+            staticShootLocY = -1.3f;
+
 
     public static final float[] joyBaseMoveVA = new float[]{
             0f,    0f, 0.5f, 0.5f,
@@ -201,6 +210,32 @@ public class Constants
             -1f, -1f,   0f, 0f,
             -1f,  1f,   0f, 1f,
             1f,  1f,   1f, 1f,
+    };
+    
+    public static final float
+            nbL = .052f,
+            nbW = .28f;
+
+    public static final float[] navButtonVA = new float[]{
+            0f,  0f, 0.5f, 0.5f,
+            -nbL, -nbW,   0f, 1f,
+            nbL, -nbW,   1f, 1f,
+            nbL,  nbW,   1f, 0f,
+            -nbL,  nbW,   0f, 0f,
+            -nbL, -nbW,   0f, 1f
+    };
+    
+    public static final float
+            bbL = .02f,
+            bbW = .8f;
+
+    public static final float[] bonusBarVA = new float[]{
+            0f,  0f, 0.5f, 0.5f,
+            -bbL, -bbW,   0f, 1f,
+            bbL, -bbW,   1f, 1f,
+            bbL,  bbW,   1f, 0f,
+            -bbL,  bbW,   0f, 0f,
+            -bbL, -bbW,   0f, 1f
     };
     
     public static final float
@@ -295,6 +330,17 @@ public class Constants
             -aibL, -aibW,   0f, 1f
     };
     
+    public static final float mlL = .952f;
+    
+    public static final float[] missionContextBoxVA = new float[]{
+            0f,  0f, 0.5f, 0.5f,
+            -mlL, -aibW,   0f, 1f,
+            mlL, -aibW,   1f, 1f,
+            mlL,  aibW,   1f, 0f,
+            -mlL,  aibW,   0f, 0f,
+            -mlL, -aibW,   0f, 1f
+    };
+    
     public static final float
             ipW = .328f, //aibL = .664f,
             ipL = .584f;
@@ -306,6 +352,19 @@ public class Constants
             ipL,  ipW,   1f, 0f,
             -ipL,  ipW,   0f, 0f,
             -ipL, -ipW,   0f, 1f
+    };
+
+    public static final float
+            cW = 1.26f, //aibL = .664f,
+            cL = .74f;
+
+    public static final float[] controlsVA = new float[]{
+            0f,  0f, 0.5f, 0.5f,
+            -cL, -cW,   0f, 1f,
+            cL, -cW,   1f, 1f,
+            cL,  cW,   1f, 0f,
+            -cL,  cW,   0f, 0f,
+            -cL, -cW,   0f, 1f
     };
 
     //info Panel center x: -.044f    y: .936f
@@ -343,8 +402,7 @@ public class Constants
             -sldBR, -sldBR,   0f, 1f
     };
 
-    public static final float slideMax = .988f;
-    public static final float slideMin = .112f;
+    public static final float slideDistMax = .876f;
 
     public static final float chckR = .072f;
 
@@ -420,33 +478,6 @@ public class Constants
 
     public static final int[]
             tinyMThrustCoor = {1, 5, 1, 6};
-   /* public static final int[]
-            pulseThrustCoor1 = {31, 1, 32, 2},
-            pulseThrustCoor2 = {44, 12, 43, 13},
-            pulseThrustCoor3 = {43, 32, 44, 33},
-            pulseThrustCoor4 = {32, 43, 33, 44},
-            pulseThrustCoor5 = {13, 43, 12, 44},
-            pulseThrustCoor6 = {1, 33, 2, 32},
-            pulseThrustCoor7 = {2, 13, 1, 12},
-            pulseThrustCoor8 = {12, 1, 13, 2},
-            pulseGunCoor1 = {38, 15, 38, 16, 38, 17, 38, 18, 
-                    39, 19, 39, 20, 39, 21, 39, 22, 39, 23, 39, 24, 39, 25, 39, 26,
-                    38, 27, 38, 28, 38, 29, 38, 30},
-            pulseGunCoor2 = {15, 38, 16, 38, 17, 38, 18, 38,
-                    19, 39, 20, 39, 21, 39, 22, 39, 23, 39, 24, 39, 25, 39, 26, 39,
-                    27, 38, 28, 38, 29, 38, 30, 38},
-            pulseGunCoor3 = {7, 15, 7, 16, 7, 17, 7, 18,
-                    6, 19, 6, 20, 6, 21, 6, 22, 6, 23, 6, 24, 6, 25, 6, 26,
-                    7, 27, 7, 28, 7, 29, 7, 30},
-            pulseGunCoor4 = {15, 7, 16, 7, 17, 7, 18, 7,
-                    19, 6, 20, 6, 21, 6, 22, 6, 23, 6, 24, 6, 25, 6, 26, 6,
-                    27, 7, 28, 7, 29, 7, 30, 7};
-
-    public static final float[]
-            pulseGunOffset1 = {(38.5f - 23f) * Constants.PIXEL_SIZE, (22.5f - 23f) * Constants.PIXEL_SIZE},
-            pulseGunOffset2 = {(22.5f - 23f) * Constants.PIXEL_SIZE, (38.5f - 23f) * Constants.PIXEL_SIZE},
-            pulseGunOffset3 = {(6.5f - 23f) * Constants.PIXEL_SIZE, (22.5f - 23f) * Constants.PIXEL_SIZE},
-            pulseGunOffset4 = {(22.5f - 23f) * Constants.PIXEL_SIZE, (6.5f - 23f) * Constants.PIXEL_SIZE};*/
 
     public static final int[][]
             pulseThrustCoors = new int[][]{
@@ -513,4 +544,21 @@ public class Constants
             {14, 38, 14, 39, 14, 40, 14, 41, 14, 42, 14, 43, 14, 44, 14, 45, 15, 40, 15, 41, 15, 42, 15, 43},
             {4, 61, 4, 62, 4, 63, 4, 64, 4, 65}
     };
+
+    public static final int[][] centipedeSegementAttch = new int[][]{
+            {61, 29, 62, 29, 61, 30, 62, 30},
+            {1, 29, 2, 29, 1, 30, 2, 30}, // same for head
+    };
+
+    public static final int[][] centipedeSegementThrust = new int[][]{
+            {12, 2, 12, 3, 12, 4, 13, 3, 13, 4},
+            {13, 55, 13, 56, 12, 57, 12, 56, 12, 55}
+    };
+
+    public static final int[][] centipedeHeadThrust = new int[][]{
+            {55, 5, 55, 6, 55, 7},
+            {55, 52, 55, 53, 55, 54}
+    };
+
+    public static final int[] centipedeGunCoors = new int[]{29, 29, 29, 30, 30, 29, 30, 30};
 }

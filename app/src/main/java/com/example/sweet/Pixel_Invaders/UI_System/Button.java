@@ -17,13 +17,16 @@ public class Button
 
     Constants.DropType type;
 
-    boolean
-            touchedOnDown = false,
+    boolean touchedOnDown = false,
             cursorOnButton = false;
-
+    private float
+            originalX,
+            originalY;
     Button(ImageContainer r, ImageContainer h, Constants.DropType dT)
     {
         regular = r;
+        originalX = r.x;
+        originalY = r.y;
         hoveredOver = h;
         type = dT;
     }
@@ -143,5 +146,15 @@ public class Button
     public float getY()
     {
         return regular.getY();
+    }
+
+    public float getOriginalX()
+    {
+        return originalX;
+    }
+
+    public float getOriginalY()
+    {
+        return originalY;
     }
 }
