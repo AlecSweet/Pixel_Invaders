@@ -25,6 +25,7 @@ img {
     position: fixed;
     margin-top: -50px;
     margin-left: -75px;
+    background-size: 80% 80%;
     background-repeat: repeat;
 }
 
@@ -58,7 +59,6 @@ img {
     z-index: -2;
     background-image: url(img/moon.png);
     background-repeat: no-repeat;
-    background-size: 58px 58px;
 }
 
 .layer-5 {
@@ -67,7 +67,6 @@ img {
     z-index: -1;
     background-image: url(img/earth.png);
     background-repeat: no-repeat;
-    background-size: 20px 20px;
 }
 
 
