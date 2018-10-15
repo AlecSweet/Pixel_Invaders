@@ -53,21 +53,21 @@ img {
 }
 
 .layer-4 {
-    top: calc(50% - 36px + 92px + 75px);
-    left: calc(50% - 36px + 142px + 75px); 
+    top: calc(50% - 29px + 92px + 75px);
+    left: calc(50% - 29px + 142px + 75px); 
     z-index: -2;
     background-image: url(img/moon.png);
     background-repeat: no-repeat;
-    background-size: 72px 72px;
+    background-size: 58px 58px;
 }
 
 .layer-5 {
-    top: calc(50% - 112px + 75px);
-    left: calc(50% - 112px + 75px); 
+    top: calc(50% - 90px + 75px);
+    left: calc(50% - 90px + 75px); 
     z-index: -1;
     background-image: url(img/earth.png);
     background-repeat: no-repeat;
-    background-size: 224px 224px;
+    background-size: 180px 180px;
 }
 
 
