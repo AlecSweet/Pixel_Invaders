@@ -123,8 +123,6 @@ $(document).ready(function(){
 
     var paraManager = new ParallaxManager('.parallax-layer');
 
-    $(document).on( "mousemove", paraManager.panningHandler.bind(paraManager));
-    
     $(document).on( "touchmove", paraManager.panningHandler.bind(paraManager));
 });
 
