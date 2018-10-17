@@ -86,9 +86,6 @@ $(document).ready(function(){
             if(event.type == "mousemove") {
                 panX = event.pageX - ($(window).width() / 2) - window.pageXOffset;
                 panY = event.pageY - ($(window).height() / 2) - window.pageYOffset;
-            } else if (event.type == "touchmove") {
-                panX = event.originalEvent.touches[0].pageX - ($(window).width() / 2) - window.pageXOffset;
-                panY = event.originalEvent.touches[0].pageY - ($(window).height() / 2) - window.pageYOffset;
             }
             for (var i in this.layers) {
                 this.layers[i].panTranslate(-panX, -panY); 
@@ -112,7 +109,6 @@ $(document).ready(function(){
     var paraManager = new ParallaxManager('.parallax-layer');
 
     $(document).on("mousemove", paraManager.panningHandler.bind(paraManager));
-    $(document).on('touchmove', paraManager.panningHandler.bind(paraManager));
     // window.addEventListener('touchmove', paraManager.panningHandler.bind(paraManager), false);
 });
 
