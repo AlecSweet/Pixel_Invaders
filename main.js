@@ -22,8 +22,8 @@ $(document).ready(function(){
       };
 
       ParallaxPart.prototype.panTranslate = function(x, y) {
-        this.curPanX = x * this.speed * .34;
-        this.curPanY = y * this.speed * .34;
+        this.curPanX = x * this.speed * .4;
+        this.curPanY = y * this.speed * .4;
         this.update();
       };
 
@@ -31,23 +31,6 @@ $(document).ready(function(){
         this.xPos = this.curPanX;
         this.yPos = this.curPanY + this.curScrollY;
         this.updateTransforms();
-      };
-
-      ParallaxPart.prototype.setYTransform = function(val) {
-        this.el.style.webkitTransform = "translate3d(0, " + val + "px, 0)";
-        this.el.style.MozTransform    = "translate3d(0, " + val + "px, 0)";
-        this.el.style.OTransform      = "translate3d(0, " + val + "px, 0)";
-        this.el.style.transform       = "translate3d(0, " + val + "px, 0)";
-        this.el.style.msTransform     = "translateY(" + val + "px)";
-      };
-
-      ParallaxPart.prototype.panBackground = function(valX, valY) {
-        this.el.style.webkitTransform = "translate3d(" + valX + "px, " + valY + "px, 0)";
-        this.el.style.MozTransform    = "translate3d(" + valX + "px, " + valY + "px, 0)";
-        this.el.style.OTransform      = "translate3d(" + valX + "px, " + valY + "px, 0)";
-        this.el.style.transform       = "translate3d(" + valX + "px, " + valY + "px, 0)";
-        this.el.style.msTransform     = "translate(" + valX + "px, " + valY + "px)";
-        //$(this.el).css("background-position", valX + "px  " + valY +"px")
       };
 
       ParallaxPart.prototype.updateTransforms = function() {
@@ -85,13 +68,12 @@ $(document).ready(function(){
             }
             
             window.addEventListener("scroll", this.onScroll.bind(this));   
-            //window.addEventListener("mousemove", this.onPan(window.event).bind(this));
         }
     
         ParallaxManager.prototype.onScroll = function() {
             window.requestAnimationFrame(this.scrollHandler.bind(this));
         };
-        
+     
         ParallaxManager.prototype.scrollHandler = function() {
             var scrollY = Math.max(window.pageYOffset, 0);
             for (var i in this.layers) { 
@@ -100,8 +82,14 @@ $(document).ready(function(){
         };
 
         ParallaxManager.prototype.panningHandler = function( event ) {
-            var panX = event.pageX - ($(window).width() / 2) - window.pageXOffset;
-            var panY = event.pageY - ($(window).height() / 2) - window.pageYOffset;
+            var panX, panY;
+            if(event.type == "mousemove") {
+                panX = event.pageX - ($(window).width() / 2) - window.pageXOffset;
+                panY = event.pageY - ($(window).height() / 2) - window.pageYOffset;
+            } else if (event.type == "touchmove") {
+                panX = event.originalEvent.touches[0].pageX - ($(window).width() / 2) - window.pageXOffset;
+                panY = event.originalEvent.touches[0].pageY - ($(window).height() / 2) - window.pageYOffset;
+            }
             for (var i in this.layers) {
                 this.layers[i].panTranslate(-panX, -panY); 
             }
@@ -123,7 +111,9 @@ $(document).ready(function(){
 
     var paraManager = new ParallaxManager('.parallax-layer');
 
-    $(document).on( "touchmove", paraManager.panningHandler.bind(paraManager));
+    $(document).on("mousemove", paraManager.panningHandler.bind(paraManager));
+    $(document).on('touchmove', paraManager.panningHandler.bind(paraManager));
+    // window.addEventListener('touchmove', paraManager.panningHandler.bind(paraManager), false);
 });
 
 
