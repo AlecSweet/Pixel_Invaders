@@ -1,5 +1,6 @@
 package com.example.sweet.Pixel_Invaders.Game_Objects.PixelGroup_System;
 
+import com.example.sweet.Pixel_Invaders.UI_System.ParticleSystem;
 import com.example.sweet.Pixel_Invaders.Util.Universal_Data.Constants;
 
 import java.nio.FloatBuffer;
@@ -25,7 +26,7 @@ import static android.opengl.GLES20.glVertexAttribPointer;
  * Created by Sweet on 2/14/2018.
  */
 
-public class  PixelGroup extends Collidable
+public class PixelGroup extends Collidable
 {
     private static final int
             POSITION_COMPONENT_COUNT = 4,
@@ -51,23 +52,18 @@ public class  PixelGroup extends Collidable
 
     private boolean glInit = false;
 
-    public PixelGroup(Pixel[] p, float halfSquareLength, Zone[] z, CollidableGroup[] g, int sL, int vB, PixelInfo[][] iM)
+    public PixelGroup(Pixel[] p, float halfSquareLength, int sL, int vB, PixelInfo[][] iM)
     {
-        super(halfSquareLength, p,true, z, g, iM);
+        //super(halfSquareLength, p,true, z, g, iM);
+        super(halfSquareLength, p,true, iM);
         shaderLocation = sL;
         vBuffer[0] = vB;
     }
 
-    public PixelGroup(Pixel[] p, float halfSquareLength, Zone[] z, int sL, int vB, PixelInfo[][] iM, Pixel[][] pM)
+    public PixelGroup(Pixel[] p, float halfSquareLength, int sL, int vB, PixelInfo[][] iM, Pixel[][] pM)
     {
-        super(halfSquareLength, p,true, z, iM, pM);
-        shaderLocation = sL;
-        vBuffer[0] = vB;
-    }
-
-    public PixelGroup(Pixel[] p, float halfSquareLength, Zone[] z, int sL, int vB, PixelInfo[][] iM)
-    {
-        super(halfSquareLength, p,true, z, iM);
+        //super(halfSquareLength, p,true, z, iM, pM);
+        super(halfSquareLength, p,true, iM, pM);
         shaderLocation = sL;
         vBuffer[0] = vB;
     }
@@ -87,19 +83,9 @@ public class  PixelGroup extends Collidable
 
         if(enableLocationChain)
         {
-            if(isBullet)
+            while (locationDrawTail.nextLocation != null && locationDrawTail.nextLocation.readyToBeConsumed)
             {
-                while (locationDrawTail.nextLocation != null && locationDrawTail.nextLocation.collisionDone)
-                {
-                    locationDrawTail = locationDrawTail.nextLocation;
-                }
-            }
-            else
-            {
-                while (locationDrawTail.nextLocation != null && locationDrawTail.nextLocation.readyToBeConsumed)
-                {
-                    locationDrawTail = locationDrawTail.nextLocation;
-                }
+                locationDrawTail = locationDrawTail.nextLocation;
             }
             glUniform4f(uPosData, locationDrawTail.x, locationDrawTail.y, cosA, sinA);
         }
@@ -221,7 +207,6 @@ public class  PixelGroup extends Collidable
     {
         glBindBuffer(GL_ARRAY_BUFFER, aBuffer[0]);
         glBufferSubData(GL_ARRAY_BUFFER,0,alphaBuf.capacity()*Constants.BYTES_PER_FLOAT, alphaBuf);
-        //System.out.println(dif1/1000 + "   :   " + (System.nanoTime() - start)/1000);
     }
     
     public void updatePixel(Pixel p)
@@ -274,6 +259,7 @@ public class  PixelGroup extends Collidable
             }
             updatePixel(p);
         }
+        getHitBox().resetHitbox();
         collidableLive = true;
         needsUpdate = true;
         numLivePixels = nL;
@@ -295,81 +281,103 @@ public class  PixelGroup extends Collidable
             angleKnockback = 0;
             readyToKnockback = false;
         }
-        float tempCMX = 0;
-        float tempCMY = 0;
-        int numOutside = 0;
-        boolean needsUpdateTemp = false;
-        for(Zone z: zones)
-        {
-            if (z != null)
-            {
-                boolean zoneCheck = false;
-                for (CollidableGroup cG: z.collidableGroups)
-                {
-                    if (cG != null)
-                    {
-                        boolean groupCheck = false;
-                        for(Pixel p: cG.pixels)
-                        {
-                            if(p.state >= 1)
-                            {
-                                groupCheck = true;
-                                if(p.state >= 2)
-                                {
-                                    p.xDisp = infoMap[p.row][p.col].xOriginal * cosA +
-                                            infoMap[p.row][p.col].yOriginal * sinA;
-                                    p.yDisp = infoMap[p.row][p.col].yOriginal * cosA -
-                                            infoMap[p.row][p.col].xOriginal * sinA;
-                                    tempCMX += infoMap[p.row][p.col].xOriginal;
-                                    tempCMY += infoMap[p.row][p.col].yOriginal;
-                                    numOutside++;
-                                    if(p.state == 3)
-                                    {
-                                        int index = infoMap[p.row][p.col].index;
-                                        if( alphaBuf != null && alphaBuf.get(index) != 0.01f)
-                                        {
-                                            alphaBuf.put(index, .01f);
-                                            needsUpdateTemp = true;
-                                        }
-                                    }
-                                }
-                            }
-                            else
-                            {
-                                int index = infoMap[p.row][p.col].index;
-                                if( alphaBuf != null && alphaBuf.get(index) > 0)
-                                {
-                                    alphaBuf.put(index, 0f);
-                                    needsUpdateTemp = true;
-                                }
-                            }
-                        }
-                        if(groupCheck)
-                        {
-                            zoneCheck = true;
-                        }
-                        cG.live = groupCheck;
-                    }
-                }
-                z.live = zoneCheck;
-            }
-        }
-        if(needsUpdateTemp)
-        {
-            needsUpdate = true;
-        }
 
         if(numLivePixels < totalPixels * livablePercentage)
         {
             collidableLive = false;
         }
-        if(numOutside > 0)
+    }
+
+    @Override
+    public void killPixel(Pixel p)
+    {
+        p.health = 0;
+        p.state = 0;
+        pixelsKilled++;
+        numLivePixels--;
+        lastPixelKilled = p;
+
+        if(alphaBuf != null)
         {
-            tempCMX /= numOutside;
-            tempCMY /= numOutside;
-            centerMassX = tempCMX;
-            centerMassY = tempCMY;
+            alphaBuf.put(infoMap[p.row][p.col].index, 0f);
         }
+
+        Pixel temp = pMap[p.row + 1][p.col];
+        if (temp != null && temp.state == 1)
+        {
+            temp.state = 3;
+            if(alphaBuf != null)//&& alphaBuf.get(infoMap[temp.row][temp.col].index) != 0.01f)
+            {
+                alphaBuf.put(infoMap[temp.row][temp.col].index, .01f);
+            }
+            if(temp.parent != null)
+            {
+                temp.parent.transmitNewOutsidePixel();
+            }
+
+        }
+
+        temp = pMap[p.row - 1][p.col];
+        if (temp != null && temp.state == 1)
+        {
+            temp.state = 3;
+            if(alphaBuf != null)//&& alphaBuf.get(infoMap[temp.row][temp.col].index) != 0.01f)
+            {
+                alphaBuf.put(infoMap[temp.row][temp.col].index, .01f);
+            }
+            if(temp.parent != null)
+            {
+                temp.parent.transmitNewOutsidePixel();
+            }
+        }
+
+        temp = pMap[p.row][p.col + 1];
+        if (temp != null && temp.state == 1)
+        {
+            temp.state = 3;
+            if(alphaBuf != null)//&& alphaBuf.get(infoMap[temp.row][temp.col].index) != 0.01f)
+            {
+                alphaBuf.put(infoMap[temp.row][temp.col].index, .01f);
+            }
+            if(temp.parent != null)
+            {
+                temp.parent.transmitNewOutsidePixel();
+            }
+        }
+
+        temp = pMap[p.row][p.col - 1];
+        if (temp != null && temp.state == 1)
+        {
+            temp.state = 3;
+            if(alphaBuf != null)//&& alphaBuf.get(infoMap[temp.row][temp.col].index) != 0.01f)
+            {
+                alphaBuf.put(infoMap[temp.row][temp.col].index, .01f);
+            }
+            if(temp.parent != null)
+            {
+                temp.parent.transmitNewOutsidePixel();
+            }
+        }
+
+       /*addPixelKillParticle(
+                infoMap[p.row][p.col].xOriginal * cosA + infoMap[p.row][p.col].yOriginal * sinA,
+                infoMap[p.row][p.col].yOriginal * cosA - infoMap[p.row][p.col].xOriginal * sinA,
+                p,
+                ps
+       );*/
+    }
+
+    @Override
+    public int hitPixel(Pixel p)
+    {
+        p.health--;
+        gotHit = true;
+        if(p.health <= 0)
+        {
+            killPixel(p);
+            return 1;
+        }
+        return 0;
     }
 
     public void revivePixels(int resNum)
@@ -378,19 +386,7 @@ public class  PixelGroup extends Collidable
         {
             if(p.state > 0)
             {
-                if (pMap[p.row][p.col - 1] != null &&
-                        pMap[p.row][p.col - 1].state == 0 &&
-                        resNum > 0)
-                {
-                    resNum = revivePixelHelper(pMap[p.row][p.col - 1], resNum);
-                }
-                else if (pMap[p.row][p.col + 1] != null &&
-                        pMap[p.row][p.col + 1].state == 0 &&
-                        resNum > 0)
-                {
-                    resNum = revivePixelHelper(pMap[p.row][p.col + 1], resNum);
-                }
-                else if (pMap[p.row + 1][p.col] != null &&
+                if (pMap[p.row + 1][p.col] != null &&
                         pMap[p.row + 1][p.col].state == 0 &&
                         resNum > 0)
                 {
@@ -401,6 +397,18 @@ public class  PixelGroup extends Collidable
                         resNum > 0)
                 {
                     resNum = revivePixelHelper(pMap[p.row - 1][p.col], resNum);
+                }
+                else if (pMap[p.row][p.col - 1] != null &&
+                        pMap[p.row][p.col - 1].state == 0 &&
+                        resNum > 0)
+                {
+                    resNum = revivePixelHelper(pMap[p.row][p.col - 1], resNum);
+                }
+                else if (pMap[p.row][p.col + 1] != null &&
+                        pMap[p.row][p.col + 1].state == 0 &&
+                        resNum > 0)
+                {
+                    resNum = revivePixelHelper(pMap[p.row][p.col + 1], resNum);
                 }
             }
             if(resNum <= 0)
@@ -414,6 +422,39 @@ public class  PixelGroup extends Collidable
             if(p.state > 0)
             {
                 p.state = 1;
+                if (pMap[p.row + 1][p.col] == null)
+                {
+                    p.state = 2;
+                }
+                else if (pMap[p.row - 1][p.col] == null)
+                {
+                    p.state = 2;
+                }
+                else if (pMap[p.row][p.col + 1] == null)
+                {
+                    p.state = 2;
+                }
+                else if (pMap[p.row][p.col - 1] == null)
+                {
+                    p.state = 2;
+                }
+                else if (pMap[p.row + 1][p.col].state == 0)
+                {
+                    p.state = 3;
+                }
+                else if (pMap[p.row - 1][p.col].state == 0)
+                {
+                    p.state = 3;
+                }
+                else if (pMap[p.row][p.col + 1].state == 0)
+                {
+                    p.state = 3;
+                }
+                else if (pMap[p.row][p.col - 1].state == 0)
+                {
+                    p.state = 3;
+                }
+                /*p.state = 1;
                 if (pMap[p.row + 1][p.col] == null)
                 {
                     if (p.state < 3)
@@ -460,7 +501,7 @@ public class  PixelGroup extends Collidable
                 else if (pMap[p.row][p.col - 1].state == 0)
                 {
                     p.state = 3;
-                }
+                }*/
 
                 updatePixel(p);
             }
@@ -476,7 +517,19 @@ public class  PixelGroup extends Collidable
         numLivePixels++;
         resNum--;
 
-        if (pMap[p.row][p.col - 1] != null &&
+        if (pMap[p.row + 1][p.col] != null &&
+            pMap[p.row + 1][p.col].state == 0 &&
+            resNum > 0)
+        {
+            resNum = revivePixelHelper(pMap[p.row + 1][p.col], resNum);
+        }
+        else if (pMap[p.row - 1][p.col] != null &&
+                pMap[p.row - 1][p.col].state == 0 &&
+                resNum > 0)
+        {
+            resNum = revivePixelHelper(pMap[p.row - 1][p.col], resNum);
+        }
+        else if (pMap[p.row][p.col - 1] != null &&
                 pMap[p.row][p.col - 1].state == 0 &&
                 resNum > 0)
         {
@@ -487,18 +540,6 @@ public class  PixelGroup extends Collidable
                 resNum > 0)
         {
             resNum = revivePixelHelper(pMap[p.row][p.col + 1], resNum);
-        }
-        else if (pMap[p.row + 1][p.col] != null &&
-                pMap[p.row + 1][p.col].state == 0 &&
-                resNum > 0)
-        {
-            resNum = revivePixelHelper(pMap[p.row + 1][p.col], resNum);
-        }
-        else if (pMap[p.row - 1][p.col] != null &&
-                pMap[p.row - 1][p.col].state == 0 &&
-                resNum > 0)
-        {
-            resNum = revivePixelHelper(pMap[p.row - 1][p.col], resNum);
         }
 
         return resNum;
@@ -549,38 +590,32 @@ public class  PixelGroup extends Collidable
         Pixel[] pArr = new Pixel[pixels.length];
         Pixel[][] cloneMap = new Pixel[pMap.length][pMap[0].length];
 
-        Zone[] tempZones = new Zone[zones.length];
-        for(int i = 0; i < zones.length; i++)
+        for(Pixel p: pixels)
         {
-            tempZones[i] = zones[i].clone();
-        }
-
-        for(Zone z: tempZones)
-        {
-            for(CollidableGroup cG: z.collidableGroups)
-            {
-                for(Pixel p: cG.pixels)
-                {
-                    cloneMap[p.row][p.col] = p;
-                    pArr[infoMap[p.row][p.col].index] = p;
-                    p.state = infoMap[p.row][p.col].originalState;
-                }
-            }
+            cloneMap[p.row][p.col] = p.clone();
+            pArr[infoMap[p.row][p.col].index] = cloneMap[p.row][p.col];
+            cloneMap[p.row][p.col].state = infoMap[p.row][p.col].originalState;
         }
 
         PixelGroup temp = new PixelGroup(
                 pArr,
                 halfSquareLength,
-                tempZones,
                 shaderLocation,
                 vBuffer[0],
                 infoMap,
                 cloneMap
         );
         temp.knockable = knockable;
-
         temp.restorable = restorable;
         temp.health = health;
+        temp.setHitbox(this.getHitBox().clone(temp.pMap, infoMap));
+        for(Pixel p: temp.getPixels())
+        {
+            if (p.parent != null && p.state > 1)
+            {
+                p.parent.transmitNewOutsidePixel();
+            }
+        }
         return temp;
     }
 }

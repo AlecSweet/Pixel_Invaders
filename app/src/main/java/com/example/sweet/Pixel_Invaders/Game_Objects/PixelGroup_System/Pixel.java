@@ -7,21 +7,19 @@ package com.example.sweet.Pixel_Invaders.Game_Objects.PixelGroup_System;
 
 public class Pixel
 {
-
-    public float
-            xDisp = 0f,
-            yDisp = 0f;
-
-    public int
+    public short
             row,
             col,
-            groupFlag = -1,
+            groupFlag = -1;
+
+    public byte
             health = 1;
 
-    public volatile int state = 1;
+    public volatile byte state = 1;
 
+    public HitboxNode parent;
 
-    public Pixel( int r, int c)
+    public Pixel(short r, short c)
     {
         row = r;
         col = c;

@@ -1,6 +1,7 @@
 package com.example.sweet.Pixel_Invaders.Game_Objects.Enemies;
 
 import com.example.sweet.Pixel_Invaders.Game_Objects.Component_System.Drop;
+import com.example.sweet.Pixel_Invaders.Game_Objects.PixelGroup_System.Pixel;
 import com.example.sweet.Pixel_Invaders.Util.Static.VectorFunctions;
 import com.example.sweet.Pixel_Invaders.Util.Universal_Data.Constants;
 import com.example.sweet.Pixel_Invaders.Util.Universal_Data.GlobalInfo;
@@ -173,13 +174,14 @@ public class Asteroid extends Enemy
                 backgroundX = x + tempDistX;
                 backgroundY = y + tempDistY;
                 enemyBody.move(-10, -10);
-                //aiRemoveConsensus = true;
             }
 
             if (enemyBody.numLivePixels < healthDropGoal)
             {
-                //cdropsToAdd.add(dropFactory.getNewDrop(Constants.DropType.HEALTH, enemyBody.lastPixelKilled.xDisp + x, enemyBody.lastPixelKilled.yDisp + y));
-                consumables[consumIndex] = dropFactory.getNewDrop(Constants.DropType.HEALTH, enemyBody.lastPixelKilled.xDisp + x, enemyBody.lastPixelKilled.yDisp + y);
+                Pixel p = enemyBody.lastPixelKilled;
+                float pX = enemyBody.infoMap[p.row][p.col].xOriginal * enemyBody.cosA + enemyBody.infoMap[p.row][p.col].yOriginal * enemyBody.sinA + x;
+                float pY = enemyBody.infoMap[p.row][p.col].yOriginal * enemyBody.cosA - enemyBody.infoMap[p.row][p.col].xOriginal * enemyBody.sinA + y;
+                consumables[consumIndex] = dropFactory.getNewDrop(Constants.DropType.HEALTH, pX, pY);
                 consumIndex++;
                 if(consumIndex > 4)
                 {

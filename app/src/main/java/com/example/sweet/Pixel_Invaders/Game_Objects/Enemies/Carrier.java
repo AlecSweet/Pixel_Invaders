@@ -35,8 +35,9 @@ public class Carrier extends Enemy
         thrusters[1] = new ThrustComponent(enemyBody,2, Constants.carrierThrustCoors[1]);
         thrusters[2] = new ThrustComponent(enemyBody, 2, Constants.carrierThrustCoors[2]);
         enemyBody.rotate(enemyBody.angle);
-        baseSpeed = .005f;
+        baseSpeed = .0001f;
         enemyBody.speed = baseSpeed;
+        enemyBody.orphanChunkCheckDelay = 100;
         hasGun = false;
 
         targetX = (float)Math.random() * 1.2f * (x / Math.abs(x));

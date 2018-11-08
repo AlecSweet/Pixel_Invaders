@@ -25,7 +25,7 @@ public class Zone
             yOriginal,
             halfSquareLength;
 
-    public  volatile boolean live = true;
+    public volatile boolean live = true;
 
     public Zone(float x, float y, float halfSquareLength, ArrayList<CollidableGroup> a)
     {
@@ -51,8 +51,8 @@ public class Zone
 
     public void rotate(float c, float s)
     {
-        xDisp = xOriginal*c + yOriginal*s;
-        yDisp = yOriginal*c - xOriginal*s;
+        xDisp = xOriginal * c + yOriginal * s;
+        yDisp = yOriginal * c - xOriginal * s;
     }
 
     public void initCollidableGroupArray()
@@ -65,7 +65,7 @@ public class Zone
     public Zone clone()
     {
         Zone temp = new Zone(this.xOriginal, this.yOriginal, this.halfSquareLength, new CollidableGroup[collidableGroups.length]);
-        for(int i = 0; i < this.collidableGroups.length; i++)
+        for (int i = 0; i < this.collidableGroups.length; i++)
         {
             temp.collidableGroups[i] = this.collidableGroups[i].clone();
         }

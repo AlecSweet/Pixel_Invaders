@@ -70,6 +70,7 @@ public class PixelGroupComponent extends Component
         baseOriginalX /= attachmentPixels.length;
         baseOriginalY /= attachmentPixels.length;
         attachDist = (float)Math.hypot(baseOriginalX, baseOriginalY);
+
         thrusters = ts;
         guns = gs;
         particleSystem = pS;
@@ -90,6 +91,7 @@ public class PixelGroupComponent extends Component
         attachOriginalY /= componentAttachment.length;
         attachDispX = attachOriginalX;
         attachDispY = attachOriginalY;
+        attachDist2 = (float)Math.hypot(attachDispX, attachDispY);
     }
 
     @Override
@@ -138,7 +140,7 @@ public class PixelGroupComponent extends Component
         float dirY = followY - pixelGroup.getCenterY();
         float angle = (float)Math.atan2(dirY, dirX);
         float distance = (float)Math.hypot(dirX, dirY);
-        float d = (distance)/attachDist;
+        float d = (distance)/attachDist2;
 
         rotate(-angle + originalAngle, gI.timeSlow);
 
@@ -255,10 +257,25 @@ public class PixelGroupComponent extends Component
                 }
             }
         }*/
-        if(onScreen)
+        if(onScreen && pixelGroup.getCollidableLive())
         {
             pixelGroup.draw();
         }
+    }
+
+    public int getPixelsKilled()
+    {
+        /*int temp = pixelGroup.pixelsKilled;
+        if(hasAttachments)
+        {
+            int size = attachments.size();
+            for(int i = 0; i < size; i++)
+            {
+                temp += attachments.get(i).getPixelsKilled();
+            }
+        }*/
+
+        return pixelGroup.pixelsKilled;
     }
 
     public PixelGroup getPixelGroup()

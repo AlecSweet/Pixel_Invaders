@@ -19,12 +19,14 @@ public class PixelInfo
             a;
 
     public int
-            index,
+            index;
+
+    public byte
             originalState = 1;
 
     public PixelInfo(float x, float y, float d, float r, float g, float b, float a, int i)
     {
-        float angle = (float)(Math.atan2(x, y));
+        float angle = (float)(Math.atan2(x, y) + Math.PI/2 + Math.PI);
         angleOriginal = angle;
         cosAOriginal = (float)Math.cos(angle);
         sinAOriginal = (float)Math.sin(angle);

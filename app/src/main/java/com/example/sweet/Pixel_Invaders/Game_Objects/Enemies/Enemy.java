@@ -91,6 +91,8 @@ public abstract class Enemy extends Drawable
             live = true,
             checkOverlap = true;
 
+    private int lastPixelsKilledCount = 0;
+
     public Enemy(PixelGroup p, ParticleSystem ps, DropFactory dF, float xb, float yb, GlobalInfo gI)
     {
         xbound = xb + p.halfSquareLength;
@@ -176,7 +178,7 @@ public abstract class Enemy extends Drawable
         }
     }
 
-    void setLoc(float sX, float sY)
+    public void setLoc(float sX, float sY)
     {
         x = sX;
         y = sY;
@@ -255,7 +257,7 @@ public abstract class Enemy extends Drawable
         }
     }
 
-    public void collisionOccured()
+    private void collisionOccured()
     {
         if(guns != null)
         {
@@ -631,7 +633,7 @@ public abstract class Enemy extends Drawable
         {
             if (!enemyBody.getCollidableLive())
             {
-                collisionHandler.destroyCollidableAnimation(enemyBody);
+                collisionHandler.destroyCollidable(enemyBody);
             }
             if(hasAttachments && attachments != null)
             {
@@ -639,7 +641,8 @@ public abstract class Enemy extends Drawable
                 {
                     if(!pGC.getPixelGroup().getCollidableLive())
                     {
-                        collisionHandler.destroyCollidableAnimation(pGC.getPixelGroup());
+                        collisionHandler.destroyCollidable(pGC.getPixelGroup());
+
                     }
                 }
             }
@@ -647,6 +650,24 @@ public abstract class Enemy extends Drawable
         }
 
         return numKilled;
+    }
+
+    public int pixelsKilledSinceLastCheck()
+    {
+        int temp = lastPixelsKilledCount;
+        int tempTotalKilled = enemyBody.pixelsKilled;
+        if(hasAttachments && attachments != null)
+        {
+            for(PixelGroupComponent pGC: attachments)
+            {
+                if(pGC != null)
+                {
+                    tempTotalKilled += pGC.getPixelsKilled();
+                }
+            }
+        }
+        lastPixelsKilledCount = tempTotalKilled;
+        return tempTotalKilled - temp;
     }
     
     private ModComponent getMod(float difficulty, float modifier)

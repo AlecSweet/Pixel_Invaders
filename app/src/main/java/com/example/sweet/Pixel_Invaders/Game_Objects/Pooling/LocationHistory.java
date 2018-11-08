@@ -14,9 +14,7 @@ public class LocationHistory
 
     public long frame;
 
-    public volatile boolean
-            readyToBeConsumed = false,
-            collisionDone = false;
+    public volatile boolean readyToBeConsumed = false;
 
     public LocationHistory nextLocation;
 
@@ -31,7 +29,6 @@ public class LocationHistory
         this.x = x;
         this.y = y;
         readyToBeConsumed = false;
-        collisionDone = false;
     }
 
     public void setPrevLocation(float x, float y)

@@ -109,7 +109,7 @@ public class Rift
                         curRadius * curRadius)
                 {
                     activatedTimeStart = System.currentTimeMillis();
-                    activatedTimeTotal = 12000 * curRadius / targetRadius * (1 + spawnFreqMod);
+                    activatedTimeTotal = 7000 * curRadius / targetRadius * (1 + spawnFreqMod);
                     activatedMagTarget = 4 * curRadius + 1;
                     saveSpin = percent * Constants.twoPI * 4;
                     riftState = RiftState.ACTIVATED;

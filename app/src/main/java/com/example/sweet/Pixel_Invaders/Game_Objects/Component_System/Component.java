@@ -38,6 +38,7 @@ public abstract class Component
             for (int i = 0; i < attachIndices.length; i += 2)
             {
                 attachmentPixels[i / 2] = base.getpMap()[attachIndices[i + 1] + 1][attachIndices[i] + 1];
+                //attachmentPixels[i / 2] = base.getpMap()[attachIndices[i] + 1][attachIndices[i + 1] + 1];
             }
             //attachmentPixels = p;
         }

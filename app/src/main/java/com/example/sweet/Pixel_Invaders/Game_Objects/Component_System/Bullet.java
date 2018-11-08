@@ -29,6 +29,8 @@ public class Bullet
 
     public PixelGroup pixelGroup;
 
+    private Pixel[] trailPixels;
+
     Bullet(float cx, float cy, float a, float spd, float mD, PixelGroup pG)
     {
         pixelGroup = pG;
@@ -79,6 +81,7 @@ public class Bullet
         angle = a;
         cosA = (float)Math.cos(angle);
         sinA = (float)Math.sin(angle);
+        pixelGroup.rotate(a);
     }
 
     public void draw()
@@ -115,7 +118,6 @@ public class Bullet
         pixelGroup.resetLocationHistory(x, y);
         pixelGroup.setLoc(x,y);
         rotate(a);
-        pixelGroup.rotate(a);
         distance = 0;
         pixelGroup.gotHit = false;
         live = true;

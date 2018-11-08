@@ -81,15 +81,17 @@ public class Player extends Drawable
     public float lastCollisionTime = 0;
 
     private int[] leftBoost = new int[]{0, 2, 0, 3};
+    //private int[] leftBoost = new int[]{2, 31, 3, 31};
     private int[] rightBoost = new int[]{0, 28, 0, 29};
+    //private int[] rightBoost = new int[]{28, 31, 29, 31};
     private int[] mainBoost = new int[]{0, 14, 0, 15, 0, 16, 0, 17, 1, 16, 1, 15};
-
+    //private int[] mainBoost = new int[]{14, 31, 15, 31, 16, 31, 17, 31, 16, 30, 15, 30};
     private int[] topLeft = new int[]{22, 5, 22, 6, 23, 5, 23, 6};
-
+    //private int[] topLeft = new int[]{5, 10, 6, 10, 5, 9, 6, 9};
     private int[] middle = new int[]{16, 15, 17, 15, 16, 16, 17, 16};
-
+    //private int[] middle = new int[]{15, 16, 15, 17, 16, 16, 16, 17};
     private int[] topRight = new int[]{22, 25, 22, 26, 23, 25, 23, 26};
-
+    //private int[] topRight = new int[]{ 25, 10, 26, 10, 25, 9, 26, 9};
     private int
             tiltLoc,
             magLoc;
@@ -128,7 +130,7 @@ public class Player extends Drawable
     private int maxGuns = 1;
 
     public Drop[] mods = new Drop[5];
-    private int maxMods = 1;
+    private int maxMods = 5;
 
     public Drop[] consumableDrops = new Drop[Constants.DROPS_LENGTH];
 
@@ -144,13 +146,13 @@ public class Player extends Drawable
 
     private int[] affectedPixels;
 
-    public Player(DropFactory dF, Context context, float sp, int sL, ParticleSystem ps, ParticleSystem sP, PixelGroup body, GlobalInfo gI)
+    public Player(DropFactory dF, Context context, float sp, int sL, ParticleSystem ps, ParticleSystem stP, ParticleSystem ep, PixelGroup body, GlobalInfo gI)
     {
         particleSystem = ps;
-        staticParticles = sP;
+        staticParticles = stP;
         baseSpeed = sp;
         globalInfo = gI;
-        rift = new Rift(ps, globalInfo);
+        rift = new Rift(ep, globalInfo);
 
         playerBody = body;
         playerBody.setLoc(0,0);
@@ -165,11 +167,19 @@ public class Player extends Drawable
         shakeEngine = new ScreenShakeEngine(gI, 200);
         initAttachmentPixels();
 
-        bonusBar = ImageParser.parseImage(context, R.drawable.bonusbargroup, R.drawable.bonusbargroup, sL,0);
+        bonusBar = ImageParser.parseImage(context, R.drawable.bonusbargroup2, R.drawable.bonusbargroup2, sL,0);
         bonusBar.setRestorable(true);
         bonusBar.setEnableLocationChain(false);
-        bonusBar.setLoc(.922f, .003f);
-        int i = 0;
+        bonusBar.setLoc(-.003f,.922f );
+
+        for(int r = 2; r < bonusBar.infoMap.length - 2; r++)
+        {
+            for(int c = 2; c < bonusBar.infoMap[0].length - 2; c++)
+            {
+                bonusBar.infoMap[r][c].originalState = 0;
+            }
+        }
+       /* int i = 0;
         for(PixelInfo[] pIA: bonusBar.infoMap)
         {
             if(i < bonusBar.infoMap.length - 2)
@@ -183,7 +193,7 @@ public class Player extends Drawable
                 }
             }
             i++;
-        }
+        }*/
         bonusBar.resetPixels();
 
         gunDrops[0] = dF.getNewDrop(Constants.DropType.GUN,
@@ -199,8 +209,8 @@ public class Player extends Drawable
                                 (
                                         ImageParser.parseImage(context, R.drawable.longb, R.drawable.longb, sL, -1),
                                         particleSystem,
-                                        50,
-                                        .1f
+                                        200,
+                                        1f
                                 ),
                         middle
                 )
@@ -222,7 +232,7 @@ public class Player extends Drawable
                                                 ImageParser.parseImage(context, R.drawable.bullet, R.drawable.bullet2_light, sL, -1),
                                                 particleSystem,
                                                 400,
-                                                .06f
+                                                .1f
                                         ),
                                 middle
                         )
@@ -247,6 +257,13 @@ public class Player extends Drawable
                                 middle
                         )
         ));
+
+        addComponenentDrop(dF.getNewDrop(Constants.DropType.PIERCING, 0, 0, new ModComponent(Constants.DropType.PIERCING, 3)));
+        addComponenentDrop(dF.getNewDrop(Constants.DropType.FIRE_RATE, 0, 0, new ModComponent(Constants.DropType.FIRE_RATE, 4)));
+        addComponenentDrop(dF.getNewDrop(Constants.DropType.FIRE_RATE, 0, 0, new ModComponent(Constants.DropType.FIRE_RATE, 4)));
+        addComponenentDrop(dF.getNewDrop(Constants.DropType.EXTRA_SHOTS, 0, 0, new ModComponent(Constants.DropType.EXTRA_SHOTS, 4)));
+        addComponenentDrop(dF.getNewDrop(Constants.DropType.EXTRA_SHOTS, 0, 0, new ModComponent(Constants.DropType.EXTRA_SHOTS, 4)));
+
 
         thrusters[1] = dF.getNewDrop(Constants.DropType.THRUSTER,
                 0,
@@ -409,7 +426,7 @@ public class Player extends Drawable
         for(Pixel p: pixels)
         {
             //if(p.live)
-            if(p.state >= 1)
+            if( p != null && p.state >= 1)
             {
                 float tX = playerBody.infoMap[p.row][p.col].xOriginal * playerBody.cosA +
                         playerBody.infoMap[p.row][p.col].yOriginal * playerBody.sinA;
@@ -1142,19 +1159,15 @@ public class Player extends Drawable
     {
         for (Pixel p : c.getPixels())
         {
-            if(p.state >= 1)
+            if (p.state > 0)
             {
-                p.xDisp = c.infoMap[p.row][p.col].xOriginal * c.cosA + c.infoMap[p.row][p.col].yOriginal * c.sinA;
-                p.yDisp = c.infoMap[p.row][p.col].yOriginal * c.cosA - c.infoMap[p.row][p.col].xOriginal * c.sinA;
-                addParticleHelper(p, c, pS);
                 c.killPixel(p);
-                c.numLivePixels--;
-                c.pixelsKilled++;
+                c.addPixelKillParticleCenter(p, pS);
             }
         }
     }
 
-    private void addParticleHelper(Pixel p, Collidable c, ParticleSystem pS)
+    /*private void addParticleHelper(Pixel p, Collidable c, ParticleSystem pS)
     {
         float angle = (float)(Math.atan2(p.yDisp, p.xDisp) + Math.random() * .2 - .1);
         pS.addParticle(
@@ -1170,7 +1183,7 @@ public class Player extends Drawable
                 (float)(Math.random()*40)-20
         );
     }
-
+*/
     public void addParticleToCenter()
     {
         float angle = (float)Math.random() * Constants.twoPI;

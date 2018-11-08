@@ -208,7 +208,8 @@ public class Centipede extends Enemy
                         c.infoMap[p.row][p.col].xOriginal * enemyBody.sinA;
                 for (int t = 0; t < 2; t++)
                 {
-                    particleSystem.addParticle(xDisp + enemyBody.centerX,
+                    particleSystem.addParticle(
+                            xDisp + enemyBody.centerX,
                             yDisp + enemyBody.centerY,
                             //-enemyBody.cosA, enemyBody.sinA,
                             -enemyBody.angle + (float)Math.PI,

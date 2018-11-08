@@ -28,10 +28,10 @@ public class BasicGun extends Gun
             float tX = x * cosA + y * sinA + cX;
             float tY = y * cosA - x * sinA + cY;
             int tempshots = numShots;
-            if(numShots > 8)
+            /*if(numShots > 8)
             {
                 tempshots = 8;
-            }
+            }*/
             float arc = (tempshots - 1) * .1f;
 
             for(int i = 0; i < tempshots; i++)
@@ -144,7 +144,7 @@ public class BasicGun extends Gun
             if(bullets[i].live)
             {
                 bullets[i].move(gI);
-                for(Pixel p: bullets[i].getPixels())
+                /*for(Pixel p: bullets[i].getPixels())
                 {
                     if(p.state >= 2)
                     {
@@ -160,7 +160,7 @@ public class BasicGun extends Gun
                                 .2f, .02f, 4f
                         );
                     }
-                }
+                }*/
             }
             if(!bullets[i].live && bullets[i].active)
             {
@@ -197,21 +197,11 @@ public class BasicGun extends Gun
             if(bullets[i].live)
             {
                 bullets[i].move(gI, slow);
-                for(Pixel p: bullets[i].getPixels())
+                /*for(Pixel p: bullets[i].getPixels())
                 {
                     if(p.state >= 2)
                     {
                         float cC = (float)(Math.random()) * .3f + .7f;
-                        /*masterParticleSystem.addParticle(
-                                p.xDisp + bullets[i].pixelGroup.getCenterX(),
-                                p.yDisp + bullets[i].pixelGroup.getCenterY(),
-                                bullets[i].angle + (float)(Math.random()* .2f - 1f),
-                                bullets[i].pixelGroup.infoMap[p.row][p.col].r * cC,
-                                bullets[i].pixelGroup.infoMap[p.row][p.col].g * cC,
-                                bullets[i].pixelGroup.infoMap[p.row][p.col].b * cC,
-                                .6f,
-                                .2f, .02f, 4f
-                        );*/
                         masterParticleSystem.addParticle(
                                 p.xDisp + bullets[i].pixelGroup.getCenterX(),
                                 p.yDisp + bullets[i].pixelGroup.getCenterY(),
@@ -223,7 +213,7 @@ public class BasicGun extends Gun
                                 .2f, .02f, 4f
                         );
                     }
-                }
+                }*/
             }
             if(!bullets[i].live && bullets[i].active)
             {

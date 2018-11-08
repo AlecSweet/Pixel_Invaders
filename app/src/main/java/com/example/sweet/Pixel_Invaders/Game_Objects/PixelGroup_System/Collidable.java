@@ -1,6 +1,7 @@
 package com.example.sweet.Pixel_Invaders.Game_Objects.PixelGroup_System;
 
 import com.example.sweet.Pixel_Invaders.Game_Objects.Pooling.LocationHistory;
+import com.example.sweet.Pixel_Invaders.UI_System.ParticleSystem;
 
 /**
  * Created by Sweet on 3/26/2018.
@@ -16,11 +17,11 @@ public class Collidable
             cosA = 1,
             sinA = 0,
             speed,
-            centerMassX = 0,
-            centerMassY = 0,
             angleKnockback = 0,
             posKnockbackX = 0,
-            posKnockbackY = 0;
+            posKnockbackY = 0,
+            tempCenterX,
+            tempCenterY;
 
     public volatile int pixelsKilled = 0;
 
@@ -32,7 +33,7 @@ public class Collidable
             lastRegenTime = 0;
 
     public long
-            orphanChunkCheckDelay = 100,
+            orphanChunkCheckDelay = 0,
             lastOrphanChunkCheck;
 
     public volatile float angle = 0;
@@ -61,15 +62,13 @@ public class Collidable
 
     public PixelInfo[][] infoMap;
 
-    public Zone[] zones;
-
     public boolean gotHit = false;
-
-    CollidableGroup[] totalGroups;
 
     public int
             totalPixels,
-            numLivePixels,
+            numLivePixels;
+
+    public byte
             health = 1;
 
     public Pixel lastPixelKilled;
@@ -83,7 +82,11 @@ public class Collidable
             readyToKnockback = false,
             readyToScreenShake = false;
 
-    Collidable(float hSL, Pixel[] p, boolean chunkDeletion, Zone[] z, CollidableGroup[] g, PixelInfo[][] iM)
+    private HitboxNode hitBox;
+
+    private ParticleSystem particleSystem;
+
+    Collidable(float hSL, Pixel[] p, boolean chunkDeletion, PixelInfo[][] iM)
     {
         centerX = 5;
         centerY = 5;
@@ -94,8 +97,6 @@ public class Collidable
         totalPixels = pixels.length;
         numLivePixels = totalPixels;
         enableOrphanChunkDeletion = chunkDeletion;
-        zones = z;
-        totalGroups = g;
         collidableLive = true;
         needsUpdate = false;
         lastOrphanChunkCheck = System.currentTimeMillis();
@@ -112,7 +113,7 @@ public class Collidable
         locationHead = locationDrawTail;
     }
 
-    Collidable(float hSL, Pixel[] p, boolean chunkDeletion, Zone[] z, PixelInfo[][] iM, Pixel[][] pM)
+    Collidable(float hSL, Pixel[] p, boolean chunkDeletion, PixelInfo[][] iM, Pixel[][] pM)
     {
         centerX = 5;
         centerY = 5;
@@ -124,36 +125,6 @@ public class Collidable
         totalPixels = pixels.length;
         numLivePixels = totalPixels;
         enableOrphanChunkDeletion = chunkDeletion;
-        zones = z;
-        collidableLive = true;
-        needsUpdate = false;
-        lastOrphanChunkCheck = System.currentTimeMillis();
-
-        locationDrawTail = new LocationHistory(4f, 4f);
-        locationCollisionTail = locationDrawTail;
-        locationHead = locationDrawTail;
-        for(int i = 0; i < 4; i++)
-        {
-            locationHead.nextLocation = new LocationHistory(4f,4f);
-            locationHead = locationHead.nextLocation;
-        }
-
-        locationHead.nextLocation = locationDrawTail;
-        locationHead = locationDrawTail;
-    }
-
-    Collidable(float hSL, Pixel[] p, boolean chunkDeletion, Zone[] z, PixelInfo[][] iM)
-    {
-        centerX = 5;
-        centerY = 5;
-
-        halfSquareLength = hSL;
-        pixels = p;
-        infoMap = iM;
-        totalPixels = pixels.length;
-        numLivePixels = totalPixels;
-        enableOrphanChunkDeletion = chunkDeletion;
-        zones = z;
         collidableLive = true;
         needsUpdate = false;
         lastOrphanChunkCheck = System.currentTimeMillis();
@@ -204,53 +175,6 @@ public class Collidable
             angleKnockback = 0;
             readyToKnockback = false;
         }
-        float tempCMX = 0;
-        float tempCMY = 0;
-        int numOutside = 0;
-        for(Zone z: zones)
-        {
-            if (z != null)
-            {
-                boolean zoneCheck = false;
-                for (CollidableGroup cG: z.collidableGroups)
-                {
-                    if (cG != null)
-                    {
-                        boolean groupCheck = false;
-                        for(Pixel p: cG.pixels)
-                        {
-                            if(p.state >= 1)
-                            {
-                                groupCheck = true;
-                                if(p.state >= 2)
-                                {
-                                    p.xDisp = infoMap[p.row][p.col].xOriginal * cosA +
-                                            infoMap[p.row][p.col].yOriginal * sinA;
-                                    p.yDisp = infoMap[p.row][p.col].yOriginal * cosA -
-                                            infoMap[p.row][p.col].xOriginal * sinA;
-                                    tempCMX += infoMap[p.row][p.col].xOriginal;
-                                    tempCMY += infoMap[p.row][p.col].yOriginal;
-                                    numOutside++;
-                                }
-                            }
-                        }
-                        if(groupCheck)
-                        {
-                            zoneCheck = true;
-                        }
-                        cG.live = groupCheck;
-                    }
-                }
-                z.live = zoneCheck;
-            }
-        }
-        if(numOutside > 0)
-        {
-            tempCMX /= numOutside;
-            tempCMY /= numOutside;
-            centerMassX = tempCMX;
-            centerMassY = tempCMY;
-        }
     }
 
     public void rotate(float a)
@@ -258,25 +182,6 @@ public class Collidable
         angle = a;
         cosA = (float)Math.cos(angle);
         sinA = (float)Math.sin(angle);
-
-        for(Zone z: zones)
-        {
-            if (z != null)
-            {
-                z.centerMassX = centerMassX;
-                z.centerMassY = centerMassY;
-                z.rotate(cosA, sinA);
-                for (CollidableGroup cG: z.collidableGroups)
-                {
-                    if (cG != null)
-                    {
-                        cG.centerMassX = centerMassX;
-                        cG.centerMassY = centerMassY;
-                        cG.rotate(cosA, sinA);
-                    }
-                }
-            }
-        }
     }
 
     public void killPixel(Pixel p)
@@ -287,52 +192,62 @@ public class Collidable
         temp = pMap[p.row + 1][p.col];
         if (temp != null && temp.state == 1)
         {
-            temp.xDisp = infoMap[temp.row][temp.col].xOriginal * cosA +
-                    infoMap[temp.row][temp.col].yOriginal * sinA;
-            temp.yDisp = infoMap[temp.row][temp.col].yOriginal * cosA -
-                    infoMap[temp.row][temp.col].xOriginal * sinA;
             temp.state = 3;
+            if(temp.parent != null)
+            {
+                temp.parent.transmitNewOutsidePixel();
+            }
         }
 
         temp = pMap[p.row - 1][p.col];
         if (temp != null && temp.state == 1)
         {
-            temp.xDisp = infoMap[temp.row][temp.col].xOriginal * cosA +
-                    infoMap[temp.row][temp.col].yOriginal * sinA;
-            temp.yDisp = infoMap[temp.row][temp.col].yOriginal * cosA -
-                    infoMap[temp.row][temp.col].xOriginal * sinA;
             temp.state = 3;
+            if(temp.parent != null)
+            {
+                temp.parent.transmitNewOutsidePixel();
+            }
         }
 
         temp = pMap[p.row][p.col + 1];
         if (temp != null && temp.state == 1)
         {
-            temp.xDisp = infoMap[temp.row][temp.col].xOriginal * cosA +
-                    infoMap[temp.row][temp.col].yOriginal * sinA;
-            temp.yDisp = infoMap[temp.row][temp.col].yOriginal * cosA -
-                    infoMap[temp.row][temp.col].xOriginal * sinA;
             temp.state = 3;
+            if(temp.parent != null)
+            {
+                temp.parent.transmitNewOutsidePixel();
+            }
         }
 
         temp = pMap[p.row][p.col - 1];
         if (temp != null && temp.state == 1)
         {
-            temp.xDisp = infoMap[temp.row][temp.col].xOriginal * cosA +
-                    infoMap[temp.row][temp.col].yOriginal * sinA;
-            temp.yDisp = infoMap[temp.row][temp.col].yOriginal * cosA -
-                    infoMap[temp.row][temp.col].xOriginal * sinA;
             temp.state = 3;
+            if(temp.parent != null)
+            {
+                temp.parent.transmitNewOutsidePixel();
+            }
         }
 
+        /*addPixelKillParticle(
+                infoMap[p.row][p.col].xOriginal * cosA + infoMap[p.row][p.col].yOriginal * sinA,
+                infoMap[p.row][p.col].yOriginal * cosA - infoMap[p.row][p.col].xOriginal * sinA,
+                p,
+                ps
+        );*/
     }
 
-    public void hitPixel(Pixel p)
+    public int hitPixel(Pixel p)
     {
         p.health--;
+        gotHit = true;
         if(p.health <= 0)
         {
             killPixel(p);
+            return 1;
         }
+
+        return 0;
     }
 
     public void setLoc(float mX, float mY)
@@ -346,7 +261,6 @@ public class Collidable
         int nL = 0;
         for(Pixel p: pixels)
         {
-
             p.health = health;
             p.groupFlag = -1;
             p.state = infoMap[p.row][p.col].originalState;
@@ -448,7 +362,6 @@ public class Collidable
                 locationCollisionTail.frame < currentFrame)
         {
             prevColLoc = locationCollisionTail;
-            locationCollisionTail.collisionDone = true;
             locationCollisionTail = locationCollisionTail.nextLocation;
         }
 
@@ -673,5 +586,63 @@ public class Collidable
                 }
             }
         }
+    }
+
+    public void addPixelKillParticleCenter(Pixel p, ParticleSystem ps)
+    {
+        ps.addParticle(
+                infoMap[p.row][p.col].xOriginal * cosA + infoMap[p.row][p.col].yOriginal * sinA + getCenterX(),
+                infoMap[p.row][p.col].yOriginal * cosA - infoMap[p.row][p.col].xOriginal * sinA + getCenterY(),
+                -infoMap[p.row][p.col].angleOriginal - angle + (float)Math.random() * .2f - .1f,
+                infoMap[p.row][p.col].r,
+                infoMap[p.row][p.col].g,
+                infoMap[p.row][p.col].b,
+                1.2f,
+                (float)Math.random() + .1f,
+                (float)Math.random() * .5f + .01f,
+                (float)Math.random() * 40f - 20f
+        );
+    }
+
+    public void addPixelKillParticle(Pixel p, ParticleSystem ps)
+    {
+        ps.addParticle(
+                infoMap[p.row][p.col].xOriginal * cosA + infoMap[p.row][p.col].yOriginal * sinA + tempCenterX,
+                infoMap[p.row][p.col].yOriginal * cosA - infoMap[p.row][p.col].xOriginal * sinA + tempCenterY,
+                -infoMap[p.row][p.col].angleOriginal - angle + (float)Math.random() * .2f - .1f,
+                infoMap[p.row][p.col].r,
+                infoMap[p.row][p.col].g,
+                infoMap[p.row][p.col].b,
+                1.2f,
+                (float)Math.random() + .1f,
+                (float)Math.random() * .5f + .01f,
+                (float)Math.random() * 40f - 20f
+        );
+    }
+
+    public void addChunkKillParticle(float angle, float speedRand, float distRand, Pixel p, ParticleSystem ps)
+    {
+        ps.addParticle(
+                infoMap[p.row][p.col].xOriginal * cosA + infoMap[p.row][p.col].yOriginal * sinA + tempCenterX,
+                infoMap[p.row][p.col].yOriginal * cosA - infoMap[p.row][p.col].xOriginal * sinA + tempCenterY,
+                angle,
+                infoMap[p.row][p.col].r,
+                infoMap[p.row][p.col].g,
+                infoMap[p.row][p.col].b,
+                1f,
+                speedRand,
+                distRand,
+                0
+        );
+    }
+
+    public HitboxNode getHitBox()
+    {
+        return hitBox;
+    }
+
+    public void setHitbox(HitboxNode hitBox)
+    {
+        this.hitBox = hitBox;
     }
 }
