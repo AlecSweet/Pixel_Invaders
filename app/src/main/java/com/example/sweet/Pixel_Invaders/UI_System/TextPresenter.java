@@ -55,8 +55,8 @@ public class TextPresenter
     private static final float charSpaceY = 3 * pixSize;
     public static final float charSkipX = (12 + 6) * pixSize;
     
-    private static final float dL = 5 * .008f;
-    private static final float dW = 2 * .008f;
+    private static final float dL = 2 * .008f;
+    private static final float dW = 5 * .008f;
 
     private static final float[] digitVA = new float[]{
             0f,  0f, 0.5f, 0.5f,
@@ -113,8 +113,8 @@ public class TextPresenter
         float disp = 0;
         if(center)
         {
-            disp = (dSkipY * getNumDigitsInt(i)) / 2f;
-            disp -= dW*1.5;
+            disp = dSkipY * getNumDigitsInt(i) / 2f;
+            disp -= dL*1.5;
         }
         int itr = 0;
         if(i > 0)
@@ -128,7 +128,7 @@ public class TextPresenter
                 glBindTexture(GL_TEXTURE_2D, digitTextures[digit]);
                 glUniform1i(uTextureLocation, 0);
 
-                glUniform2f(dispLoc, x, y + itr * dSkipY - disp);
+                glUniform2f(dispLoc, x - itr * dSkipY + disp, y);
 
                 glBindBuffer(GL_ARRAY_BUFFER, vboHandle[0]);
                 bindAttributes();
@@ -147,7 +147,7 @@ public class TextPresenter
             glBindTexture(GL_TEXTURE_2D, digitTextures[0]);
             glUniform1i(uTextureLocation, 0);
 
-            glUniform2f(dispLoc, x, y + itr * dSkipY - disp);
+            glUniform2f(dispLoc, x - itr * dSkipY - disp, y);
 
             glBindBuffer(GL_ARRAY_BUFFER, vboHandle[0]);
             bindAttributes();
@@ -171,7 +171,7 @@ public class TextPresenter
                     disp -= (charSpaceY + charSkipY) * mag;
                 }
             }
-            disp /= 3f;
+            disp /= 2.4f;
         }
 
         for(int i = start; i < len; i++)
@@ -182,7 +182,7 @@ public class TextPresenter
                 glBindTexture(GL_TEXTURE_2D, characters.get((int)s.charAt(i)));
                 glUniform1i(uTextureLocation, 0);
 
-                glUniform2f(dispLoc, x, y - disp);
+                glUniform2f(dispLoc, x + disp, y);
 
                 glBindBuffer(GL_ARRAY_BUFFER, vboHandle[1]);
                 bindAttributes();

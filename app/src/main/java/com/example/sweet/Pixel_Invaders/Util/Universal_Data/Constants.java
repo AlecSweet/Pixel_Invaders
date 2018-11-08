@@ -10,17 +10,9 @@ public class Constants
 
     public static final float PIXEL_SIZE = .0056f;
 
-    public static final float MAX_DIST_JUMP = PIXEL_SIZE * 1.4f;
+    public static final float MAX_DIST_JUMP = PIXEL_SIZE * 1.41f;
 
     public static final float twoPI = (float)(2*Math.PI);
-
-    public static final int CELL_LENGTH = 4;
-
-    public static final float CELL_SIZE = PIXEL_SIZE * CELL_LENGTH;
-
-    public static final int ZONE_LENGTH = 4;
-
-    public static final float ZONE_SIZE = CELL_SIZE * ZONE_LENGTH;
 
     public static final int ENTITIES_LENGTH = 200;
 
@@ -46,7 +38,7 @@ public class Constants
 
     public static final float COMPONENT_DROP_MOVESPEED = .0002f;
 
-    public enum EnemyType
+    public enum EntityType
     {
         //Enemies
         SIMPLE,
@@ -166,10 +158,10 @@ public class Constants
 
     public static final float
             joyStickRadius = .32f,
-            staticMoveLocX = -.55f,
-            staticMoveLocY = 1.3f,
-            staticShootLocX = -.55f,
-            staticShootLocY = -1.3f;
+            staticMoveLocX = -1.3f,
+            staticMoveLocY = -.55f,
+            staticShootLocX = 1.3f,
+            staticShootLocY = -.55f;
 
 
     public static final float[] joyBaseMoveVA = new float[]{
@@ -213,8 +205,8 @@ public class Constants
     };
     
     public static final float
-            nbL = .052f,
-            nbW = .28f;
+            nbL = .28f,
+            nbW = .052f;
 
     public static final float[] navButtonVA = new float[]{
             0f,  0f, 0.5f, 0.5f,
@@ -226,8 +218,8 @@ public class Constants
     };
     
     public static final float
-            bbL = .02f,
-            bbW = .8f;
+            bbL = .8f,
+            bbW = .02f;
 
     public static final float[] bonusBarVA = new float[]{
             0f,  0f, 0.5f, 0.5f,
@@ -239,8 +231,8 @@ public class Constants
     };
     
     public static final float
-            rbL = .1f,
-            rbW = .4f,
+            rbL = .4f,
+            rbW = .1f,
             hoverMag = 1.04f;
 
     public static final float[] resumeButtonVA = new float[]{
@@ -262,8 +254,8 @@ public class Constants
     };
 
     public static final float
-            sbL = 1.2f,
-            sbW = .5f;
+            sbL = .5f,
+            sbW = 1.2f;
     
     public static final float[] shadeBarVa = new float[]{
             0f,  0f, 0.5f, 0.5f,
@@ -318,8 +310,8 @@ public class Constants
     //----- pause Info
     
     public static final float
-            aibL = .808f, //aibL = .664f,
-            aibW = 1.344f;
+            aibL = 1.344f, //aibL = .664f,
+            aibW = .808f;
     
     public static final float[] allInfoBoxVA = new float[]{
             0f,  0f, 0.5f, 0.5f,
@@ -334,16 +326,16 @@ public class Constants
     
     public static final float[] missionContextBoxVA = new float[]{
             0f,  0f, 0.5f, 0.5f,
-            -mlL, -aibW,   0f, 1f,
-            mlL, -aibW,   1f, 1f,
-            mlL,  aibW,   1f, 0f,
-            -mlL,  aibW,   0f, 0f,
-            -mlL, -aibW,   0f, 1f
+               -aibL, -mlL,   0f, 1f,
+               aibL, -mlL,   1f, 1f,
+               aibL,  mlL,   1f, 0f,
+               -aibL, mlL,   0f, 0f,
+               -aibL, -mlL,  0f, 1f
     };
     
     public static final float
-            ipW = .328f, //aibL = .664f,
-            ipL = .584f;
+            ipW = .584f, //aibL = .664f,
+            ipL = .328f;
 
     public static final float[] infoPanelVA = new float[]{
             0f,  0f, 0.5f, 0.5f,
@@ -355,8 +347,8 @@ public class Constants
     };
 
     public static final float
-            cW = 1.26f, //aibL = .664f,
-            cL = .74f;
+            cW = .74f, //aibL = .664f,
+            cL = 1.26f;
 
     public static final float[] controlsVA = new float[]{
             0f,  0f, 0.5f, 0.5f,
@@ -368,7 +360,7 @@ public class Constants
     };
 
     //info Panel center x: -.044f    y: .936f
-    public static final float infoPanelY = .666f;
+    public static final float infoPanelY = -.666f;
 
     public static final float iPnum1X = -.044f + .392f;
     public static final float iPnum2X = -.044f + .256f;
@@ -377,8 +369,8 @@ public class Constants
     public static final float gpPathX = -.044f + .048f;
     public static final float gpPathY = .656f + .08f;
 
-    public static final float gpBulletY = .936f;
-    public static final float gpBulletX = -.044f - .28f;
+    public static final float gpBulletY = -.044f - .28f;
+    public static final float gpBulletX = -.936f;
 
     public static final float pbR = .587f;
 
@@ -416,8 +408,8 @@ public class Constants
     };
 
     public static final float
-            paL = .072f,
-            paW = .224f;
+            paL = .224f,
+            paW = .072f;
 
     public static final float[] pauseVA = new float[]{
             0f,  0f, 0.5f, 0.5f,
@@ -429,8 +421,8 @@ public class Constants
     };
 
     public static final float
-            modL = .112f,
-            modW = .328f;
+            modL = .328f,
+            modW = .112f;
 
     public static final float[] modNameVA = new float[]{
             0f,  0f, 0.5f, 0.5f,
@@ -442,19 +434,20 @@ public class Constants
     };
 
     public static final float
+            modW2 = .328f,
             modL2 = .256f;
 
     public static final float[] modDescripVA = new float[]{
             0f,  0f, 0.5f, 0.5f,
-            -modL2, -modW,   0f, 1f,
-            modL2, -modW,   1f, 1f,
-            modL2,  modW,   1f, 0f,
-            -modL2,  modW,   0f, 0f,
-            -modL2, -modW,   0f, 1f
+             -modW2, -modL2,   0f, 1f,
+             modW2, -modL2,   1f, 1f,
+              modW2, modL2,   1f, 0f,
+              -modW2, modL2,   0f, 0f,
+             -modW2, -modL2,   0f, 1f
     };
     public static final float
-            titleL = .256f,
-            titleW = .512f;
+            titleL = .512f,
+            titleW = .256f;
 
     public static final float[] titleVA = new float[]{
             0f,  0f, 0.5f, 0.5f,

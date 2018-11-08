@@ -99,6 +99,7 @@ public class AIThread implements Runnable
     {
         levelDone = true;
         boolean clearedTemp = true;
+        int pxKilledThisFrame = 0;
         for(int i = 0; i < Constants.ENTITIES_LENGTH; i++)
         {
             if(entities[i] != null && !entities[i].aiRemoveConsensus)
@@ -126,7 +127,17 @@ public class AIThread implements Runnable
                                 player1.getPixelGroup().getCenterY()
                         );
 
-                        if (entities[i].getPixelGroup().readyToScreenShake && entities[i].getPixelGroup().pixelsKilled > 0)
+                        pxKilledThisFrame += entities[i].pixelsKilledSinceLastCheck();
+             /*           if(pixKilled > 0)
+                        {
+                            System.out.println(pixKilled);
+                            player1.shakeEngine.addShake(
+                                    (float) (.002f * Math.sqrt(pixKilled)),
+                                    120,
+                                    500
+                            );
+                        }*/
+                        /*if (entities[i].getPixelGroup().readyToScreenShake && entities[i].getPixelGroup().pixelsKilled > 0)
                         {
                             player1.shakeEngine.addShake(
                                     (float) (.004f * Math.sqrt(entities[i].getPixelGroup().pixelsKilled)),
@@ -139,7 +150,7 @@ public class AIThread implements Runnable
                         else
                         {
                             entities[i].getPixelGroup().readyToScreenShake = false;
-                        }
+                        }*/
                         for (int d = 0; d < entities[i].consumables.length; d++)
                         {
                             if (entities[i].consumables[d] != null && entities[i].isAsteriod)
@@ -151,11 +162,15 @@ public class AIThread implements Runnable
                     }
                     else
                     {
-                        player1.shakeEngine.addShake(
-                                (float) (.002f * Math.sqrt(entities[i].getPixelGroup().totalPixels)),
-                                120,
-                                1000
-                        );
+                        pxKilledThisFrame += entities[i].getPixelGroup().totalPixels;
+                        /*if(entities[i].pixelsKilledSinceLastCheck() > 0)
+                        {
+                            player1.shakeEngine.addShake(
+                                    (float) (.002f * Math.sqrt(entities[i].getPixelGroup().totalPixels)),
+                                    120,
+                                    1000
+                            );
+                        }*/
                         if (globalInfo.gameSettings.slowOnKill)
                         {
                             timeEngine.addSlow(.7f, 400, POW3_FADEOUT);
@@ -169,6 +184,16 @@ public class AIThread implements Runnable
             {
                 entities[i] = null;
             }
+        }
+
+        if(pxKilledThisFrame > 0)
+        {
+            float temp = (float)Math.sqrt(pxKilledThisFrame);
+            player1.shakeEngine.addShake(
+                    (.002f * temp),
+                    120,
+                    300 + (int)(7 * temp)
+            );
         }
 
         if(clearedTemp)

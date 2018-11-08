@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/Game3.01(Threading).iml" filepath="$PROJECT_DIR$/Game3.01(Threading).iml" />
+      <module fileurl="file://$PROJECT_DIR$/Pixel Invaders.iml" filepath="$PROJECT_DIR$/Pixel Invaders.iml" />
       <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
     </modules>
   </component>

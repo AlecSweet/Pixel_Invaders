@@ -1,13 +1,13 @@
 package com.example.sweet.Pixel_Invaders.Util;
 
+import com.example.sweet.Pixel_Invaders.Game_Objects.PixelGroup_System.CollisionMethods;
+import com.example.sweet.Pixel_Invaders.Game_Objects.PixelGroup_System.GroupNum;
 import com.example.sweet.Pixel_Invaders.Game_Objects.PixelGroup_System.PixelGroup;
 import com.example.sweet.Pixel_Invaders.Util.Universal_Data.Constants;
 import com.example.sweet.Pixel_Invaders.Game_Objects.PixelGroup_System.Collidable;
-import com.example.sweet.Pixel_Invaders.Game_Objects.PixelGroup_System.CollidableGroup;
 import com.example.sweet.Pixel_Invaders.Game_Objects.Enemies.Enemy;
 import com.example.sweet.Pixel_Invaders.UI_System.ParticleSystem;
 import com.example.sweet.Pixel_Invaders.Game_Objects.PixelGroup_System.Pixel;
-import com.example.sweet.Pixel_Invaders.Game_Objects.PixelGroup_System.Zone;
 
 /**
  * Created by Sweet on 3/26/2018.
@@ -16,44 +16,41 @@ import com.example.sweet.Pixel_Invaders.Game_Objects.PixelGroup_System.Zone;
 public class CollisionHandler
 {
     private ParticleSystem collisionParticles;
+    //private int colltime;
+
+    private int[] groupSizes = new int[100];
+    private GroupNum[] groups = new GroupNum[400];
 
     public CollisionHandler(ParticleSystem pS)
     {
         collisionParticles = pS;
+        for(int i = 0; i < groups.length; i++)
+        {
+            groups[i] = new GroupNum((short)-1);
+        }
     }
 
-    private int[] groupSizes =  new int[100];
 
     public int checkCollisions(PixelGroup c, PixelGroup c2)
     {
         boolean collision = false;
         int numKilled = 0;
-        /*float tempX = 0;
-        float tempY = 0;
-        float tempX2 = 0;
-        float tempY2 = 0;*/
 
-        float cCenterX = c.getCenterX();
-        float cCenterY = c.getCenterY();
-
+        //long start = System.nanoTime();
         float cPCenterX = c.getPrevCenterX();
         float cPCenterY = c.getPrevCenterY();
-
-        float cDistX = cCenterX - cPCenterX;
-        float cDistY = cCenterY - cPCenterY;
-
-        float c2CenterX = c2.getCenterX();
-        float c2CenterY = c2.getCenterY();
+        float cDistX = c.getCenterX() - cPCenterX;
+        float cDistY = c.getCenterY() - cPCenterY;
 
         float c2PCenterX = c2.getPrevCenterX();
         float c2PCenterY = c2.getPrevCenterY();
-
-        float c2DistX = c2CenterX - c2PCenterX;
-        float c2DistY = c2CenterY - c2PCenterY;
-
+        float c2DistX = c2.getCenterX() - c2PCenterX;
+        float c2DistY = c2.getCenterY() - c2PCenterY;
+        float length = c.halfSquareLength + c2.halfSquareLength;
         for(float cDistBtwn = 0; cDistBtwn <= c.speed; cDistBtwn += Constants.MAX_DIST_JUMP)
         {
-            if(c.speed > Constants.PIXEL_SIZE)
+            //if(c.speed > Constants.PIXEL_SIZE)
+            if(c.speed > Constants.MAX_DIST_JUMP)
             {
                 float percent;
                 if (c.speed > 0)
@@ -64,13 +61,19 @@ public class CollisionHandler
                 {
                     percent = 0;
                 }
-                cCenterX = cPCenterX + cDistX * percent;
-                cCenterY = cPCenterY + cDistY * percent;
+                c.tempCenterX = cPCenterX + cDistX * percent;
+                c.tempCenterY = cPCenterY + cDistY * percent;
+            }
+            else
+            {
+                c.tempCenterX = c.getCenterX();
+                c.tempCenterY = c.getCenterY();
             }
 
             for(float c2DistBtwn = 0; c2DistBtwn <= c2.speed; c2DistBtwn += Constants.MAX_DIST_JUMP)
             {
-                if(c2.speed > Constants.PIXEL_SIZE)
+                //if(c2.speed > Constants.PIXEL_SIZE)
+                if(c2.speed > Constants.MAX_DIST_JUMP)
                 {
                     float percent;
                     if (c2.speed > 0)
@@ -81,109 +84,49 @@ public class CollisionHandler
                     {
                         percent = 0;
                     }
-                    c2CenterX = c2PCenterX + c2DistX * percent;
-                    c2CenterY = c2PCenterY + c2DistY * percent;
+                    c2.tempCenterX = c2PCenterX + c2DistX * percent;
+                    c2.tempCenterY = c2PCenterY + c2DistY * percent;
+                }
+                else
+                {
+                    c2.tempCenterX = c2.getCenterX();
+                    c2.tempCenterY = c2.getCenterY();
                 }
 
-                if (Math.abs(cCenterX - c2CenterX) <=
-                        c.getHalfSquareLength() + c2.getHalfSquareLength() &&
-                    Math.abs(cCenterY - c2CenterY) <=
-                        c.getHalfSquareLength() + c2.getHalfSquareLength())
+                if(Math.abs(c.tempCenterX - c2.tempCenterX) < length &&
+                        Math.abs(c.tempCenterY - c2.tempCenterY) < length)
                 {
-                    boolean stillNeedsChecks = true;
-                    while(stillNeedsChecks)
+                    int tempKilled = CollisionMethods.checkCollision(c, c2, collisionParticles);
+                    if (tempKilled > 0)
                     {
-                        stillNeedsChecks = false;
-                        for (Zone z : c.zones)
-                        {
-                            if (z.live)
-                            {
-                                for (Zone z2 : c2.zones)
-                                {
-                                    if (z2.live &&
-                                            Math.abs((z.xDisp + cCenterX) - (z2.xDisp + c2CenterX)) <=
-                                                    z.getHalfSquareLength() + z2.getHalfSquareLength() &&
-                                            Math.abs((z.yDisp + cCenterY) - (z2.yDisp + c2CenterY)) <=
-                                                    z.getHalfSquareLength() + z2.getHalfSquareLength())
-                                    {
-                                        for (CollidableGroup cG : z.collidableGroups)
-                                        {
-                                            if (cG.live)
-                                            {
-                                                for (CollidableGroup cG2 : z2.collidableGroups)
-                                                {
-                                                    if (cG2.live &&
-                                                            Math.abs((cG.xDisp + cCenterX) - (cG2.xDisp + c2CenterX)) <=
-                                                                    cG.getHalfSquareLength() + cG2.getHalfSquareLength() &&
-                                                            Math.abs((cG.yDisp + cCenterY) - (cG2.yDisp + c2CenterY)) <=
-                                                                    cG.getHalfSquareLength() + cG2.getHalfSquareLength())
-                                                    {
-                                                        for (Pixel p : cG.pixels)
-                                                        {
-                                                            if (p.state >= 2)
-                                                            {
-                                                                for (Pixel p2 : cG2.pixels)
-                                                                {
-                                                                    if (p2.state >= 2)
-                                                                    {
-                                                                        if (Math.abs((p.xDisp + cCenterX) - (p2.xDisp + c2CenterX)) <=
-                                                                                Constants.PIXEL_SIZE + .001 &&
-                                                                            Math.abs((p.yDisp + cCenterY) - (p2.yDisp + c2CenterY)) <=
-                                                                                Constants.PIXEL_SIZE + .001)
-                                                                        {
-                                                                            c.hitPixel(p);
-                                                                            if(p.state == 0)
-                                                                            {
-                                                                                addParticleHelper(p, c, cCenterX, cCenterY);
-                                                                                c.numLivePixels--;
-                                                                                c.lastPixelKilled = p;
-                                                                            }
-                                                                            c.gotHit = true;
-                                                                            /*tempX += p.xDisp;
-                                                                            tempY += p.yDisp;*/
-
-                                                                            c2.hitPixel(p2);
-                                                                            if(p2.state == 0)
-                                                                            {
-                                                                                addParticleHelper(p2, c2, c2CenterX, c2CenterY);
-                                                                                c2.numLivePixels--;
-                                                                                c2.lastPixelKilled = p2;
-                                                                                numKilled++;
-                                                                            }
-                                                                            c2.gotHit = true;
-                                                                            /*tempX2 += p2.xDisp;
-                                                                            tempY2 += p2.yDisp;*/
-
-                                                                            collision = true;
-                                                                            stillNeedsChecks = true;
-                                                                            break;
-                                                                        }
-                                                                    }
-                                                                    if (p.state == 0)
-                                                                    {
-                                                                        break;
-                                                                    }
-                                                                }
-                                                            }
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
+                        numKilled += tempKilled;
+                        collision = true;
                     }
                 }
             }
         }
+        /*if(collision)
+        {
+            if(colltime > 0)
+            {
+                colltime += (System.nanoTime() - startime) / 1000;
+                colltime /= 2;
+            }
+            else
+            {
+                colltime = (int)((System.nanoTime() - startime) / 1000);
+            }
+            System.out.println("collision: " + colltime);
+        }*/
+        //if(collision)
+        //    System.out.println("collision: " + (System.nanoTime() - start)/1000);
         if(numKilled > 0)
         {
             if(c.knockable)
             {
                 float knockFactor = ((float)c2.totalPixels / (float)(c.totalPixels + c2.totalPixels))
                         * c2.speed
+                        *.2f
                         * numKilled / (float)c2.totalPixels;
                 c.posKnockbackX += -c2.cosA * knockFactor;
                 c.posKnockbackY += c2.sinA * knockFactor;
@@ -212,6 +155,7 @@ public class CollisionHandler
             {
                 float knockFactor = ((float)c.totalPixels / (float)(c.totalPixels + c2.totalPixels))
                         * c.speed
+                        *.2f
                         * numKilled / (float)c.totalPixels;
                 c2.posKnockbackX += -c.cosA * knockFactor;
                 c2.posKnockbackY += c.sinA * knockFactor;
@@ -237,13 +181,22 @@ public class CollisionHandler
             }
         }
 
+
         if(collision)
         {
             if(c2.getChunkDeletion())
             {
                 if (System.currentTimeMillis() - c2.lastOrphanChunkCheck > c2.orphanChunkCheckDelay)
                 {
-                    numKilled += removeOrphanChunksRecursive(c2);
+                    c2.lastOrphanChunkCheck = System.currentTimeMillis();
+                    if(c2.totalPixels <= 1000)
+                    {
+                        numKilled += removeOrphanChunksRecursive(c2);
+                    }
+                    else
+                    {
+                        numKilled += removeOrphanChunks(c2);
+                    }
                 }
             }
             c2.setNeedsUpdate(true);
@@ -252,11 +205,21 @@ public class CollisionHandler
             {
                 if (System.currentTimeMillis() - c.lastOrphanChunkCheck > c.orphanChunkCheckDelay)
                 {
-                    removeOrphanChunksRecursive(c);
+                    c.lastOrphanChunkCheck = System.currentTimeMillis();
+                    if(c.totalPixels <= 1000)
+                    {
+                        removeOrphanChunksRecursive(c);
+                    }
+                    else
+                    {
+                        removeOrphanChunks(c);
+                    }
                 }
             }
             c.setNeedsUpdate(true);
+            //System.out.println("Orphan: " + (System.nanoTime() - start)/1000);
         }
+
         return numKilled;
     }
 
@@ -274,7 +237,7 @@ public class CollisionHandler
 
     private static boolean overlapHelper(Collidable c, Collidable c2)
     {
-        for(Zone z: c.zones)
+        /*for(Zone z: c.zones)
         {
             if (z.live)
             {
@@ -306,305 +269,275 @@ public class CollisionHandler
                     }
                 }
             }
-        }
+        }*/
         return false;
     }
 
-    public void destroyCollidableAnimation(Collidable c)
+    public void destroyCollidable(PixelGroup c)
     {
         for (Pixel p : c.getPixels())
         {
-            if(p.state >= 1)
+            if (p.state > 0)
             {
-                p.xDisp = c.infoMap[p.row][p.col].xOriginal * c.cosA + c.infoMap[p.row][p.col].yOriginal * c.sinA;
-                p.yDisp = c.infoMap[p.row][p.col].yOriginal * c.cosA - c.infoMap[p.row][p.col].xOriginal * c.sinA;
-                addParticleHelper(p, c);
                 c.killPixel(p);
-                c.numLivePixels--;
-                c.pixelsKilled++;
+                c.addPixelKillParticle(p, collisionParticles);
             }
+            p.groupFlag = -1;
         }
     }
 
     private int removeOrphanChunksRecursive(PixelGroup c)
     {
-        int groupNumberIterator = 0;
+        short groupNumberIterator = 0;
         int highestSize = 0;
-        int numKilled = 0;
+        int largestGroup = -1;
 
         for(Pixel p: c.getPixels())
         {
-            if(p != null && p.state >= 1 && p.groupFlag == -1)
+            if (p.state > 0)
             {
-                groupSizes[groupNumberIterator] = (orphanChunkHelper(p, groupNumberIterator, 0, c.pMap));
-                if(groupSizes[groupNumberIterator] > highestSize)
+                if (p.groupFlag == -1)
                 {
-                    highestSize = groupSizes[groupNumberIterator];
+                    orphanChunkHelper(p, groupNumberIterator, c.pMap);
+
+                    if (groupSizes[groupNumberIterator] > highestSize)
+                    {
+                        highestSize = groupSizes[groupNumberIterator];
+                        largestGroup = groupNumberIterator;
+                    }
+                    groupNumberIterator++;
                 }
-                groupNumberIterator++;
             }
+        }
+
+        int numKilled = 0;
+        float angle = c.infoMap[c.lastPixelKilled.row][c.lastPixelKilled.col].angleOriginal + (float)Math.PI;
+        float speedRand = (float)Math.random() * .1f + .1f;
+        float distRand = (float)Math.random() * .2f + .1f;
+
+        for(Pixel p: c.getPixels())
+        {
+            if (p.state > 0 && p.groupFlag != largestGroup)
+            {
+                c.killPixel(p);
+                if(groupSizes[p.groupFlag] < 300)
+                {
+                    c.addChunkKillParticle(
+                            angle + (float) Math.random() * .2f - .1f,
+                            speedRand,
+                            distRand,
+                            p,
+                            collisionParticles);
+                }
+                else
+                {
+                    c.addPixelKillParticle(p, collisionParticles);
+                }
+                numKilled++;
+            }
+            p.groupFlag = -1;
         }
 
         if(highestSize < c.getTotalPixels() * c.getLivablePercentage())
         {
             c.setCollidableLive(false);
-        }
-
-        if(c.getCollidableLive())
-        {
-            for (Pixel p : c.getPixels())
-            {
-                if (p.groupFlag != -1 && groupSizes[p.groupFlag] < highestSize)
-                {
-                    p.xDisp = c.infoMap[p.row][p.col].xOriginal * c.cosA + c.infoMap[p.row][p.col].yOriginal * c.sinA;
-                    p.yDisp = c.infoMap[p.row][p.col].yOriginal * c.cosA - c.infoMap[p.row][p.col].xOriginal * c.sinA;
-                    c.killPixel(p);
-                    c.updatePixel(p);
-                    numKilled++;
-                    c.pixelsKilled++;
-                    c.numLivePixels--;
-                    addParticleHelper(p, c);
-                }
-                p.groupFlag = -1;
-            }
-        }
-        else
-        {
-            for (Pixel p : c.getPixels())
-            {
-                if(p.state >= 1)
-                {
-                    p.xDisp = c.infoMap[p.row][p.col].xOriginal * c.cosA + c.infoMap[p.row][p.col].yOriginal * c.sinA;
-                    p.yDisp = c.infoMap[p.row][p.col].yOriginal * c.cosA - c.infoMap[p.row][p.col].xOriginal * c.sinA;
-                    c.killPixel(p);
-                    numKilled++;
-                    c.pixelsKilled++;
-                    c.numLivePixels--;
-                    addParticleHelper(p, c);
-                }
-                p.groupFlag = -1;
-            }
+            destroyCollidable(c);
+            c.pixelsKilled += c.getTotalPixels();
         }
 
         return numKilled;
     }
 
-    private int orphanChunkHelper(Pixel p, int groupNum, int total, Pixel[][] pMap)
+    private void orphanChunkHelper(Pixel p, short groupNum, Pixel[][] pMap)
     {
         p.groupFlag = groupNum;
-        if (pMap[p.row + 1][p.col] != null &&
-                pMap[p.row + 1][p.col].state >= 1 &&
-                pMap[p.row + 1][p.col].groupFlag == -1)
-        {
-            total = orphanChunkHelper(pMap[p.row + 1][p.col], groupNum, total, pMap);
-        }
+        groupSizes[groupNum]++;
 
-        if (pMap[p.row - 1][p.col] != null &&
-                pMap[p.row - 1][p.col].state >= 1 &&
-                pMap[p.row - 1][p.col].groupFlag == -1)
+        Pixel curNeighbor = pMap[p.row + 1][p.col];
+        if (curNeighbor != null &&
+                curNeighbor.state >= 1 &&
+                curNeighbor.groupFlag == -1)
         {
-            total = orphanChunkHelper(pMap[p.row - 1][p.col], groupNum, total, pMap);
+            orphanChunkHelper(curNeighbor, groupNum, pMap);
         }
-
-        if (pMap[p.row][p.col + 1] != null &&
-                pMap[p.row][p.col + 1].state >= 1 &&
-                pMap[p.row][p.col + 1].groupFlag == -1)
+        curNeighbor = pMap[p.row - 1][p.col];
+        if (curNeighbor != null &&
+                curNeighbor.state >= 1 &&
+                curNeighbor.groupFlag == -1)
         {
-            total = orphanChunkHelper(pMap[p.row][p.col + 1], groupNum, total, pMap);
+            orphanChunkHelper(curNeighbor, groupNum, pMap);
         }
-
-        if (pMap[p.row][p.col - 1] != null &&
-                pMap[p.row][p.col - 1].state >= 1 &&
-                pMap[p.row][p.col - 1].groupFlag == -1)
+        curNeighbor = pMap[p.row][p.col + 1];
+        if (curNeighbor != null &&
+                curNeighbor.state >= 1 &&
+                curNeighbor.groupFlag == -1)
         {
-            total = orphanChunkHelper(pMap[p.row][p.col - 1], groupNum, total, pMap);
+            orphanChunkHelper(curNeighbor, groupNum, pMap);
         }
-
-        return 1 + total;
+        curNeighbor = pMap[p.row][p.col - 1];
+        if (curNeighbor != null &&
+                curNeighbor.state >= 1 &&
+                curNeighbor.groupFlag == -1)
+        {
+            orphanChunkHelper(curNeighbor, groupNum, pMap);
+        }
     }
 
-
-    private void addParticleHelper(Pixel p, Collidable c, float centerX, float centerY)
+    public int removeOrphanChunks(PixelGroup c)
     {
-        //float angle = (float)(Math.atan2(p.yDisp, p.xDisp) + Math.random() * .2 - .1);
-
-        collisionParticles.addParticle(
-                p.xDisp + centerX,
-                p.yDisp + centerY,
-                -c.angle - c.infoMap[p.row][p.col].angleOriginal + (float) Math.random() * .2f - .1f,
-                //c.angle + (float) Math.random() * .2f - .1f,
-                c.infoMap[p.row][p.col].r,
-                c.infoMap[p.row][p.col].g,
-                c.infoMap[p.row][p.col].b,
-                1.4f,
-                (float)(Math.random())+.1f,
-                (float)(Math.random()*.5)+.01f,
-                (float)(Math.random()*40)-20
-        );
-    }
-
-    private void addParticleHelper(Pixel p, Collidable c)
-    {
-        //float angle = (float)(Math.atan2(p.yDisp, p.xDisp) + Math.random() * .2 - .1);
-        collisionParticles.addParticle(
-                p.xDisp + c.getCenterX(),
-                p.yDisp + c.getCenterY(),
-                c.angle - c.infoMap[p.row][p.col].angleOriginal + (float) Math.random() * .2f - .1f,
-                c.infoMap[p.row][p.col].r,
-                c.infoMap[p.row][p.col].g,
-                c.infoMap[p.row][p.col].b,
-                1.4f,
-                (float)(Math.random())+.1f,
-                (float)(Math.random()*.5)+.01f,
-                (float)(Math.random()*40)-20
-        );
-    }
-
-    private static void addParticleHelper(Pixel p, Collidable c, ParticleSystem particleSystem)
-    {
-        //float angle = (float)(Math.atan2(p.yDisp, p.xDisp) + Math.random() * .2 - .1);
-        particleSystem.addParticle(
-                p.xDisp + c.getCenterX(),
-                p.yDisp + c.getCenterY(),
-                c.angle - c.infoMap[p.row][p.col].angleOriginal + (float) Math.random() * .2f - .1f,
-                c.infoMap[p.row][p.col].r,
-                c.infoMap[p.row][p.col].g,
-                c.infoMap[p.row][p.col].b,
-                1.4f,
-                (float)(Math.random())+.1f,
-                (float)(Math.random()*.5)+.01f,
-                (float)(Math.random()*40)-20
-        );
-    }
-
-    /* public void removeOrphanChunks(Collidable c)
-    {
-        int groupNumberIterator = 0;
-        int highestSize = 0;
-
+        short groupNumberIterator = 0;
         for (Pixel p : c.getPixels())
         {
-            if (p.live)
+            if (p.state > 0)
             {
+                Pixel curNeighbor;
                 if (p.groupFlag == -1)
                 {
-                    for (Pixel n : p.neighbors)
+                    curNeighbor = c.pMap[p.row - 1][p.col];
+                    if (curNeighbor != null &&
+                            curNeighbor.state >= 1 &&
+                            curNeighbor.groupFlag != -1)
                     {
-                        if (n != null && n.live && n.groupFlag != -1)
-                        {
-                            p.groupFlag = n.groupFlag;
-                        }
+                        p.groupFlag = curNeighbor.groupFlag;
+                    }
+
+                    curNeighbor = c.pMap[p.row][p.col - 1];
+                    if (curNeighbor != null &&
+                            curNeighbor.state >= 1 &&
+                            curNeighbor.groupFlag != -1)
+                    {
+                        p.groupFlag = curNeighbor.groupFlag;
                     }
                 }
+
                 if (p.groupFlag == -1)
                 {
-                    p.groupFlag = groupNumberIterator;
-                    groupNumberIterator++;
+                    groups[groupNumberIterator].size = 0;
+                    groups[groupNumberIterator].num = -1;
+                    p.groupFlag = groupNumberIterator++;
                 }
 
-                for (Pixel n : p.neighbors)
+                groups[p.groupFlag].size++;
+
+                curNeighbor = c.pMap[p.row - 1][p.col];
+                if (curNeighbor != null &&
+                        curNeighbor.groupFlag > -1 &&
+                        curNeighbor.groupFlag != p.groupFlag)
                 {
-                    if (n != null && n.live)
-                    {
-                        n.groupFlag = p.groupFlag;
-                    }
+                    reducePairing(groups, curNeighbor.groupFlag, p.groupFlag);
+                }
+
+                curNeighbor = c.pMap[p.row][p.col - 1];
+                if (curNeighbor != null &&
+                        curNeighbor.groupFlag > -1 &&
+                        curNeighbor.groupFlag != p.groupFlag)
+                {
+                    reducePairing(groups, curNeighbor.groupFlag, p.groupFlag);
                 }
             }
         }
 
-        if(groupNumberIterator > 0)
+        /*
+            Reduce all keys to their smallest value at the end of the path and add
+            their size to that value
+         */
+        int highestSize = 0;
+        short largestGroup = -1;
+        for(int i = 0; i < groupNumberIterator; i++)
         {
-            Mapping[] mappings = new Mapping[groupNumberIterator];
-            for (Pixel p : c.getPixels())
-            {
-                if (p.live && p.groupFlag != -1)
-                {
-                    if (mappings[p.groupFlag] == null)
-                    {
-                        mappings[p.groupFlag] = new Mapping(p.groupFlag);
-                        mappings[p.groupFlag].size = 1;
-                    }
-                    else
-                    {
-                        mappings[p.groupFlag].size += 1;
-                    }
+            GroupNum currentVal = groups[i];
+            short currentKey = currentVal.num;
 
-                    for (Pixel n : p.neighbors)
-                    {
-                        if (n != null && n.live && n.groupFlag != -1 && n.groupFlag != p.groupFlag)
-                        {
-                            if (mappings[n.groupFlag] == null)
-                            {
-                                mappings[n.groupFlag] = new Mapping(n.groupFlag);
-                                mappings[n.groupFlag].size = 1;
-                            }
-                            mappings[p.groupFlag].connections.add(n.groupFlag);
-                            mappings[n.groupFlag].connections.add(p.groupFlag);
-                        }
-                    }
-                }
+            while (currentVal.num != -1)
+            {
+                currentKey = currentVal.num;
+                currentVal = groups[currentKey];
             }
 
-            for (Mapping m : mappings)
+            if (currentKey != -1)
             {
-                if (m != null)
+                groups[i].num = currentKey;
+                groups[currentKey].size += groups[i].size;
+                if(groups[currentKey].size > highestSize)
                 {
-                    for (Mapping m1 : mappings)
-                    {
-                        if (m1 != null && m != m1 && m1.connections != m.connections)
-                        {
-                            for (Integer i : m.connections)
-                            {
-                                if (m1.connections.contains(i))
-                                {
-                                    m1.connections.addAll(m.connections);
-                                    m.connections = m1.connections;
-                                    break;
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
-            for (Mapping mapping : mappings)
-            {
-                if (mapping != null)
-                {
-                    for (Integer connection : mapping.connections)
-                    {
-                        mapping.totalSize += mappings[connection].size;
-                    }
-                    if (mapping.totalSize > highestSize)
-                    {
-                        highestSize = mapping.totalSize;
-                    }
-                }
-            }
-
-            if(c.getCollidableLive())
-            {
-                for (Pixel p : c.getPixels())
-                {
-                    if (p.groupFlag != -1 && mappings[p.groupFlag].totalSize < highestSize)
-                    {
-                        p.xDisp = p.xOriginal * c.cosA + p.yOriginal * c.sinA;
-                        p.yDisp = p.yOriginal * c.cosA - p.xOriginal * c.sinA;
-                        addParticleHelper(p, c);
-                        p.killPixel(c.pMap);
-                        c.numLivePixels--;
-                    }
-                    p.groupFlag = -1;
+                    highestSize = groups[currentKey].size;
+                    largestGroup = currentKey;
                 }
             }
         }
-        else
+
+        int numKilled = 0;
+        float angle = c.infoMap[c.lastPixelKilled.row][c.lastPixelKilled.col].angleOriginal + (float)Math.PI;
+        float speedRand = (float)Math.random() * .1f + .1f;
+        float distRand = (float)Math.random() * .2f + .1f;
+        for (Pixel p : c.getPixels())
         {
-            for (Pixel p : c.getPixels())
+            if (p.state > 0 &&
+                    groups[p.groupFlag].num != largestGroup &&
+                    p.groupFlag != largestGroup)
             {
-                p.groupFlag = -1;
+                c.killPixel(p);
+                if(groups[p.groupFlag].size < 300)
+                {
+                    c.addChunkKillParticle(
+                            angle + (float) Math.random() * .2f - .1f,
+                            speedRand,
+                            distRand,
+                            p,
+                            collisionParticles);
+                }
+                else
+                {
+                    c.addPixelKillParticle(p, collisionParticles);
+                }
+                numKilled++;
             }
+            p.groupFlag = -1;
         }
 
-    }*/
+        if(highestSize < c.getTotalPixels() * c.getLivablePercentage())
+        {
+            c.setCollidableLive(false);
+            destroyCollidable(c);
+            c.pixelsKilled += c.getTotalPixels();
+        }
+
+        return numKilled;
+    }
+
+    private void reducePairing(GroupNum[] groups, short flag1, short flag2)
+    {
+        if(flag1 > flag2)
+        {
+            if(groups[flag1].num == -1)
+            {
+                groups[flag1].num = flag2;
+            }
+            else if(groups[flag1].num > flag2)
+            {
+                reducePairing(groups, groups[flag1].num, flag2);
+                groups[flag1].num = flag2;
+            }
+            else if(groups[flag1].num < flag2)
+            {
+                reducePairing(groups, groups[flag1].num, flag2);
+            }
+        }
+        else if(flag2 > flag1)
+        {
+            if(groups[flag2].num == -1)
+            {
+                groups[flag2].num = flag1;
+            }
+            else if(groups[flag2].num > flag1)
+            {
+                reducePairing(groups, groups[flag2].num, flag1);
+                groups[flag2].num = flag1;
+            }
+            else if(groups[flag2].num < flag1)
+            {
+                reducePairing(groups, groups[flag2].num, flag1);
+            }
+        }
+    }
 }

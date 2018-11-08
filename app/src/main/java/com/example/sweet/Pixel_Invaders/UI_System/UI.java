@@ -69,6 +69,7 @@ public class UI extends Drawable
             changeParticlesFlag = false,
             pauseFlag = false,
             readyFlag = false,
+            backOutFlag = false,
             displayReady = false;
 
     public boolean intro = false;
@@ -81,7 +82,7 @@ public class UI extends Drawable
     private Constants.GameState outroSwitchTo = Constants.GameState.MAIN_MENU;
     private double titleIntroStart;
     private float
-            titleIntroLengh = 2000f,
+            titleIntroLengh = 1000f,
             titleIntroButtonY = -.2f,
             titleBackgroundY = .5f,
             tBShiftX = 0,
@@ -194,8 +195,8 @@ public class UI extends Drawable
     private Button[] checkButtons = new Button[6];
 
     private float
-            playerModelX = 0.08f,
-            playerModelY = -.672f,
+            playerModelX = .672f,
+            playerModelY = 0.08f,
             mag = 2.8f;
 
     public Player player;
@@ -203,22 +204,22 @@ public class UI extends Drawable
     private float u = .024f;
     private Button[] playerGuns = new Button[3];
     private PointF[] gunOffsets = new PointF[]{
-            new PointF(0 + u, 0f * mag),
-            new PointF(.056f * mag + u, -.08f * mag),
-            new PointF(.056f * mag + u, .08f * mag)
+            new PointF( -0f * mag,0 + u),
+            new PointF( .08f * mag,.056f * mag + u),
+            new PointF( -.08f * mag,.056f * mag + u)
     };
 
     private Button[] playerThrusters = new Button[3];
 
     private float tempOff = -.132f + .04f;
     private PointF[] thrusterOffsets = new PointF[]{
-            new PointF(tempOff * mag, -.104f * mag),
-            new PointF(tempOff * mag, 0f * mag),
-            new PointF(tempOff * mag, .104f * mag)
+            new PointF(.104f * mag, tempOff * mag),
+            new PointF(-0f * mag, tempOff * mag),
+            new PointF(-.104f * mag, tempOff * mag)
     };
 
     private Button[] playerMods = new Button[5];
-    private PointF modLeftOffset = new PointF(-.46f, -.235f);
+    private PointF modLeftOffset = new PointF(.235f, -.46f);
 
     private Button[] allComponentButtons = new Button[
             componentPanel.length * componentPanel[0].length +
@@ -243,7 +244,8 @@ public class UI extends Drawable
             missionText5,
             missionText6,
             missionText7,
-            missionText8;
+            missionText8,
+            toAddTrailer;
 
     public UI(Context context, int shaderLocation, GlobalInfo globalInfo, ParticleSystem ps)
     {
@@ -256,6 +258,7 @@ public class UI extends Drawable
         alphaLoc = glGetUniformLocation(shaderLocation, "alpha");
         magLoc = glGetUniformLocation(shaderLocation, "mag");
         init(context,shaderLocation);
+        toAddTrailer.startTypeEventRealTime();
     }
 
     public void setPlayer(Player p)
@@ -385,7 +388,7 @@ public class UI extends Drawable
                 }
 
                 glUniform1f(magLoc, .7f);
-                riftDetected.drawTyping(textPresenter, .664f, 0f, .7f, globalInfo, false);
+                riftDetected.drawTyping(textPresenter,0,.664f, .7f, globalInfo, false);
                 glUniform1f(magLoc, 1f);
             }
 
@@ -402,7 +405,7 @@ public class UI extends Drawable
                     glUniform1f(alphaLoc, 1 - progress * progress * progress);
                     screenShade.draw();
                     glUniform1f(alphaLoc, 1f);
-                    onceMore.drawTypingRealTime(textPresenter, .34f, .208f, 1f, false);
+                    onceMore.drawTypingRealTime(textPresenter, -.206f,.314f, 1f, false);
                     if (progress > .6f && !introRevTime)
                     {
                         introRevTime = true;
@@ -466,12 +469,12 @@ public class UI extends Drawable
                     readyButton.draw(movementOnMove.x, movementOnMove.y, shootingOnMove.x, shootingOnMove.y);
                     glUniform1f(magLoc, 1f);
                 }
-                bonusBar.draw();
+                //bonusBar.draw();
                 glUniform1f(magLoc, .7f);
-                textPresenter.drawString(stringX, .918f, -.9f, 0,1,.7f, false);
+                textPresenter.drawString(stringX,.9f,.918f, 0,1,.7f, false);
                 glUniform1f(magLoc, 1f);
-                textPresenter.drawInt(player.bonus, .918f, -.932f, true);
-                textPresenter.drawInt(player.score, .812f, 0f, true);
+                textPresenter.drawInt(player.bonus,  .932f,.918f, true);
+                textPresenter.drawInt(player.score,  0f,.812f, true);
             }
 
             //textPresenter.drawString("Hello World", 0, 0, 11);
@@ -486,7 +489,7 @@ public class UI extends Drawable
             glUniform1i(uTextureLocation, 0);
             player.getPixelGroup().softDraw(playerModelX + player.driftX,
                     playerModelY + player.driftY,
-                    1,0,
+                    0,-1,
                     player.tiltAngle,
                     mag,
                     globalInfo.pointSize * mag);
@@ -578,7 +581,7 @@ public class UI extends Drawable
                         thrusterPanel.draw();
                         textPresenter.drawInt(
                                 (int)(((ThrustComponent) c).getMaxThrustPower()*100f),
-                                Constants.iPnum1X, Constants.infoPanelY,
+                                 Constants.infoPanelY, Constants.iPnum1X,
                                 false
                         );
                         break;
@@ -587,18 +590,18 @@ public class UI extends Drawable
                         GunComponent gC = (GunComponent)c;
                         textPresenter.drawInt(
                                 (int) gC.gun.getShotDelay(),
-                                Constants.iPnum1X, Constants.infoPanelY,
+                                 Constants.infoPanelY, Constants.iPnum1X,
                                 false
                         );
                         textPresenter.drawInt(
                                 gC.gun.getTemplate().totalPixels,
-                                Constants.iPnum2X, Constants.infoPanelY,
+                                 Constants.infoPanelY, Constants.iPnum2X,
                                 false
                         );
                         textPresenter.drawInt(
                                 (int) (gC.gun.getTemplate().totalPixels *
                                         (1000 / gC.gun.getShotDelay())),
-                                Constants.iPnum3X, Constants.infoPanelY,
+                                 Constants.infoPanelY, Constants.iPnum3X,
                                 false
                         );
                         break;
@@ -611,7 +614,7 @@ public class UI extends Drawable
                         fireRateDesc.draw();
                         textPresenter.drawInt(
                                 ((ModComponent) c).getModLevel(),
-                                Constants.iPnum3X, Constants.infoPanelY,
+                                 Constants.infoPanelY, Constants.iPnum3X,
                                 false
                         );
                         break;
@@ -621,7 +624,7 @@ public class UI extends Drawable
                         bulletSpeedDesc.draw();
                         textPresenter.drawInt(
                                 ((ModComponent) c).getModLevel(),
-                                Constants.iPnum3X, Constants.infoPanelY,
+                                 Constants.infoPanelY, Constants.iPnum3X,
                                 false
                         );
                         break;
@@ -631,7 +634,7 @@ public class UI extends Drawable
                         extraShotsDesc.draw();
                         textPresenter.drawInt(
                                 ((ModComponent) c).getModLevel(),
-                                Constants.iPnum3X, Constants.infoPanelY,
+                                 Constants.infoPanelY, Constants.iPnum3X,
                                 false
                         );
                         break;
@@ -641,7 +644,7 @@ public class UI extends Drawable
                         precisionDesc.draw();
                         textPresenter.drawInt(
                                 ((ModComponent) c).getModLevel(),
-                                Constants.iPnum3X, Constants.infoPanelY,
+                                 Constants.infoPanelY, Constants.iPnum3X,
                                 false
                         );
                         break;
@@ -651,7 +654,7 @@ public class UI extends Drawable
                         platingDesc.draw();
                         textPresenter.drawInt(
                                 ((ModComponent) c).getModLevel(),
-                                Constants.iPnum3X, Constants.infoPanelY,
+                                 Constants.infoPanelY, Constants.iPnum3X,
                                 false
                         );
                         break;
@@ -661,7 +664,7 @@ public class UI extends Drawable
                         piercingDesc.draw();
                         textPresenter.drawInt(
                                 ((ModComponent) c).getModLevel(),
-                                Constants.iPnum3X, Constants.infoPanelY,
+                                 Constants.infoPanelY, Constants.iPnum3X,
                                 false
                         );
                         break;
@@ -671,7 +674,7 @@ public class UI extends Drawable
                         restorationDesc.draw();
                         textPresenter.drawInt(
                                 ((ModComponent) c).getModLevel(),
-                                Constants.iPnum3X, Constants.infoPanelY,
+                                 Constants.infoPanelY, Constants.iPnum3X,
                                 false
                         );
                         break;
@@ -681,7 +684,7 @@ public class UI extends Drawable
                         temporalDesc.draw();
                         textPresenter.drawInt(
                                 ((ModComponent) c).getModLevel(),
-                                Constants.iPnum3X, Constants.infoPanelY,
+                                 Constants.infoPanelY, Constants.iPnum3X,
                                 false
                         );
                         break;
@@ -744,8 +747,8 @@ public class UI extends Drawable
 
             }
 
-            textPresenter.drawInt(player.score, -.86f, -.006f, false);
-            textPresenter.drawInt(difficulty, -.86f, -1.26f, false);
+            textPresenter.drawInt(player.score,  .006f,-.86f, false);
+            textPresenter.drawInt(difficulty,  1.26f,-.86f, false);
         }
         else if (gameState == Constants.GameState.MAIN_MENU)
         {
@@ -768,7 +771,7 @@ public class UI extends Drawable
             glUseProgram(uiShaderProgram);
             screenShade.draw();
             optionsMenu.draw();
-            backButton.setLoc(.84f, -.96f);
+            backButton.setLoc( .96f,.84f);
             backButton.draw(menuOnMove.x, menuOnMove.y);
             if (menuPointerDown)
             {
@@ -778,19 +781,19 @@ public class UI extends Drawable
                     if (b.touchedOnDown)
                     {
                         b.drawHighlight();
-                        if (-menuOnMove.y < b.getOriginalY())
+                        if (menuOnMove.x > b.getOriginalX())
                         {
-                            b.setY(b.getOriginalY());
+                            b.setX(b.getOriginalX());
                         }
-                        else if (-menuOnMove.y > b.getOriginalY() + slideDistMax)
+                        else if (menuOnMove.x < b.getOriginalX() - slideDistMax)
                         {
-                            b.setY(b.getOriginalY() + slideDistMax);
+                            b.setX(b.getOriginalX() - slideDistMax);
                         }
                         else
                         {
-                            b.setY(-menuOnMove.y);
+                            b.setX(menuOnMove.x);
                         }
-                        float percent = 1 - Math.abs(b.getY() - b.getOriginalY()) / slideDistMax;
+                        float percent = 1 - Math.abs(b.getX() - b.getOriginalX()) / slideDistMax;
                         globalInfo.gameSettings.setSlideSetting(index, percent);
                         settingsChanged = true;
                     }
@@ -821,22 +824,22 @@ public class UI extends Drawable
                 }
             }
 
-            textPresenter.drawInt((int) (globalInfo.gameSettings.particlePercent * 100), .348f, -1.224f, false);
-            textPresenter.drawInt((int) (globalInfo.gameSettings.screenShakePercent * 100), -.044f, -1.224f, false);
-            textPresenter.drawInt((int) (globalInfo.gameSettings.musicPercent * 100), -.436f, -1.224f, false);
-            textPresenter.drawInt((int) (globalInfo.gameSettings.soundPercent * 100), -.828f, -1.224f, false);
-            textPresenter.drawInt((int) (globalInfo.gameSettings.joyStickSize * 100), -.828f, .144f, false);
+            textPresenter.drawInt((int) (globalInfo.gameSettings.particlePercent * 100),  1.224f,.348f, false);
+            textPresenter.drawInt((int) (globalInfo.gameSettings.screenShakePercent * 100),  1.224f,-.044f, false);
+            textPresenter.drawInt((int) (globalInfo.gameSettings.musicPercent * 100),  1.224f,-.436f, false);
+            textPresenter.drawInt((int) (globalInfo.gameSettings.soundPercent * 100),  1.224f,-.828f, false);
+            textPresenter.drawInt((int) (globalInfo.gameSettings.joyStickSize * 100),  -.144f,-.828f, false);
         }
         else if(gameState == Constants.GameState.GAME_OVER)
         {
             screenShade.draw();
             mainMenuButton2.draw(menuOnMove.x, menuOnMove.y);
-            textPresenter.drawInt(player.score, -.2f, 0, true);
+            textPresenter.drawInt(player.score,0,-.2f, true);
         }
         else if(gameState == Constants.GameState.SHIP_LOGS)
         {
             screenShade.draw();
-            backButton.setLoc(.784f , -.872f);
+            backButton.setLoc(.872f, .784f);
             backButton.draw(menuOnMove.x, menuOnMove.y);
             leftPageButton.draw(menuOnMove.x, menuOnMove.y);
             rightPageButton.draw(menuOnMove.x, menuOnMove.y);
@@ -862,14 +865,14 @@ public class UI extends Drawable
                 case 2: mInfoConsumables.draw(); break;
                 case 3: mInfoDestruction.draw(); break;
                 case 4: mInfoTime.draw(); break;
-                case 5: missionText1.drawTypingRealTime(textPresenter,.464f,1.12f,.8f, true); break;
-                case 6: missionText2.drawTypingRealTime(textPresenter,.464f,1.12f,.8f, true); break;
-                case 7: missionText3.drawTypingRealTime(textPresenter,.464f,1.12f,.8f, true); break;
-                case 8: missionText4.drawTypingRealTime(textPresenter,.464f,1.12f,.8f, true); break;
-                case 9: missionText5.drawTypingRealTime(textPresenter,.464f,1.12f,.8f, true); break;
-                case 10: missionText6.drawTypingRealTime(textPresenter,.464f,1.12f,.8f, true); break;
-                case 11: missionText7.drawTypingRealTime(textPresenter,.464f,1.12f,.8f, true); break;
-                case 12: missionText8.drawTypingRealTime(textPresenter,.464f,1.12f,.8f, true); break;
+                case 5: missionText1.drawTypingRealTime(textPresenter,-1.12f,.464f,.8f, true); break;
+                case 6: missionText2.drawTypingRealTime(textPresenter,-1.12f,.464f,.8f, true); break;
+                case 7: missionText3.drawTypingRealTime(textPresenter,-1.12f,.464f,.8f, true); break;
+                case 8: missionText4.drawTypingRealTime(textPresenter,-1.12f,.464f,.8f, true); break;
+                case 9: missionText5.drawTypingRealTime(textPresenter,-1.12f,.464f,.8f, true); break;
+                case 10: missionText6.drawTypingRealTime(textPresenter,-1.12f,.464f,.8f, true); break;
+                case 11: missionText7.drawTypingRealTime(textPresenter,-1.12f,.464f,.8f, true); break;
+                case 12: missionText8.drawTypingRealTime(textPresenter,-1.12f,.464f,.8f, true); break;
             }
             glUniform1f(magLoc, 1f);
         }
@@ -908,10 +911,13 @@ public class UI extends Drawable
 
         if (globalInfo.gameSettings.showFps)
         {
-            textPresenter.drawInt((int)uiAvgFrame, .9f, -1.4f, false);
-            textPresenter.drawInt((int)aiAvgFrame, .8f, -1.4f, false);
-            textPresenter.drawInt((int)collisionAvgFrame, .7f, -1.4f, false);
+            textPresenter.drawInt((int)uiAvgFrame,  1.4f,.9f, false);
+            textPresenter.drawInt((int)aiAvgFrame,  1.4f,.8f, false);
+            textPresenter.drawInt((int)collisionAvgFrame,  1.4f,.7f, false);
         }
+        glUniform1f(magLoc, 1.5f);
+        toAddTrailer.drawTypingRealTime(textPresenter,0,.9f,1.5f, false);
+        glUniform1f(magLoc, 1f);
     }
 
     public void pointerDown()
@@ -957,8 +963,8 @@ public class UI extends Drawable
             {
                 if(readyButton.cursorOnButton)
                 {
-                    readyFlag = true;
                     readyButton.cursorOnButton = false;
+                    readyFlag = true;
                 }
             }
         }
@@ -1004,6 +1010,7 @@ public class UI extends Drawable
                 startTitleIntro();
                 gameState = Constants.GameState.MAIN_MENU;
                 prevGameState = Constants.GameState.PAUSE_MENU;
+                backOutFlag = true;
                 mainMenuButton.cursorOnButton = false;
             }
             else if (optionsButton.cursorOnButton)
@@ -1167,8 +1174,8 @@ public class UI extends Drawable
         if(gameState == Constants.GameState.MAIN_MENU || gameState == Constants.GameState.SHIP_LOGS ||
                 (gameState == Constants.GameState.OPTIONS && prevGameState == Constants.GameState.MAIN_MENU))
         {
-            tBShiftX = (float) Math.cos((System.currentTimeMillis() - globalStartTime) / 4000) * .06f - .588f;
-            tBShiftY = (float) Math.sin((System.currentTimeMillis() - globalStartTime) / 4000) * .2f - 1f + titleBackgroundY * 2;
+            tBShiftY = (float) Math.cos((System.currentTimeMillis() - globalStartTime) / 4000) * .06f - .588f;
+            tBShiftX = (float) Math.sin((System.currentTimeMillis() - globalStartTime) / 4000) * .2f + 1f - titleBackgroundY * 2;
            /* if(!titleIntro)
             {
                 tShiftX = (float) Math.cos((System.currentTimeMillis() - globalStartTime) / 4000) * .06f - .588f;
@@ -1239,7 +1246,7 @@ public class UI extends Drawable
                 glUniform1f(alphaLoc, 1 - locProg);
                 screenShade.draw();
                 glUniform1f(alphaLoc, locProg);
-                drawTitleHelper(0, titleBackgroundY);
+                drawTitleHelper(-titleBackgroundY, 0);
                 glUniform1f(alphaLoc, 1);
             }
             else if(progress > .4f && progress <= .7f)
@@ -1247,25 +1254,27 @@ public class UI extends Drawable
                 float locProg = (progress - .4f) / .3f;
                 locProg *= locProg;
                 titleBackgroundY = .5f * (1 - locProg);
-                drawTitleHelper(0, titleBackgroundY);
+                drawTitleHelper(-titleBackgroundY, 0);
             }
             else if(progress > .7f && progress < .8f)
             {
                 float locProg = (progress - .7f) / .1f;
-                locProg *= locProg * locProg;
                 glUniform1f(alphaLoc, locProg);
-                arcadeButton.drawShift(0, (1 - locProg) * titleIntroButtonY);
-                exitButton.drawShift(0, (1 - locProg) * titleIntroButtonY);
+                locProg *= locProg * locProg;
+                //glUniform1f(alphaLoc, locProg);
+                arcadeButton.drawShift((1 - locProg) * titleIntroButtonY, 0);
+                exitButton.drawShift((1 - locProg) * titleIntroButtonY, 0 );
                 glUniform1f(alphaLoc, 1);
                 drawTitleHelper(0, 0);
             }
             else if(progress > .8f && progress < .9f)
             {
                 float locProg = (progress - .8f) / .1f;
-                locProg *= locProg * locProg;
                 glUniform1f(alphaLoc, locProg);
-                challengeButton.drawShift(0, (1 - locProg) * titleIntroButtonY);
-                optionsButton2.drawShift(0, (1 - locProg) * titleIntroButtonY);
+                locProg *= locProg * locProg;
+                //glUniform1f(alphaLoc, locProg);
+                challengeButton.drawShift((1 - locProg) * titleIntroButtonY,0);
+                optionsButton2.drawShift( (1 - locProg) * titleIntroButtonY, 0);
                 glUniform1f(alphaLoc, 1);
                 arcadeButton.draw(menuOnMove.x, menuOnMove.y);
                 exitButton.draw(menuOnMove.x, menuOnMove.y);
@@ -1274,9 +1283,10 @@ public class UI extends Drawable
             else if(progress > .9f && progress < 1f)
             {
                 float locProg = (progress - .9f) / .1f;
-                locProg *= locProg * locProg;
                 glUniform1f(alphaLoc, locProg);
-                shipLogsButton.drawShift(0, (1 - locProg) * titleIntroButtonY);
+                locProg *= locProg * locProg;
+                //glUniform1f(alphaLoc, locProg);
+                shipLogsButton.drawShift((1 - locProg) * titleIntroButtonY, 0);
                 glUniform1f(alphaLoc, 1);
                 arcadeButton.draw(menuOnMove.x, menuOnMove.y);
                 challengeButton.draw(menuOnMove.x, menuOnMove.y);
@@ -1539,16 +1549,17 @@ public class UI extends Drawable
 
     private void initTextEvents()
     {
-        riftDetected = new TextTypeEvent("Rift Detected...", .5f, true, 3000);
-        onceMore = new TextTypeEvent("Once More", 1.5f, false, 3000);
-        missionText1 = new TextTypeEvent("2032: Earth\\\\Space-time distortions are observed opening near earth.\\\\Research on the newly opened temporal rifts initiates.\\\\Power conflicts between nations arise...", .8f, false, 5000);
-        missionText2 = new TextTypeEvent("~2045: Unknown\\\\Sentient species from across the galaxy detect\\accessible space-time distortion for the first time...", .8f, false, 5000);
-        missionText3 = new TextTypeEvent("~2046: Unknown\\\\Alien fleets are launched on a collision course with\\earth.\\\\The invaders seek to research and control the\\temporal rifts, their intentions are malicious...", .8f, false, 5000);
-        missionText4 = new TextTypeEvent("2059: Earth\\\\Blueshift foreign objects are detected traveling toward\\Earth at nearly a third the speed of light.\\\\Worldwide conflict quickly recedes. Talks of crisis\\resolution begin...", .8f, false, 5000);
-        missionText5 = new TextTypeEvent("2061: Earth United\\\\A temporarily united world begins construction of an\\earthern space fleet.\\\\Temporal rift research, however, remains humanity's\\top priority...", .8f, false, 5000);
-        missionText6 = new TextTypeEvent("2089: Perimeter of the Sun's Solar System\\\\The United Earthern Fleet engages invading vessels.\\\\They are cannon fodder against superior combat\\technology and overwhelming numbers...", .8f, false, 5000);
-        missionText7 = new TextTypeEvent("2090: Earth United\\\\With little time to spare, humanity deciphers the\\true nature of the temporal rifts.\\\\A checkpoint in space-time is recorded and set for\\later restoration...", .8f, false, 5000);
-        missionText8 = new TextTypeEvent("2091: The Edge of Earth Space\\\\Mustering the last of its time and resources, Earth\\United produces a handful of experimental, adaptive\\ships equip with the technology to manipulate time.\\\\Their chance at victory over the invaders is nearly\\nonexistent but their attempts are infinite...", .8f, false, 5000);
+        riftDetected = new TextTypeEvent("Rift Detected...", .33f, true, 3000);
+        onceMore = new TextTypeEvent("Once More", .2f, false, 2000);
+        missionText1 = new TextTypeEvent("2032: Earth\\\\Space-time distortions are observed opening near earth.\\\\Research on the newly opened temporal rifts initiates.\\\\Power conflicts between nations arise...", .1f, false, 5000);
+        missionText2 = new TextTypeEvent("~2045: Unknown\\\\Sentient species from across the galaxy detect\\accessible space-time distortion for the first time...", .1f, false, 5000);
+        missionText3 = new TextTypeEvent("~2046: Unknown\\\\Alien fleets are launched on a collision course with\\earth.\\\\The invaders seek to research and control the\\temporal rifts, their intentions are malicious...", .1f, false, 5000);
+        missionText4 = new TextTypeEvent("2059: Earth\\\\Blueshift foreign objects are detected traveling toward\\Earth at nearly a third the speed of light.\\\\Worldwide conflict quickly recedes. Talks of crisis\\resolution begin...", .1f, false, 5000);
+        missionText5 = new TextTypeEvent("2061: Earth United\\\\A temporarily united world begins construction of an\\earthern space fleet.\\\\Temporal rift research, however, remains humanity's\\top priority...", .1f, false, 5000);
+        missionText6 = new TextTypeEvent("2089: Perimeter of the Sun's Solar System\\\\The United Earthern Fleet engages invading vessels.\\\\They are cannon fodder against superior combat\\technology and overwhelming numbers...", .1f, false, 5000);
+        missionText7 = new TextTypeEvent("2090: Earth United\\\\With little time to spare, humanity deciphers the\\true nature of the temporal rifts.\\\\A checkpoint in space-time is recorded and set for\\later restoration...", .1f, false, 5000);
+        missionText8 = new TextTypeEvent("2091: The Edge of Earth Space\\\\Mustering the last of its time and resources, Earth\\United produces a handful of experimental, adaptive\\ships equip with the technology to manipulate time.\\\\Their chance at victory over the invaders is nearly\\nonexistent but their attempts are infinite...", .1f, false, 5000);
+        toAddTrailer = new TextTypeEvent("To Add Trailer Here", .01f, true, 15000);
     }
 
     private void init(Context context, int shaderLocation)
@@ -1574,7 +1585,7 @@ public class UI extends Drawable
                 (
                         TextureLoader.loadTexture(context, R.drawable.moon),
                         moonVA,
-                        -.2f, -.34f,
+                         .34f,-.2f,
                         "earth",
                         glVarLocations,
                         -1, -1
@@ -1676,7 +1687,7 @@ public class UI extends Drawable
                 (
                         TextureLoader.loadTexture(context, R.drawable.shade),
                         Constants.shadeBarVa,
-                        0, .85f,
+                         -.85f,0,
                         "screenShade",
                         glVarLocations,
                         -1, -1
@@ -1686,7 +1697,7 @@ public class UI extends Drawable
                 (
                         TextureLoader.loadTexture(context, R.drawable.modpanel),
                         Constants.infoPanelVA,
-                        -.024f + .02f, .936f,
+                         -.936f,-.024f + .02f,
                         "modPanel",
                         glVarLocations,
                         -1, -1
@@ -1696,7 +1707,7 @@ public class UI extends Drawable
                 (
                         TextureLoader.loadTexture(context, R.drawable.weaponsoverdrive),
                         Constants.modNameVA,
-                        -.024f + .308f, .936f,
+                         -.936f,-.024f + .308f,
                         "modPanel",
                         glVarLocations,
                         -1, -1
@@ -1706,7 +1717,7 @@ public class UI extends Drawable
                 (
                         TextureLoader.loadTexture(context, R.drawable.accelerator),
                         Constants.modNameVA,
-                        -.024f + .308f, .936f,
+                         -.936f,-.024f + .308f,
                         "modPanel",
                         glVarLocations,
                         -1, -1
@@ -1715,7 +1726,7 @@ public class UI extends Drawable
                 (
                         TextureLoader.loadTexture(context, R.drawable.projectilecloner),
                         Constants.modNameVA,
-                        -.024f + .308f, .936f,
+                         -.936f,-.024f + .308f,
                         "modPanel",
                         glVarLocations,
                         -1, -1
@@ -1724,7 +1735,7 @@ public class UI extends Drawable
                 (
                         TextureLoader.loadTexture(context, R.drawable.precisionbarrels),
                         Constants.modNameVA,
-                        -.024f + .308f, .936f,
+                         -.936f,-.024f + .308f,
                         "modPanel",
                         glVarLocations,
                         -1, -1
@@ -1733,7 +1744,7 @@ public class UI extends Drawable
                 (
                         TextureLoader.loadTexture(context, R.drawable.restorativecells),
                         Constants.modNameVA,
-                        -.024f + .308f, .936f,
+                         -.936f,-.024f + .308f,
                         "modPanel",
                         glVarLocations,
                         -1, -1
@@ -1742,7 +1753,7 @@ public class UI extends Drawable
                 (
                         TextureLoader.loadTexture(context, R.drawable.armoredplating),
                         Constants.modNameVA,
-                        -.024f + .308f, .936f,
+                         -.936f,-.024f + .308f,
                         "modPanel",
                         glVarLocations,
                         -1, -1
@@ -1751,7 +1762,7 @@ public class UI extends Drawable
                 (
                         TextureLoader.loadTexture(context, R.drawable.piercingrounds),
                         Constants.modNameVA,
-                        -.024f + .308f, .936f,
+                         -.936f,-.024f + .308f,
                         "modPanel",
                         glVarLocations,
                         -1, -1
@@ -1760,7 +1771,7 @@ public class UI extends Drawable
                 (
                         TextureLoader.loadTexture(context, R.drawable.temporalmanipulator),
                         Constants.modNameVA,
-                        -.024f + .308f, .936f,
+                         -.936f,-.024f + .308f,
                         "modPanel",
                         glVarLocations,
                         -1, -1
@@ -1770,7 +1781,7 @@ public class UI extends Drawable
                 (
                         TextureLoader.loadTexture(context, R.drawable.overdrivedescrip),
                         Constants.modDescripVA,
-                        -.284f, .936f,
+                         -.936f,-.284f,
                         "modPanel",
                         glVarLocations,
                         -1, -1
@@ -1780,7 +1791,7 @@ public class UI extends Drawable
                 (
                         TextureLoader.loadTexture(context, R.drawable.acceleratordescrip),
                         Constants.modDescripVA,
-                        -.284f, .936f,
+                         -.936f,-.284f,
                         "modPanel",
                         glVarLocations,
                         -1, -1
@@ -1789,7 +1800,7 @@ public class UI extends Drawable
                 (
                         TextureLoader.loadTexture(context, R.drawable.projectileclonerdescrip),
                         Constants.modDescripVA,
-                        -.284f, .936f,
+                         -.936f,-.284f,
                         "modPanel",
                         glVarLocations,
                         -1, -1
@@ -1798,7 +1809,7 @@ public class UI extends Drawable
                 (
                         TextureLoader.loadTexture(context, R.drawable.precisionbarrelsdescrip),
                         Constants.modDescripVA,
-                        -.284f, .936f,
+                         -.936f,-.284f,
                         "modPanel",
                         glVarLocations,
                         -1, -1
@@ -1807,7 +1818,7 @@ public class UI extends Drawable
                 (
                         TextureLoader.loadTexture(context, R.drawable.restorativecellsdescrip),
                         Constants.modDescripVA,
-                        -.284f, .936f,
+                         -.936f,-.284f,
                         "modPanel",
                         glVarLocations,
                         -1, -1
@@ -1816,7 +1827,7 @@ public class UI extends Drawable
                 (
                         TextureLoader.loadTexture(context, R.drawable.pixelplatingdescrip),
                         Constants.modDescripVA,
-                        -.284f, .936f,
+                         -.936f,-.284f,
                         "modPanel",
                         glVarLocations,
                         -1, -1
@@ -1825,7 +1836,7 @@ public class UI extends Drawable
                 (
                         TextureLoader.loadTexture(context, R.drawable.piercingroundsdescrip),
                         Constants.modDescripVA,
-                        -.284f, .936f,
+                         -.936f,-.284f,
                         "modPanel",
                         glVarLocations,
                         -1, -1
@@ -1834,7 +1845,7 @@ public class UI extends Drawable
                 (
                         TextureLoader.loadTexture(context, R.drawable.temporaldescrip),
                         Constants.modDescripVA,
-                        -.284f, .936f,
+                         -.936f,-.284f,
                         "modPanel",
                         glVarLocations,
                         -1, -1
@@ -1844,7 +1855,7 @@ public class UI extends Drawable
                 (
                         TextureLoader.loadTexture(context, R.drawable.gunpanel),
                         Constants.infoPanelVA,
-                        -.024f + .02f, .936f,
+                         -.936f,-.024f + .02f,
                         "gunPanel",
                         glVarLocations,
                         -1, -1
@@ -1853,7 +1864,7 @@ public class UI extends Drawable
                 (
                         TextureLoader.loadTexture(context, R.drawable.thrusterpanel),
                         Constants.infoPanelVA,
-                        -.024f + .02f, .936f,
+                         -.936f,-.024f + .02f,
                         "thrusterPanel",
                         glVarLocations,
                         -1, -1
@@ -1862,7 +1873,7 @@ public class UI extends Drawable
                 (
                         TextureLoader.loadTexture(context, R.drawable.largebox2),
                         Constants.allInfoBoxVA,
-                        -.024f - .144f + .02f, 0,
+                         0,-.024f - .144f + .02f,
                         "largeBox",
                         glVarLocations,
                         -1, -1
@@ -1871,14 +1882,14 @@ public class UI extends Drawable
                 (
                         TextureLoader.loadTexture(context, R.drawable.optionsmenu),
                         Constants.allInfoBoxVA,
-                        -.024f - .144f + .02f, 0,
+                         0,-.024f - .144f + .02f,
                         "largeBox",
                         glVarLocations,
                         -1, -1
                 );
 
-        float titleX = .32f;
-        float titleY = -.5f;
+        float titleX = .5f;
+        float titleY = .32f;
         title = new ImageContainer
                 (
                         TextureLoader.loadTexture(context, R.drawable.pixelinvaders),
@@ -1953,7 +1964,7 @@ public class UI extends Drawable
                         TextureLoader.loadTexture(context, R.drawable.controls),
                         Constants.controlsVA,
                         //.35f, -.56f,
-                        -.136f, 0,
+                         0,-.136f,
                         "largeBox",
                         glVarLocations,
                         -1, -1
@@ -1964,7 +1975,7 @@ public class UI extends Drawable
                         TextureLoader.loadTexture(context, R.drawable.consumables),
                         Constants.controlsVA,
                         //.35f, -.56f,
-                        -.136f, 0,
+                         0,-.136f,
                         "largeBox",
                         glVarLocations,
                         -1, -1
@@ -1975,7 +1986,7 @@ public class UI extends Drawable
                         TextureLoader.loadTexture(context, R.drawable.destruction),
                         Constants.controlsVA,
                         //.35f, -.56f,
-                        -.136f, 0,
+                         0,-.136f,
                         "largeBox",
                         glVarLocations,
                         -1, -1
@@ -1986,7 +1997,7 @@ public class UI extends Drawable
                         TextureLoader.loadTexture(context, R.drawable.time),
                         Constants.controlsVA,
                         //.35f, -.56f,
-                        -.136f, 0,
+                         0,-.136f,
                         "largeBox",
                         glVarLocations,
                         -1, -1
@@ -1997,7 +2008,7 @@ public class UI extends Drawable
                         TextureLoader.loadTexture(context, R.drawable.index),
                         Constants.controlsVA,
                         //.35f, -.56f,
-                        -.136f, 0,
+                         0,-.136f,
                         "largeBox",
                         glVarLocations,
                         -1, -1
@@ -2008,7 +2019,7 @@ public class UI extends Drawable
                         TextureLoader.loadTexture(context, R.drawable.bonusbar),
                         Constants.bonusBarVA,
                         //.35f, -.56f,
-                        .92f, 0,
+                         0,.92f,
                         "largeBox",
                         glVarLocations,
                         -1, -1
@@ -2021,7 +2032,7 @@ public class UI extends Drawable
                                 (
                                         TextureLoader.loadTexture(context, R.drawable.resume),
                                         Constants.resumeButtonVA,
-                                        .82f + .02f, .96f,
+                                         -.96f,.82f + .02f,
                                         "resumeButton",
                                         glVarLocations,
                                         Constants.rbL, Constants.rbW
@@ -2030,7 +2041,7 @@ public class UI extends Drawable
                                 (
                                         TextureLoader.loadTexture(context, R.drawable.resume2),
                                         Constants.resumeButtonHoveredVA,
-                                        .82f + .02f, .96f,
+                                         -.96f,.82f + .02f,
                                         "resumeButtonHover",
                                         glVarLocations,
                                         Constants.rbL, Constants.rbW
@@ -2046,7 +2057,7 @@ public class UI extends Drawable
                                 (
                                         optionsText,
                                         Constants.resumeButtonVA,
-                                        .82f + .02f, 0,
+                                         0,.82f + .02f,
                                         "optionsButton",
                                         glVarLocations,
                                         Constants.rbL, Constants.rbW
@@ -2055,7 +2066,7 @@ public class UI extends Drawable
                                 (
                                         optionsText2,
                                         Constants.resumeButtonHoveredVA,
-                                        .82f + .02f, 0,
+                                         0,.82f + .02f,
                                         "optionsButtonHover",
                                         glVarLocations,
                                         Constants.rbL, Constants.rbW
@@ -2069,7 +2080,7 @@ public class UI extends Drawable
                                 (
                                         TextureLoader.loadTexture(context, R.drawable.ready),
                                         Constants.resumeButtonVA,
-                                        -.85f, 0,
+                                         0,-.85f,
                                         "optionsButton",
                                         glVarLocations,
                                         Constants.rbL, Constants.rbW
@@ -2078,7 +2089,7 @@ public class UI extends Drawable
                                 (
                                         TextureLoader.loadTexture(context, R.drawable.ready2),
                                         Constants.resumeButtonHoveredVA,
-                                        -.85f, 0,
+                                         0,-.85f,
                                         "optionsButtonHover",
                                         glVarLocations,
                                         Constants.rbL, Constants.rbW
@@ -2094,7 +2105,7 @@ public class UI extends Drawable
                                 (
                                         mainmenuTex,
                                         Constants.resumeButtonVA,
-                                        .82f + .02f, -.96f,
+                                         .96f,.82f + .02f,
                                         "exitButton",
                                         glVarLocations,
                                         Constants.rbL, Constants.rbW
@@ -2103,7 +2114,7 @@ public class UI extends Drawable
                                 (
                                         mainmenuTex2,
                                         Constants.resumeButtonHoveredVA,
-                                        .82f + .02f, -.96f,
+                                         .96f,.82f + .02f,
                                         "exitButtonHover",
                                         glVarLocations,
                                         Constants.rbL, Constants.rbW
@@ -2140,7 +2151,7 @@ public class UI extends Drawable
                                 (
                                         TextureLoader.loadTexture(context, R.drawable.back),
                                         Constants.resumeButtonVA,
-                                        .82f + .02f, -.96f,
+                                         -.96f,.82f + .02f,
                                         "exitButton",
                                         glVarLocations,
                                         Constants.rbL, Constants.rbW
@@ -2149,7 +2160,7 @@ public class UI extends Drawable
                                 (
                                         TextureLoader.loadTexture(context, R.drawable.back2),
                                         Constants.resumeButtonHoveredVA,
-                                        .82f + .02f, -.96f,
+                                         -.96f,.82f + .02f,
                                         "exitButtonHover",
                                         glVarLocations,
                                         Constants.rbL, Constants.rbW
@@ -2159,9 +2170,9 @@ public class UI extends Drawable
 
         float shiftUp = 0f;
         float xScaleB = .3f;
-        float group1y = .50f;
-        float group2y = .66f;
-        float group3y = .75f;
+        float group1y = -.50f;
+        float group2y = -.66f;
+        float group3y = -.75f;
         arcadeButton = new Button
                 (
                         new ImageContainer
@@ -2169,7 +2180,7 @@ public class UI extends Drawable
                                         TextureLoader.loadTexture(context, R.drawable.arcade),
                                         Constants.resumeButtonVA,
                                         //.4f, .65f,
-                                        xScaleB * 2 + shiftUp, group1y,
+                                         group1y,xScaleB * 2 + shiftUp,
                                         "optionsButton",
                                         glVarLocations,
                                         Constants.rbL, Constants.rbW
@@ -2179,7 +2190,7 @@ public class UI extends Drawable
                                         TextureLoader.loadTexture(context, R.drawable.arcade2),
                                         Constants.resumeButtonHoveredVA,
                                         //.4f, .65f,
-                                        xScaleB * 2 + shiftUp, group1y,
+                                         group1y,xScaleB * 2 + shiftUp,
                                         "optionsButtonHover",
                                         glVarLocations,
                                         Constants.rbL, Constants.rbW
@@ -2194,7 +2205,7 @@ public class UI extends Drawable
                                         TextureLoader.loadTexture(context, R.drawable.challenge),
                                         Constants.resumeButtonVA,
                                         //.4f, .65f,
-                                        xScaleB + shiftUp, group2y,
+                                         group2y,xScaleB + shiftUp,
                                         "optionsButton",
                                         glVarLocations,
                                         Constants.rbL, Constants.rbW
@@ -2204,7 +2215,7 @@ public class UI extends Drawable
                                         TextureLoader.loadTexture(context, R.drawable.challenge2),
                                         Constants.resumeButtonHoveredVA,
                                         //.4f, .65f,
-                                        xScaleB + shiftUp, group2y,
+                                         group2y,xScaleB + shiftUp,
                                         "optionsButtonHover",
                                         glVarLocations,
                                         Constants.rbL, Constants.rbW
@@ -2219,7 +2230,7 @@ public class UI extends Drawable
                                         TextureLoader.loadTexture(context, R.drawable.shiplogs),
                                         Constants.resumeButtonVA,
                                         //.4f, .65f,
-                                        shiftUp, group3y,
+                                         group3y, shiftUp,
                                         "optionsButton",
                                         glVarLocations,
                                         Constants.rbL, Constants.rbW
@@ -2229,7 +2240,7 @@ public class UI extends Drawable
                                         TextureLoader.loadTexture(context, R.drawable.shiplogs2),
                                         Constants.resumeButtonHoveredVA,
                                         //.4f, .65f,
-                                        shiftUp, group3y,
+                                         group3y, shiftUp,
                                         "optionsButtonHover",
                                         glVarLocations,
                                         Constants.rbL, Constants.rbW
@@ -2244,7 +2255,7 @@ public class UI extends Drawable
                                         TextureLoader.loadTexture(context, R.drawable.optionss),
                                         Constants.resumeButtonVA,
                                         //0f, .75f,
-                                        -xScaleB + shiftUp, group2y,
+                                         group2y,-xScaleB + shiftUp,
                                         "optionsButton",
                                         glVarLocations,
                                         Constants.rbL, Constants.rbW
@@ -2254,7 +2265,7 @@ public class UI extends Drawable
                                         TextureLoader.loadTexture(context, R.drawable.optionss2),
                                         Constants.resumeButtonHoveredVA,
                                         //0f, .75f,
-                                        -xScaleB + shiftUp, group2y,
+                                         group2y,-xScaleB + shiftUp,
                                         "optionsButtonHover",
                                         glVarLocations,
                                         Constants.rbL, Constants.rbW
@@ -2269,7 +2280,7 @@ public class UI extends Drawable
                                         TextureLoader.loadTexture(context, R.drawable.exit),
                                         Constants.resumeButtonVA,
                                         //-.4f, .65f,
-                                        -xScaleB * 2 + shiftUp, group1y,
+                                         group1y,-xScaleB * 2 + shiftUp,
                                         "optionsButton",
                                         glVarLocations,
                                         Constants.rbL, Constants.rbW
@@ -2279,7 +2290,7 @@ public class UI extends Drawable
                                         TextureLoader.loadTexture(context, R.drawable.exit2),
                                         Constants.resumeButtonHoveredVA,
                                         //-.4f, .65f,
-                                        -xScaleB * 2 + shiftUp, group1y,
+                                         group1y,-xScaleB * 2 + shiftUp,
                                         "optionsButtonHover",
                                         glVarLocations,
                                         Constants.rbL, Constants.rbW
@@ -2293,7 +2304,7 @@ public class UI extends Drawable
                                 (
                                         TextureLoader.loadTexture(context, R.drawable.pause),
                                         Constants.resumeButtonVA,
-                                        -.85f, -.672f,
+                                         .672f,-.85f,
                                         "optionsButton",
                                         glVarLocations,
                                         Constants.rbL, Constants.rbW
@@ -2302,7 +2313,7 @@ public class UI extends Drawable
                                 (
                                         TextureLoader.loadTexture(context, R.drawable.pause2),
                                         Constants.resumeButtonVA,
-                                        -.85f, -.672f,
+                                         .672f,-.85f,
                                         "optionsButtonHover",
                                         glVarLocations,
                                         Constants.rbL, Constants.rbW
@@ -2316,7 +2327,7 @@ public class UI extends Drawable
                                 (
                                         TextureLoader.loadTexture(context, R.drawable.leftpage),
                                         Constants.navButtonVA,
-                                        -.8f, .296f,
+                                         -.296f,-.8f,
                                         "optionsButton",
                                         glVarLocations,
                                         Constants.nbL, Constants.nbW
@@ -2325,7 +2336,7 @@ public class UI extends Drawable
                                 (
                                         TextureLoader.loadTexture(context, R.drawable.leftpage2),
                                         Constants.navButtonVA,
-                                        -.8f, .296f,
+                                         -.296f,-.8f,
                                         "optionsButtonHover",
                                         glVarLocations,
                                         Constants.nbL, Constants.nbW
@@ -2339,7 +2350,7 @@ public class UI extends Drawable
                                 (
                                         TextureLoader.loadTexture(context, R.drawable.rightpage),
                                         Constants.navButtonVA,
-                                        -.8f, -.296f,
+                                         .296f,-.8f,
                                         "optionsButton",
                                         glVarLocations,
                                         Constants.nbL, Constants.nbW
@@ -2348,7 +2359,7 @@ public class UI extends Drawable
                                 (
                                         TextureLoader.loadTexture(context, R.drawable.rightpage2),
                                         Constants.navButtonVA,
-                                        -.8f, -.296f,
+                                         .296f,-.8f,
                                         "optionsButtonHover",
                                         glVarLocations,
                                         Constants.nbL, Constants.nbW
@@ -2362,7 +2373,7 @@ public class UI extends Drawable
                                 (
                                         TextureLoader.loadTexture(context, R.drawable.leftskip),
                                         Constants.navButtonVA,
-                                        -.8f, .856f,
+                                         -.856f,-.8f,
                                         "optionsButton",
                                         glVarLocations,
                                         Constants.nbL, Constants.nbW
@@ -2371,7 +2382,7 @@ public class UI extends Drawable
                                 (
                                         TextureLoader.loadTexture(context, R.drawable.leftskip2),
                                         Constants.navButtonVA,
-                                        -.8f, .856f,
+                                         -.856f,-.8f,
                                         "optionsButtonHover",
                                         glVarLocations,
                                         Constants.nbL, Constants.nbW
@@ -2385,7 +2396,7 @@ public class UI extends Drawable
                                 (
                                         TextureLoader.loadTexture(context, R.drawable.rightskip),
                                         Constants.navButtonVA,
-                                        -.8f, -.856f,
+                                         .856f,-.8f,
                                         "optionsButton",
                                         glVarLocations,
                                         Constants.nbL, Constants.nbW
@@ -2394,7 +2405,7 @@ public class UI extends Drawable
                                 (
                                         TextureLoader.loadTexture(context, R.drawable.rightskip2),
                                         Constants.navButtonVA,
-                                        -.8f, -.856f,
+                                         .856f,-.8f,
                                         "optionsButtonHover",
                                         glVarLocations,
                                         Constants.nbL, Constants.nbW
@@ -2409,7 +2420,7 @@ public class UI extends Drawable
                                 (
                                         TextureLoader.loadTexture(context, R.drawable.controlsb),
                                         Constants.resumeButtonVA,
-                                        mInfoIndex.x + .408f + (Constants.rbL - (Constants.rbL * tempMag)), mInfoIndex.y + .808f + (Constants.rbW - (Constants.rbW * tempMag)),
+                                        -(mInfoIndex.y + .808f + (Constants.rbW - (Constants.rbW * tempMag))),-(mInfoIndex.x + .408f + (Constants.rbL - (Constants.rbL * tempMag))),
                                         "optionsButton",
                                         glVarLocations,
                                         Constants.rbL, Constants.rbW
@@ -2418,7 +2429,7 @@ public class UI extends Drawable
                                 (
                                         TextureLoader.loadTexture(context, R.drawable.controlsb2),
                                         Constants.resumeButtonVA,
-                                        mInfoIndex.x + .408f + (Constants.rbL - (Constants.rbL * tempMag)), mInfoIndex.y + .808f + (Constants.rbW - (Constants.rbW * tempMag)),
+                                         -(mInfoIndex.y + .808f + (Constants.rbW - (Constants.rbW * tempMag))),-(mInfoIndex.x + .408f + (Constants.rbL - (Constants.rbL * tempMag))),
                                         "optionsButtonHover",
                                         glVarLocations,
                                         Constants.rbL, Constants.rbW
@@ -2432,7 +2443,7 @@ public class UI extends Drawable
                                 (
                                         TextureLoader.loadTexture(context, R.drawable.history),
                                         Constants.resumeButtonVA,
-                                        mInfoIndex.x + .2f + (Constants.rbL - (Constants.rbL * tempMag)), mInfoIndex.y + .808f + (Constants.rbW - (Constants.rbW * tempMag)),
+                                        -(mInfoIndex.y + .808f + (Constants.rbW - (Constants.rbW * tempMag))),mInfoIndex.x + .2f + (Constants.rbL - (Constants.rbL * tempMag)),
                                         "optionsButton",
                                         glVarLocations,
                                         Constants.rbL, Constants.rbW
@@ -2441,7 +2452,7 @@ public class UI extends Drawable
                                 (
                                         TextureLoader.loadTexture(context, R.drawable.history2),
                                         Constants.resumeButtonVA,
-                                        mInfoIndex.x + .2f + (Constants.rbL - (Constants.rbL * tempMag)), mInfoIndex.y + .808f + (Constants.rbW - (Constants.rbW * tempMag)),
+                                         -(mInfoIndex.y + .808f + (Constants.rbW - (Constants.rbW * tempMag))), mInfoIndex.x + .2f + (Constants.rbL - (Constants.rbL * tempMag)),
                                         "optionsButtonHover",
                                         glVarLocations,
                                         Constants.rbL, Constants.rbW
@@ -2462,7 +2473,7 @@ public class UI extends Drawable
                                         (
                                                 slideTexture,
                                                 Constants.slideButtonVA,
-                                                .332f + .02f - .392f * i, -.992f,
+                                                 .992f,.332f + .02f - .392f * i,
                                                 "optionsButton",
                                                 glVarLocations,
                                                 Constants.sldBR, Constants.sldBR
@@ -2471,7 +2482,7 @@ public class UI extends Drawable
                                         (
                                                 slideTexture2,
                                                 Constants.slideButtonVA,
-                                                .332f + .02f - .392f * i, -.992f,
+                                                 .992f,.332f + .02f - .392f * i,
                                                 "optionsButtonHover",
                                                 glVarLocations,
                                                 Constants.sldBR, Constants.sldBR
@@ -2487,7 +2498,7 @@ public class UI extends Drawable
                                         (
                                                 slideTexture,
                                                 Constants.slideButtonVA,
-                                                .332f + .02f - .392f * 3, .376f,
+                                                 -.376f,.332f + .02f - .392f * 3,
                                                 "optionsButton",
                                                 glVarLocations,
                                                 Constants.sldBR, Constants.sldBR
@@ -2496,7 +2507,7 @@ public class UI extends Drawable
                                         (
                                                 slideTexture2,
                                                 Constants.slideButtonVA,
-                                                .332f + .02f - .392f * 3, .376f,
+                                                 -.376f,.332f + .02f - .392f * 3,
                                                 "optionsButtonHover",
                                                 glVarLocations,
                                                 Constants.sldBR, Constants.sldBR
@@ -2515,7 +2526,7 @@ public class UI extends Drawable
                                     (
                                             checkTexture,
                                             Constants.checkVA,
-                                            .53f - .192f * i, .16f,
+                                             -.16f,.53f - .192f * i,
                                             "optionsButton",
                                             glVarLocations,
                                             Constants.chckR, Constants.chckR
@@ -2524,7 +2535,7 @@ public class UI extends Drawable
                                     (
                                             checkTexture,
                                             Constants.checkVA,
-                                            .53f - .192f * i, .16f,
+                                             -.16f,.53f - .192f * i,
                                             "optionsButtonHover",
                                             glVarLocations,
                                             Constants.chckR, Constants.chckR
@@ -2549,7 +2560,7 @@ public class UI extends Drawable
                                         (
                                                 squareTexture,
                                                 Constants.componentSquareVA,
-                                                xL, yL,
+                                                 -yL, xL,
                                                 "square",
                                                 glVarLocations,
                                                 Constants.radius, Constants.radius
@@ -2558,7 +2569,7 @@ public class UI extends Drawable
                                         (
                                                 squareTexture,
                                                 Constants.componentSquareHoverVA,
-                                                xL, yL,
+                                                 -yL, xL,
                                                 "squareHover",
                                                 glVarLocations,
                                                 Constants.radius, Constants.radius
@@ -2579,7 +2590,7 @@ public class UI extends Drawable
                                     (
                                             square2Texture,
                                             Constants.playerSquareVA,
-                                            playerModelX + gunOffsets[i].x, playerModelY + gunOffsets[i].y,
+                                             playerModelX + gunOffsets[i].x, playerModelY + gunOffsets[i].y,
                                             "square",
                                             glVarLocations,
                                             Constants.r2, Constants.r2
@@ -2588,7 +2599,7 @@ public class UI extends Drawable
                                     (
                                             square2Texture,
                                             Constants.playerSquareHoverVA,
-                                            playerModelX + gunOffsets[i].x, playerModelY + gunOffsets[i].y,
+                                             playerModelX + gunOffsets[i].x, playerModelY + gunOffsets[i].y,
                                             "squareHover",
                                             glVarLocations,
                                             Constants.r2, Constants.r2
@@ -2607,7 +2618,7 @@ public class UI extends Drawable
                                     (
                                             square2Texture,
                                             Constants.playerSquareVA,
-                                            playerModelX + thrusterOffsets[i].x, playerModelY + thrusterOffsets[i].y,
+                                             playerModelX + thrusterOffsets[i].x, playerModelY + thrusterOffsets[i].y,
                                             "square",
                                             glVarLocations,
                                             Constants.r2, Constants.r2
@@ -2616,7 +2627,7 @@ public class UI extends Drawable
                                     (
                                             square2Texture,
                                             Constants.playerSquareHoverVA,
-                                            playerModelX + thrusterOffsets[i].x, playerModelY + thrusterOffsets[i].y,
+                                             playerModelX + thrusterOffsets[i].x, playerModelY + thrusterOffsets[i].y,
                                             "squareHover",
                                             glVarLocations,
                                             Constants.r2, Constants.r2
@@ -2635,7 +2646,7 @@ public class UI extends Drawable
                                     (
                                             square2Texture,
                                             Constants.playerSquareVA,
-                                            modLeftOffset.x, modLeftOffset.y - i * (.038f + Constants.r2 * 2),
+                                             modLeftOffset.x + i * (.038f + Constants.r2 * 2), modLeftOffset.y,
                                             "square",
                                             glVarLocations,
                                             Constants.r2, Constants.r2
@@ -2644,7 +2655,7 @@ public class UI extends Drawable
                                     (
                                             square2Texture,
                                             Constants.playerSquareHoverVA,
-                                            modLeftOffset.x, modLeftOffset.y - i * (.038f + Constants.r2 * 2),
+                                              modLeftOffset.x + i * (.038f + Constants.r2 * 2), modLeftOffset.y,
                                             "squareHover",
                                             glVarLocations,
                                             Constants.r2, Constants.r2

@@ -188,7 +188,7 @@ public class TextTypeEvent
                 {
                     disp = tP.drawString(
                             text,
-                            x - tP.charSkipX * mag * i, y,
+                            x, y - tP.charSkipX * mag * i,
                             lineBreaks.get(i), lineBreaks.get(i+1),
                             mag,
                             centeredTyping
@@ -198,7 +198,7 @@ public class TextTypeEvent
                 {
                     disp = tP.drawString(
                             text,
-                            x - tP.charSkipX * mag * i, y,
+                            x, y - tP.charSkipX * mag * i,
                             lineBreaks.get(i), indx,
                             mag,
                             centeredTyping
@@ -209,7 +209,7 @@ public class TextTypeEvent
             {
                 tP.drawString(
                         bar,
-                        x - tP.charSkipX * curLine, y - disp,
+                        x + disp, y - tP.charSkipX * curLine,
                         0,1,
                         mag,
                         centeredTyping
@@ -217,7 +217,7 @@ public class TextTypeEvent
             }
             if(finishedTyping && !deleting)
             {
-                if(gI.getAugmentedTimeMillis() - flashDelay * typeSpeed > nextFlashTime)
+                if(gI.getAugmentedTimeMillis() - flashDelay > nextFlashTime)
                 {
                     nextFlashTime = gI.getAugmentedTimeMillis();
                     flash *= -1;
@@ -236,7 +236,7 @@ public class TextTypeEvent
             {
                 if(currentChar <= 0)
                 {
-                    if(gI.getAugmentedTimeMillis() - flashDelay * typeSpeed > nextFlashTime)
+                    if(gI.getAugmentedTimeMillis() - flashDelay > nextFlashTime)
                     {
                         nextFlashTime = gI.getAugmentedTimeMillis();
                         flash *= -1;
@@ -327,7 +327,7 @@ public class TextTypeEvent
                 {
                     disp = tP.drawString(
                             text,
-                            x - tP.charSkipX * mag * i, y,
+                            x, y - tP.charSkipX * mag * i,
                             lineBreaks.get(i), lineBreaks.get(i+1),
                             mag,
                             centeredTyping
@@ -337,7 +337,7 @@ public class TextTypeEvent
                 {
                     disp = tP.drawString(
                             text,
-                            x - tP.charSkipX * mag * i, y,
+                            x, y - tP.charSkipX * mag * i,
                             lineBreaks.get(i), indx,
                             mag,
                             centeredTyping
@@ -348,7 +348,7 @@ public class TextTypeEvent
             {
                 tP.drawString(
                         bar,
-                        x - tP.charSkipX * mag * curLine, y - disp,
+                        x + disp, y - tP.charSkipX * mag * curLine,
                         0,1,
                         mag,
                         centeredTyping
@@ -356,7 +356,7 @@ public class TextTypeEvent
             }
             if(finishedTyping && !deleting)
             {
-                if(System.currentTimeMillis() - nextFlashTimeRT > flashDelay * typeSpeed)
+                if(System.currentTimeMillis() - nextFlashTimeRT > flashDelay)
                 {
                     nextFlashTimeRT = System.currentTimeMillis();
                     flash *= -1;
@@ -375,7 +375,7 @@ public class TextTypeEvent
             {
                 if(currentChar <= 0)
                 {
-                    if(System.currentTimeMillis() -  nextFlashTimeRT> flashDelay * typeSpeed)
+                    if(System.currentTimeMillis() -  nextFlashTimeRT > flashDelay)
                     {
                         nextFlashTimeRT = System.currentTimeMillis();
                         flash *= -1;

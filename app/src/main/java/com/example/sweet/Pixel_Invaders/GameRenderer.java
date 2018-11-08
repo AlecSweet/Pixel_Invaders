@@ -15,7 +15,7 @@ import com.example.sweet.Pixel_Invaders.Game_Objects.Enemies.Kamikaze;
 import com.example.sweet.Pixel_Invaders.Game_Objects.Enemies.Pulser;
 import com.example.sweet.Pixel_Invaders.Game_Objects.Enemies.Tiny;
 import com.example.sweet.Pixel_Invaders.Util.CollisionHandler;
-import com.example.sweet.Pixel_Invaders.Util.Factories.EnemyFactory;
+import com.example.sweet.Pixel_Invaders.Util.Factories.EntityFactory;
 import com.example.sweet.Pixel_Invaders.Util.Factories.LoadLevel;
 import com.example.sweet.Pixel_Invaders.Util.Resource_Readers.ImageParser;
 import com.example.sweet.Pixel_Invaders.Util.Resource_Readers.TextureLoader;
@@ -73,8 +73,6 @@ public class GameRenderer implements Renderer
 
     public GlobalInfo globalInfo;
 
-    private Constants.GameState gameState = Constants.GameState.MAIN_MENU;
-
     private ExecutorService levelLoader = newSingleThreadExecutor();
 
     private float averageFrameTime;
@@ -93,7 +91,7 @@ public class GameRenderer implements Renderer
          void onExit();
     }
 
-    private EnemyFactory enemyFactory;
+    private EntityFactory entityFactory;
     private DropFactory dropFactory;
 
     float
@@ -146,7 +144,7 @@ public class GameRenderer implements Renderer
     
     private ParticleSystem
             playerParticles,
-            enemyParticles,
+            entityParticles,
             collisionParticles,
             staticParticles,
             uiParticles;
@@ -194,7 +192,7 @@ public class GameRenderer implements Renderer
     @Override
     public void onSurfaceCreated(GL10 unused,EGLConfig eglConfig)
     {
-        glClearColor(0.0f,0f,0f,0.0f);
+        glClearColor(1.0f,1f,1f,1.0f);
 
         String vertexShaderSource = TextResourceReader
                 .readTextFileFromResource(context, R.raw.vert_shader);
@@ -370,7 +368,7 @@ public class GameRenderer implements Renderer
     public void draw()
     {
         ui.drawBackground();
-
+        //glClear(GL_COLOR_BUFFER_BIT);
         if(ui.gameState == Constants.GameState.IN_GAME || ui.gameState == Constants.GameState.PAUSE_MENU ||
                 (ui.gameState == Constants.GameState.OPTIONS && ui.prevGameState != Constants.GameState.MAIN_MENU))
         {
@@ -488,7 +486,7 @@ public class GameRenderer implements Renderer
             if(ui.introRevTime || !ui.intro)
             {
                 collisionParticles.draw();
-                enemyParticles.draw();
+                entityParticles.draw();
                 playerParticles.draw();
             }
             glUniform1f(xScreenShiftLocationParticle, 0);
@@ -578,7 +576,7 @@ public class GameRenderer implements Renderer
             xbound = 1.5f;
             ybound = 1.5f;
             ui.setScale(xScale, yScale);
-            enemyFactory.setBounds(2.5f, 3.4f);
+            entityFactory.setBounds(2.5f, 3.4f);
             scaleSet = true;
         }
     }
@@ -587,7 +585,7 @@ public class GameRenderer implements Renderer
     {
         playerParticles.clear();
         collisionParticles.clear();
-        enemyParticles.clear();
+        entityParticles.clear();
 
         for(int i = 0; i < entities.length; i++)
         {
@@ -605,7 +603,8 @@ public class GameRenderer implements Renderer
                 shaderProgram,
                 playerParticles,
                 staticParticles,
-                ImageParser.parseImage(context, R.drawable.playerm, R.drawable.player_lightm, shaderProgram,2),
+                entityParticles,
+                ImageParser.parseImage(context, R.drawable.player, R.drawable.player_light, shaderProgram,2).clone(),
                 globalInfo
         );
         player1.setScale(xScale, yScale);
@@ -625,7 +624,6 @@ public class GameRenderer implements Renderer
         globalInfo.extraModChance = .5f;
         globalInfo.setTimeSlow(1);
         ui.gameState = Constants.GameState.IN_GAME;
-        gameState = Constants.GameState.IN_GAME;
 
         saveTime = false;
         pastTime = 0.0;
@@ -690,7 +688,7 @@ public class GameRenderer implements Renderer
     {
         playerParticles = new ParticleSystem(10000, particleShaderProgram , whiteTexture, globalStartTime, globalInfo);
 
-        enemyParticles = new ParticleSystem(12000, particleShaderProgram, whiteTexture, globalStartTime, globalInfo);
+        entityParticles = new ParticleSystem(12000, particleShaderProgram, whiteTexture, globalStartTime, globalInfo);
 
         collisionParticles = new ParticleSystem(12000, particleShaderProgram, whiteTexture, globalStartTime, globalInfo);
 
@@ -698,9 +696,9 @@ public class GameRenderer implements Renderer
 
         staticParticles = new ParticleSystem(1500, particleShaderProgram, whiteTexture, globalStartTime, globalInfo);
 
-        enemyFactory = initEnemyFactory();
+        entityFactory = initEntityFactory();
 
-        loadLevel = new LoadLevel(0, enemyFactory);
+        loadLevel = new LoadLevel(0, entityFactory);
 
         entities = new Enemy[Constants.ENTITIES_LENGTH];
 
@@ -721,29 +719,51 @@ public class GameRenderer implements Renderer
 
         collisionRunnable = new CollisionThread(globalInfo);
         collisionThread = new Thread(null, collisionRunnable, "collision", 6000000);
+        //collisionThread = new Thread(collisionRunnable);
         collisionRunnable.setCollisionHandler(new CollisionHandler(collisionParticles));
         ui.startTitleIntro();
     }
 
-    private EnemyFactory initEnemyFactory()
+    private EntityFactory initEntityFactory()
     {
         dropFactory = initDropFactory();
-        EnemyFactory e = new EnemyFactory();
+        EntityFactory e = new EntityFactory();
 
-        e.addEnemyToCatalog
+       /* e.addEntityToCatalog
                 (
-                        Constants.EnemyType.SIMPLE,
+                        Constants.EntityType.SIMPLE,
                         new Simple
                                 (
                                         ImageParser.parseImage(context, R.drawable.simple1, R.drawable.simple_light, shaderProgram, 1),
                                         new BasicGun
                                                 (
                                                         ImageParser.parseImage(context, R.drawable.basicbullet, R.drawable.basicbullet_light, shaderProgram, 1),
-                                                        enemyParticles,
+                                                        EntityParticles,
                                                         1000,
                                                         .022f
                                                 ),
-                                        enemyParticles,
+                                        EntityParticles,
+                                        dropFactory,
+                                        xbound,
+                                        ybound,
+                                        globalInfo
+                                )
+                );*/
+        
+        e.addEntityToCatalog
+                (
+                        Constants.EntityType.SIMPLE,
+                        new Simple
+                                (
+                                        ImageParser.parseImage(context, R.drawable.simple1, R.drawable.simple_light, shaderProgram, 1),
+                                        new BasicGun
+                                                (
+                                                        ImageParser.parseImage(context, R.drawable.basicbullet, R.drawable.basicbullet_light, shaderProgram, 1),
+                                                        entityParticles,
+                                                        1000,
+                                                        .022f
+                                                ),
+                                        entityParticles,
                                         dropFactory,
                                         xbound,
                                         ybound,
@@ -751,48 +771,48 @@ public class GameRenderer implements Renderer
                                 )
                 );
 
-        e.addEnemyToCatalog
+        e.addEntityToCatalog
                 (
-                        Constants.EnemyType.KAMIKAZE,
+                        Constants.EntityType.KAMIKAZE,
                         new Kamikaze
                                 (
                                         ImageParser.parseImage(context, R.drawable.kamikaze, R.drawable.kamikaze_light, shaderProgram, 1),
                                         xbound,
                                         ybound,
-                                        enemyParticles,
+                                        entityParticles,
                                         dropFactory,
                                         globalInfo
                                 )
                 );
 
-        e.addEnemyToCatalog
+        e.addEntityToCatalog
                 (
-                        Constants.EnemyType.TINY,
+                        Constants.EntityType.TINY,
                         new Tiny
                                 (
                                         ImageParser.parseImage(context, R.drawable.tiny, R.drawable.tiny_light, shaderProgram, 1),
                                         xbound,
                                         ybound,
-                                        enemyParticles,
+                                        entityParticles,
                                         dropFactory,
                                         globalInfo
                                 )
                 );
 
-        e.addEnemyToCatalog
+        e.addEntityToCatalog
                 (
-                        Constants.EnemyType.PULSER,
+                        Constants.EntityType.PULSER,
                         new Pulser
                                 (
                                         ImageParser.parseImage(context, R.drawable.pulser1, R.drawable.pulser_light1, shaderProgram, 1),
                                         new BasicGun
                                                 (
                                                         ImageParser.parseImage(context, R.drawable.pulserbullet, R.drawable.pulserbullet, shaderProgram, 1),
-                                                        enemyParticles,
+                                                        entityParticles,
                                                         2000,
                                                         .02f
                                                 ),
-                                        enemyParticles,
+                                        entityParticles,
                                         dropFactory,
                                         xbound,
                                         ybound,
@@ -800,20 +820,20 @@ public class GameRenderer implements Renderer
                                 )
                 );
 
-        e.addEnemyToCatalog
+        e.addEntityToCatalog
                 (
-                        Constants.EnemyType.HEAVY,
+                        Constants.EntityType.HEAVY,
                         new Heavy
                                 (
                                         ImageParser.parseImage(context, R.drawable.heavy, R.drawable.heavy_light, shaderProgram, 1),
                                         new BasicGun
                                                 (
                                                         ImageParser.parseImage(context, R.drawable.heavybullet, R.drawable.heavybullet, shaderProgram, 1),
-                                                        enemyParticles,
+                                                        entityParticles,
                                                         1000,
                                                         .03f
                                                 ),
-                                        enemyParticles,
+                                        entityParticles,
                                         dropFactory,
                                         xbound,
                                         ybound,
@@ -821,20 +841,20 @@ public class GameRenderer implements Renderer
                                 )
                 );
 
-        e.addEnemyToCatalog
+        e.addEntityToCatalog
                 (
-                        Constants.EnemyType.MINELAYER,
+                        Constants.EntityType.MINELAYER,
                         new MineLayer
                                 (
                                         ImageParser.parseImage(context, R.drawable.minelayer, R.drawable.minelayer_light, shaderProgram, 1),
                                         new MineGun
                                                 (
                                                         ImageParser.parseImage(context, R.drawable.minelayerbullet, R.drawable.minelayerbullet, shaderProgram, 1),
-                                                        enemyParticles,
+                                                        entityParticles,
                                                         2000,
                                                         10
                                                 ),
-                                        enemyParticles,
+                                        entityParticles,
                                         dropFactory,
                                         xbound,
                                         ybound,
@@ -842,20 +862,20 @@ public class GameRenderer implements Renderer
                                 )
                 );
 
-        e.addEnemyToCatalog
+        e.addEntityToCatalog
                 (
-                        Constants.EnemyType.MASSACCELERATOR,
+                        Constants.EntityType.MASSACCELERATOR,
                         new MassAccelerator
                                 (
                                         ImageParser.parseImage(context, R.drawable.massaccelerator1, R.drawable.massaccelerator_light, shaderProgram, 1),
                                         new BasicGun
                                                 (
                                                         ImageParser.parseImage(context, R.drawable.acceleratorbullet, R.drawable.acceleratorbullet, shaderProgram, 1),
-                                                        enemyParticles,
+                                                        entityParticles,
                                                         4000,
                                                         .3f
                                                 ),
-                                        enemyParticles,
+                                        entityParticles,
                                         dropFactory,
                                         xbound,
                                         ybound,
@@ -863,13 +883,13 @@ public class GameRenderer implements Renderer
                                 )
                 );
 
-        e.addEnemyToCatalog
+        e.addEntityToCatalog
                 (
-                        Constants.EnemyType.CARRIER,
+                        Constants.EntityType.CARRIER,
                         new Carrier
                                 (
                                         ImageParser.parseImage(context, R.drawable.carrier3, R.drawable.carrier_light1, shaderProgram, 1),
-                                        enemyParticles,
+                                        entityParticles,
                                         dropFactory,
                                         xbound,
                                         ybound,
@@ -877,9 +897,9 @@ public class GameRenderer implements Renderer
                                 )
                 );
 
-        e.addEnemyToCatalog
+        e.addEntityToCatalog
                 (
-                        Constants.EnemyType.CENTIPEDE,
+                        Constants.EntityType.CENTIPEDE,
                         new Centipede
                                 (
                                         ImageParser.parseImage(context, R.drawable.head, R.drawable.head_light, shaderProgram, 1),
@@ -887,18 +907,18 @@ public class GameRenderer implements Renderer
                                         new BasicGun
                                                 (
                                                         ImageParser.parseImage(context, R.drawable.basicbullet, R.drawable.basicbullet_light, shaderProgram, 1),
-                                                        enemyParticles,
+                                                        entityParticles,
                                                         1000,
                                                         .022f
                                                 ),
                                         new BasicGun
                                                 (
                                                         ImageParser.parseImage(context, R.drawable.basicbullet, R.drawable.basicbullet_light, shaderProgram, 1),
-                                                        enemyParticles,
+                                                        entityParticles,
                                                         1000,
                                                         .022f
                                                 ),
-                                        enemyParticles,
+                                        entityParticles,
                                         dropFactory,
                                         xbound,
                                         ybound,
@@ -906,13 +926,13 @@ public class GameRenderer implements Renderer
                                 )
                 );
 
-        e.addEnemyToCatalog
+        e.addEntityToCatalog
                 (
-                        Constants.EnemyType.ASTEROID_GREY_TINY,
+                        Constants.EntityType.ASTEROID_GREY_TINY,
                         new Asteroid
                                 (
                                         ImageParser.parseImage(context, R.drawable.asteroidgraysmall, R.drawable.asteroidgraysmall_light, shaderProgram, 0),
-                                        enemyParticles,
+                                        entityParticles,
                                         xbound,
                                         ybound,
                                         dropFactory,
@@ -920,13 +940,13 @@ public class GameRenderer implements Renderer
                                 )
                 );
 
-        e.addEnemyToCatalog
+        e.addEntityToCatalog
                 (
-                        Constants.EnemyType.ASTEROID_RED_TINY,
+                        Constants.EntityType.ASTEROID_RED_TINY,
                         new Asteroid
                                 (
                                         ImageParser.parseImage(context, R.drawable.asteroidredtiny, R.drawable.asteroidredtiny_light, shaderProgram, 0),
-                                        enemyParticles,
+                                        entityParticles,
                                         xbound,
                                         ybound,
                                         dropFactory,
@@ -934,13 +954,13 @@ public class GameRenderer implements Renderer
                                 )
                 );
 
-        e.addEnemyToCatalog
+        e.addEntityToCatalog
                 (
-                        Constants.EnemyType.ASTEROID_GREY_SMALL,
+                        Constants.EntityType.ASTEROID_GREY_SMALL,
                         new Asteroid
                                 (
                                         ImageParser.parseImage(context, R.drawable.asteroidgraymedium, R.drawable.asteroidgraymedium_light, shaderProgram, 0),
-                                        enemyParticles,
+                                        entityParticles,
                                         xbound,
                                         ybound,
                                         dropFactory,
@@ -948,13 +968,13 @@ public class GameRenderer implements Renderer
                                 )
                 );
 
-        e.addEnemyToCatalog
+        e.addEntityToCatalog
                 (
-                        Constants.EnemyType.ASTEROID_RED_SMALL,
+                        Constants.EntityType.ASTEROID_RED_SMALL,
                         new Asteroid
                                 (
                                         ImageParser.parseImage(context, R.drawable.asteroidredsmall, R.drawable.asteroidredsmall_light, shaderProgram, 0),
-                                        enemyParticles,
+                                        entityParticles,
                                         xbound,
                                         ybound,
                                         dropFactory,
@@ -962,13 +982,13 @@ public class GameRenderer implements Renderer
                                 )
                 );
 
-        e.addEnemyToCatalog
+        e.addEntityToCatalog
                 (
-                        Constants.EnemyType.ASTEROID_GREY_MEDIUM,
+                        Constants.EntityType.ASTEROID_GREY_MEDIUM,
                         new Asteroid
                                 (
                                         ImageParser.parseImage(context, R.drawable.asteroidgraylarge, R.drawable.asteroidgraylarge_light, shaderProgram, 0),
-                                        enemyParticles,
+                                        entityParticles,
                                         xbound,
                                         ybound,
                                         dropFactory,
@@ -977,13 +997,13 @@ public class GameRenderer implements Renderer
                 );
 
 
-        e.addEnemyToCatalog
+        e.addEntityToCatalog
                 (
-                        Constants.EnemyType.ASTEROID_RED_MEDIUM,
+                        Constants.EntityType.ASTEROID_RED_MEDIUM,
                         new Asteroid
                                 (
                                         ImageParser.parseImage(context, R.drawable.asteroidredlarge, R.drawable.asteroidredlarge_light, shaderProgram, 0),
-                                        enemyParticles,
+                                        entityParticles,
                                         xbound,
                                         ybound,
                                         dropFactory,
@@ -1030,7 +1050,6 @@ public class GameRenderer implements Renderer
 
     void inGamePause()
     {
-        gameState = Constants.GameState.PAUSE_MENU;
         ui.gameState = Constants.GameState.PAUSE_MENU;
         /*for(int i = 0; i < entities.length; i++)
         {
@@ -1059,7 +1078,6 @@ public class GameRenderer implements Renderer
 
     void inGameUnpause()
     {
-        gameState = Constants.GameState.IN_GAME;
         ui.gameState = Constants.GameState.IN_GAME;
         globalInfo.unpauseTime();
         player1.pause = false;
@@ -1090,6 +1108,22 @@ public class GameRenderer implements Renderer
     {
         if(ui.exitFlag)
         {
+            if(aiThread.getState() == Thread.State.WAITING)
+            {
+                synchronized (aiRunnable.lock)
+                {
+                    aiRunnable.lock.notify();
+                }
+            }
+
+            if(collisionThread.getState() == Thread.State.WAITING)
+            {
+                synchronized (collisionRunnable.lock)
+                {
+                    collisionRunnable.lock.notify();
+                }
+            }
+
             exitGame();
         }
         if(ui.newGameFlag)
@@ -1104,7 +1138,7 @@ public class GameRenderer implements Renderer
         if(ui.changeParticlesFlag)
         {
             collisionParticles.setCurMax(globalInfo.gameSettings.particlePercent);
-            enemyParticles.setCurMax(globalInfo.gameSettings.particlePercent);
+            entityParticles.setCurMax(globalInfo.gameSettings.particlePercent);
             playerParticles.setCurMax(globalInfo.gameSettings.particlePercent);
             uiParticles.setCurMax(globalInfo.gameSettings.particlePercent);
             ui.changeParticlesFlag = false;
@@ -1116,6 +1150,7 @@ public class GameRenderer implements Renderer
         }
         if(ui.readyFlag)
         {
+            ui.readyFlag = false;
             player1.resetDrops();
             globalInfo.extraGunChance = .2f / (player1.getMaxGuns() * 2f);
             globalInfo.extraModChance = .5f / (player1.getMaxMods());
@@ -1129,7 +1164,6 @@ public class GameRenderer implements Renderer
             levelDone = false;
             requestLevel = false;
             ui.displayReady = false;
-            ui.readyFlag = false;
             Arrays.fill(collisionRunnable.entities, null);
             Arrays.fill(aiRunnable.entities, null);
             try
@@ -1162,7 +1196,29 @@ public class GameRenderer implements Renderer
             {
                 collisionRunnable.lock.notify();
             }
-
+        }
+        if(ui.backOutFlag)
+        {
+            aiRunnable.block = true;
+            collisionRunnable.block = true;
+            while(aiThread.getState() != Thread.State.WAITING &&
+                    collisionThread.getState() != Thread.State.WAITING)
+            {
+                System.out.println(aiThread.getState()+ ", " + aiThread.getState());
+            }
+            aiRunnable.block = false;
+            collisionRunnable.block = false;
+            for(int i = 0; i < entities.length; i++)
+            {
+                if(entities[i] != null)
+                {
+                    entities[i].freeMemory();
+                }
+                entities[i] = null;
+                collisionRunnable.entities[i] = null;
+                aiRunnable.entities[i] = null;
+            }
+            ui.backOutFlag = false;
         }
     }
 }

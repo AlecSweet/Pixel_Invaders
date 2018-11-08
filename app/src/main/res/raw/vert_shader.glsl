@@ -54,13 +54,11 @@ void main()
 	gl_PointSize = pointSize;
 	gl_Position = vec4( a_Position.x, a_Position.y, 0.0, 1.0);
 	
-	float tempY  = cos(tilt) * a_Position.y;
 	
-	float tY = tempY;
-	float tX = a_Position.x;
+	vec2 rotated = vec2(v_CosA * a_Position.x + v_SinA * a_Position.y,
+						v_CosA * a_Position.y - v_SinA * a_Position.x);
 	
-	vec2 rotated = vec2(v_CosA * tX + v_SinA * tY,
-						v_CosA * tY - v_SinA * tX);
+	rotated.x = rotated.x * cos(tilt);
 	
 	float radius = riftData.z;
 	vec2 center = riftData.xy;
@@ -120,12 +118,10 @@ void main()
 		//gl_Position.y = ((rotated.y * mag) + posData.y - y_ScreenShift) * y_Scale;
 	}
 	
-	float normX = -rotated.x;
-	float normY = rotated.y;
 	float a = 1.1;
 		
-	float tLeft = -normX * 0.891 + normY * 0.454;
-	float tRight = normX * 0.454 + normY * 0.891;
+	float tLeft = rotated.y * 0.891 + -rotated.x * 0.454;
+	float tRight = -rotated.y * 0.454 + -rotated.x * 0.891;
 	float factor = (0.8 + 0.2 * lightF);
 	float inc = squareLength/40.0;
 	float bound = squareLength/2.0;

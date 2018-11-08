@@ -14,7 +14,7 @@
         android:supportsRtl="true"
 
         android:theme="@style/AppTheme">
-        <activity android:name="com.example.sweet.Pixel_Invaders.GameWatcher" android:screenOrientation="portrait">
+        <activity android:name="com.example.sweet.Pixel_Invaders.GameWatcher" android:screenOrientation="landscape">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
