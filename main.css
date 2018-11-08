@@ -1,0 +1,83 @@
+
+body {
+    margin: 0;
+}
+
+h1 {
+    color: white
+}
+
+img {
+    z-index: 1;
+}
+
+section {
+    top: 1000px;
+    z-index: 1;
+    width: 100%;
+    text-align: center;
+}
+
+.parallax-container {
+    overflow: hidden;
+    width: 100%;
+    height: 100%;
+    z-index: 0;
+}
+
+.parallax-layer {
+    width: 114%;
+    height: 2048px;
+    position: fixed;
+    margin-top: -7%;
+    margin-left: -7%;
+    background-repeat: repeat;
+}
+
+.layer-0 {
+    top: 0pX;
+    z-index: -10;
+    background-image: url(img/spacebackground.png);
+}
+
+.layer-1 {
+    top: 0px;
+    z-index: -8;
+    background-image: url(img/layer2.png);
+}
+
+.layer-2 {
+    top: 0px;
+    z-index: -6;
+    background-image: url(img/layer1.png);
+}
+
+.layer-3 {
+    top: 0px;
+    z-index: -4;
+    background-image: url(img/layer0.png);
+}
+
+.layer-4 {
+    top: calc(57% - 36px + 92px);
+    /*57% - 36px + 92px*/
+    left: calc(57% - 36px + 142px);
+    /*57% - 36px + 142px*/ 
+    z-index: -2;
+    background-image: url(img/moon.png);
+    background-repeat: no-repeat;
+    background-size: 2.88%;
+}
+
+.layer-5 {
+    top: calc(57% - 112px);
+    /*57% - 112px*/ 
+    left: calc(57% - 112px);
+    /*57% - 112px*/  
+    z-index: -1;
+    background-image: url(img/earth.png);
+    background-repeat: no-repeat;
+    background-size: 9%;
+}
+
+
