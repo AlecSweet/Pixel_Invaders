@@ -89,7 +89,7 @@ $(document).ready(function(){
             }.bind(this));
 
             $(document).on('mouseout', function() {
-                this.mouseX = Math.round($(window).width() / 2);
+                //this.mouseX = Math.round($(window).width() / 2);
                 //this.mouseY = Math.round($(window).height() / 2) - window.pageYOffset;
             }.bind(this));
 
