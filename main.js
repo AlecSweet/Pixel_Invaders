@@ -58,8 +58,8 @@ $(document).ready(function(){
         ParallaxManager.prototype.layers = [];
         
         function ParallaxManager(elements, iframe) {
-            this.mouseX = this.mouseX = Math.round($(window).width() / 2);
-            this.mouseY = this.mouseY = Math.round($(window).height() / 2) - window.pageYOffset;
+            this.mouseX = Math.round($(window).width() / 2);
+            this.mouseY = Math.round($(window).height() / 2) - window.pageYOffset;
             this.curLocX = 0;
             this.curLocY = 0;
             this.hasMouseListener = true;
