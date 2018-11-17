@@ -103,6 +103,8 @@ $(document).ready(function(){
                 $(document).off('mousemove');
                 $(document).off('mouseout');
                 //$(document.getElementById('cover').contentWindow).off('mousemove');
+                this.mouseX = Math.round($(window).width() / 2);
+                this.mouseY = Math.round($(window).height() / 2) - window.pageYOffset;
                 this.hasMouseListener = false;
             });
             
