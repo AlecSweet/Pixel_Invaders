@@ -89,7 +89,7 @@ $(document).ready(function(){
             }.bind(this));
 
             $(document).on('mouseout', function() {
-                //this.mouseX = Math.round($(window).width() / 2);
+                this.mouseX = Math.round($(window).width() / 2);
                 //this.mouseY = Math.round($(window).height() / 2) - window.pageYOffset;
             }.bind(this));
 
@@ -104,9 +104,6 @@ $(document).ready(function(){
                 $(document).off('mouseout');
                 //$(document.getElementById('cover').contentWindow).off('mousemove');
                 this.hasMouseListener = false;
-                for (var i in this.layers) {
-                    this.layers[i].panTranslate(0, 0); 
-                }
             });
             
         }
