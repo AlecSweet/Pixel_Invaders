@@ -105,6 +105,9 @@ $(document).ready(function(){
                 //$(document.getElementById('cover').contentWindow).off('mousemove');
                 this.mouseX = Math.round($(window).width() / 2);
                 this.mouseY = Math.round($(window).height() / 2) - window.pageYOffset;
+                for (var i in this.layers) {
+                    this.layers[i].panTranslate(this.mouseX, this.mouseY); 
+                }
                 this.hasMouseListener = false;
             });
             
