@@ -99,7 +99,7 @@ $(document).ready(function(){
             }.bind(this));*/
 
             $(document).on('touchstart', function onFirstTouch() {
-                consol.log('hit');
+                console.log('hit');
                 $(document).off('touchstart');
                 $(document).off('mousemove');
                 $(document).off('mouseout');
