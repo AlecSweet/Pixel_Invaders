@@ -2,19 +2,27 @@
 $(document).ready(function(){
     var ParallaxManager, ParallaxLayer;
     var high = screen.width > screen.height ? screen.width : screen.height;
+    high = high > 1380 ? high : 1380;
 
     var temp = Math.round(high * .0375 * .8);
     $('.layer-4').css({
         'background-size': temp + 'px ' + temp + 'px',
-        'top': 'calc(57% + ' + Math.round(high * .0291 * .8) + 'px)',
-        'left': 'calc(57% + ' + Math.round(high * .0552 * .8) + 'px)',
+        'top': 'calc(50% + ' + Math.round(high * .0291 * .8) + 'px)',
+        'left': 'calc(50% + ' + Math.round(high * .0552 * .8) + 'px)',
     });
 
     temp = Math.round(high * .117 * .8);
     $('.layer-5').css({
         'background-size': temp + 'px ' + temp + 'px',
-        'top': 'calc(57% - ' + Math.round(high * .0583 * .8)  + 'px)',
-        'left': 'calc(57% - ' + Math.round(high * .0583 * .8) + 'px)',
+        'top': 'calc(50% - ' + Math.round(temp / 2) + 'px)',
+        'left': 'calc(50% - ' + Math.round(temp / 2) + 'px)',
+    });
+
+    temp = Math.round(high * .266 * .8);
+    $('.layer-6').css({
+        'background-size': temp + 'px ' + temp / 2 + 'px',
+        'top': 'calc(50% - ' + Math.round(temp * .78) + 'px)',
+        'left': 'calc(50% - ' + Math.round(temp / 2) + 'px)',
     });
 
     ParallaxLayer = (function() {
@@ -38,8 +46,8 @@ $(document).ready(function(){
 
         ParallaxLayer.prototype.update = function() {
             var temp1 = this.curPanY + this.curScrollY;
-            console.log(this.curPanX + ', ' + this.curPanY + ' : ' + this.curScrollY);
-            $(this.el).css('transform', 'translate3d(' + this.curPanX + 'px, ' + temp1 + 'px, 0)' );
+            //$(this.el).css('transform', 'translate(' + 0 + 'px, ' + 0 + 'px)' );
+            $(this.el).css('transform', 'translate(' + this.curPanX + 'px, ' + temp1 + 'px)' );
         };
 
         return ParallaxLayer;
@@ -49,9 +57,12 @@ $(document).ready(function(){
     ParallaxManager = (function() {
         ParallaxManager.prototype.layers = [];
         
-        function ParallaxManager(elements) {
+        function ParallaxManager(elements, iframe) {
             this.mouseX = 0;
             this.mouseY = 0;
+            this.curLocX = 0;
+            this.curLocY = 0;
+            this.hasMouseListener = true;
             if (Array.isArray(elements) && elements.length) {
                 this.elements = elements;
             }
@@ -69,33 +80,113 @@ $(document).ready(function(){
             for (var i in this.elements) {
                 this.layers.push(new ParallaxLayer(this.elements[i]));
             }
-            
-            window.setInterval(this.update.bind(this), 14);
-            $(document).on('mousemove', function(event){
-                this.mouseX = event.pageX - window.pageXOffset;
+                   
+            window.setInterval(this.update.bind(this), 16);
+
+            $(document).on('mousemove', function(event) {
+                this.mouseX = event.pageX;
                 this.mouseY = event.pageY - window.pageYOffset;
             }.bind(this));
+
+            $(document).on('mouseout', function() {
+                this.mouseX = Math.round($(window).width() / 2);
+                //this.mouseY = Math.round($(window).height() / 2) - window.pageYOffset;
+            }.bind(this));
+
+            /*document.getElementById('cover').contentWindow.addEventListener('mousemove', function(event) {
+                this.mouseX = event.pageX;
+                this.mouseY = event.pageY - window.pageYOffset;
+            }.bind(this));*/
+
             $(document).on('touchstart', function onFirstTouch() {
                 $(document).off('touchstart');
                 $(document).off('mousemove');
-            }); 
+                $(document).off('mouseout');
+                //$(document.getElementById('cover').contentWindow).off('mousemove');
+                this.hasMouseListener = false;
+                for (var i in this.layers) {
+                    this.layers[i].panTranslate(0, 0); 
+                }
+            });
+            
+        }
+
+        ParallaxManager.prototype.triggerMouseMove = function(){
+            //document.dispatchEvent(new Event('mousemove'));
+            //document.trigger('mousemove');
         }
 
         ParallaxManager.prototype.update = function() {
-            var scrollY = window.pageYOffset;//Math.max(window.pageYOffset, 0);
-            var panX = this.mouseX - Math.round($(window).width() / 2) - window.pageXOffset;
-            var panY = this.mouseY - Math.round($(window).height() / 2) - window.pageYOffset;
-            for (var i in this.layers) {
-                this.layers[i].scrollTranslate(scrollY); 
-                this.layers[i].panTranslate(-panX, -panY); 
-                this.layers[i].update();
+            if(this.hasMouseListener) {
+                //var panX = this.mouseX - Math.round(document.documentElement.clientWidth / 2);
+                //var panY = this.mouseY - Math.round(document.documentElement.clientHeight / 2) - window.pageYOffset;
+                //var newX = this.mouseX - Math.round(document.documentElement.clientWidth / 2);
+                //var newY = this.mouseY - Math.round(document.documentElement.clientHeight / 2) - window.pageYOffset;
+                var difX = this.mouseX - Math.round(document.documentElement.clientWidth / 2) - this.curLocX;
+                var difY = this.mouseY - Math.round(document.documentElement.clientHeight / 2) - window.pageYOffset - this.curLocY;
+                var dist = Math.sqrt(difX * difX + difY * difY);
+
+                if(dist > 20)
+                {
+                    this.curLocX += Math.round(20 * difX / dist);
+                    this.curLocY += Math.round(20 * difY / dist);
+                }else if(dist > 10){
+                    this.curLocX += Math.round(.5 * difX);
+                    this.curLocY += Math.round(.5 * difY);
+                }
+                for (var i in this.layers) {
+                    this.layers[i].scrollTranslate(window.pageYOffset); 
+                    //this.layers[i].panTranslate(-panX, -panY);
+                    this.layers[i].panTranslate(-this.curLocX, -this.curLocY);  
+                    this.layers[i].update();
+                }
+            } else {
+                for (var i in this.layers) {
+                    this.layers[i].scrollTranslate(window.pageYOffset); 
+                    this.layers[i].update();
+                }
             }
         }
 
         return ParallaxManager;
     })();
 
-    var paraManager = new ParallaxManager('.parallax-layer');
+    var paraManager = new ParallaxManager('.parallax-layer', document.getElementById('trailer'));
+
+    function titleAnimationDelay() {
+        titleAnimationPlay(1, 1);
+    }
+
+    function titleAnimationPlay(animState, direction) {
+        $('.title').css({
+            'background-image': 'url(img/title' + animState + '2.png)',
+        });
+        if(animState == 0) {
+            window.setTimeout(function(){titleAnimationDelay()}, Math.random() * 5000 + 1000);
+        } else if(animState < 4 && direction == 1) {
+            window.setTimeout(function(){titleAnimationPlay(++animState, 1)}, 32);
+        } else {
+            window.setTimeout(function(){titleAnimationPlay(--animState, -1)}, 32);
+        }
+    }
+ 
+    var timeoutID = window.setTimeout(function(){titleAnimationDelay()}, 1000);
+
+    /*var videoPlayer = new Vimeo.Player('video', {url: 'https://player.vimeo.com/video/300653546?title=0&byline=0&portrait=0'});
+    video01Player.on('play', function() {
+        console.log('Played the first video');
+    });*/
+    //var player = new Vimeo.Player(document.getElementById('trailer'));
+
+    /*player.on('play', function() {
+        console.log('hitPlay');
+        $('.parallax-container').focus();
+        $(document.getElementById('trailer')).css({
+            'pointer-events': 'none'
+        });
+        paraManager.triggerMouseMove();
+        paraManager.update()
+    });*/
 });
 
 
