@@ -1,29 +1,9 @@
 
 $(document).ready(function(){
     var ParallaxManager, ParallaxLayer;
-    var high = screen.width > screen.height ? screen.width : screen.height;
-    high = high > 1380 ? high : 1380;
-
-    var temp = Math.round(high * .0375 * .8);
-    $('.layer-4').css({
-        'background-size': temp + 'px ' + temp + 'px',
-        'top': 'calc(50% + ' + Math.round(high * .0291 * .8) + 'px)',
-        'left': 'calc(50% + ' + Math.round(high * .0552 * .8) + 'px)',
-    });
-
-    temp = Math.round(high * .117 * .8);
-    $('.layer-5').css({
-        'background-size': temp + 'px ' + temp + 'px',
-        'top': 'calc(50% - ' + Math.round(temp / 2) + 'px)',
-        'left': 'calc(50% - ' + Math.round(temp / 2) + 'px)',
-    });
-
-    temp = Math.round(high * .266 * .8);
-    $('.layer-6').css({
-        'background-size': temp + 'px ' + temp / 2 + 'px',
-        'top': 'calc(50% - ' + Math.round(temp * .78) + 'px)',
-        'left': 'calc(50% - ' + Math.round(temp / 2) + 'px)',
-    });
+    //var canvas = document.getElementById("canvas");
+    positionElements();
+    initMainButtons();
 
     ParallaxLayer = (function() {
         function ParallaxLayer(el) {
@@ -174,6 +154,9 @@ $(document).ready(function(){
     }
  
     var timeoutID = window.setTimeout(function(){titleAnimationDelay()}, 1000);
+    
+    var timeoutID2 = window.setTimeout(function(){toggleButtons(true)}, 1400);
+
 
     /*var videoPlayer = new Vimeo.Player('video', {url: 'https://player.vimeo.com/video/300653546?title=0&byline=0&portrait=0'});
     video01Player.on('play', function() {
